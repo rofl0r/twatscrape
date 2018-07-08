@@ -95,6 +95,7 @@ def get_twats(user):
 			retweet_user = None
 			card_url = None
 			images = None
+			quote_tweet = None
 
 			tweet_id = div.attrs["data-tweet-id"]
 			tweet_user = div.attrs["data-screen-name"]
@@ -135,6 +136,13 @@ def get_twats(user):
 					if bg.startswith("url('"):
 						bg = bg[5:-2]
 						images.append(bg)
+			card_div = div.find('div', attrs={'class':'QuoteTweet-innerContainer'})
+			if card_div:
+				quote_tweet = {
+					'user':card_div.attrs['data-screen-name'],
+					'id':card_div.attrs['data-item-id'] }
+				dv = card_div.find('div', attrs={'class':'QuoteTweet-text'})
+				quote_tweet['text'] = dv.text
 
 
 			if tweet_user != None and tweet_id:
@@ -142,6 +150,7 @@ def get_twats(user):
 				if retweet_id: vals['rid'] = retweet_id
 				if card_url: vals['curl'] = card_url
 				if images: vals['images'] = images
+				if quote_tweet: vals['quote'] = quote_tweet
 
 				twats.append(vals)
 #				add_tweet(tweet_id, tweet_user, tweet_time, tweet_text)
