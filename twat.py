@@ -64,6 +64,13 @@ def get_twats_mobile(user):
 def strify_tag_arr(tag_arr):
 	pass
 
+def get_style_tag(tag, styles):
+	sta = [x.strip() for x in styles.split(';')]
+	for st in sta:
+		tg, s = st.split(':', 1)
+		if tg.strip() == tag: return s.strip()
+	return None
+
 def get_twats(user):
 	host = 'twitter.com'
 	http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, user_agent="curl/7.60.0")
@@ -123,6 +130,11 @@ def get_twats(user):
 				images = []
 				for dv in card_div.find_all('div', attrs={'class':'AdaptiveMedia-photoContainer'}):
 					images.append(dv.attrs["data-image-url"])
+				for dv in card_div.find_all('div', attrs={'class':'PlayableMedia-player'}):
+					bg = get_style_tag('background-image', dv.attrs["style"])
+					if bg.startswith("url('"):
+						bg = bg[5:-2]
+						images.append(bg)
 
 
 			if tweet_user != None and tweet_id:

@@ -66,7 +66,12 @@ th { background-color : #eeeeee ; }
 			html += '<tr><td><table width=100% height=380px><tr>'
 			wdth = 100/len(twat['images'])
 			for i in twat['images']:
-				html += '<td width=%d%%><a href="%s"><img src="%s" width=100%%></a></td>'%(wdth, i, i)
+				alt = ''
+				href = i
+				if 'ext_tw_video' in i:
+					alt = "alt='Video'"
+					href = "https://twitter.com/%s/status/%s"%(twat['user'], twat["id"])
+				html += '<td width=%d%%><a href="%s"><img src="%s" width=100%% %s></a></td>'%(wdth, href, i, alt)
 			html += '</tr></table></td></tr>\n'
 	html += "</table></body></html>"
 	with codecs.open("index.html", 'w', 'utf-8') as h:
