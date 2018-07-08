@@ -1,0 +1,15 @@
+html { font-size: 14px; background: #dcdcdc; }
+a { text-decoration: none; color: blue; }
+a:hover { text-decoration: underline; }
+div.twat-container { border: 1px solid transparent; width: 100%; display: block;}
+p.twat-title { font-weight: bold; font-size: 16px; text-decoration: bold; text-align: center; background-color: #eee;}
+p.twat-text { font-size: 14px; padding-left: 1%; word-wrap: auto; display: block;}
+span.twat-image { text-align: center; }
+span.twat-iframe { text-align: center; width: 600px; height: 380px; }
+img { opacity: .6; transition: all 0.5s ease-out; }
+img:hover { opacity: 1; }
+
+/* js search may be implemented, see: https://jsfiddle.net/ZLhAd/369/
+#searcher { position:fixed; top:0px; right:0px; }
+.show { background-color:yellow; }
+*/
