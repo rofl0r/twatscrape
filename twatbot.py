@@ -9,10 +9,6 @@ import argparse
 
 
 title = 'twatscrape'
-imgdownload = True
-twat_refresh = 180
-page_refresh = 120
-theme = 'default'
 
 tweets = dict()
 
@@ -29,11 +25,16 @@ class twatscrape():
 		self.render_site()
 
 		while True:
+			## keep reloading the list
 			self.watchlist = [x.rstrip('\n') for x in open('watchlist.txt', 'r').readlines()]
+			## if no new twats found
 			if not self.scrape():
+				## search for old ones ?
 				if self.parse.search > 0:
 					self.scrape(True)
-			time.sleep(twat_refresh)
+
+			## sleep a little while
+			time.sleep(5)
 
 	def get_refresh_time(self,mem):
 		if mem == 'search': return self.parse.search
@@ -45,10 +46,13 @@ class twatscrape():
 		if not mem in self.memory: self.memory[mem] = {}
 		every = self.get_refresh_time(mem)
 		for user in self.watchlist:
+			## if user hasn't been checked yet
 			if not user in self.memory[mem]:
+				## add dummy value
 				self.memory[mem][user] = ticks - 86400
+			
 			if (ticks - self.memory[mem][user]) > every:
-				#print('scrapping %s (%s)' % (user, mem))
+				print('scrapping %s (%s)' % (user, mem))
 				insert_pos = 0
 				twats = get_twats(user, search)
 				for t in twats:
@@ -64,6 +68,7 @@ class twatscrape():
 				ticks = time.time()
 				self.memory[mem][user] = ticks
 
+		## if no new twat, return False
 		if result < 1: return False
 		else: return True
 
@@ -105,8 +110,7 @@ class twatscrape():
 		return nl
 
 
-	def html_header(self, theme = False):
-		if not theme: theme = 'default'
+	def html_header(self):
 		return """<!DOCTYPE html><html><head>
 			<meta charset="utf-8"/>
 			<meta http-equiv="refresh" content="%d" >
