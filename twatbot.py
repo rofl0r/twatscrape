@@ -122,24 +122,18 @@ def render_site():
 			if args.mirror > 0:
 				if not os.path.exists('img'): os.makedirs('img')
 				for i in twat['images']:
-					ext = i.split('.')[-1]
-					urllib.urlretrieve(i, 'img/image.%s' % ext)
-					filehash = hashlib.md5(open('img/image.%s' % ext, 'rb').read()).hexdigest()
-					## image already exists
-					if os.path.isfile('img/%s.%s' % (filehash, ext)): os.remove('img/image.%s' % ext)
-					## rename image to fit hash
-					else: os.rename('img/image.%s' % ext, 'img/%s.%s' % (filehash, ext))
-
+					filename = i.split('/')[-1]
+					if not os.path.isfile('img/%s' % filename):
+						urllib.urlretrieve(i, 'img/%s' % filename )
+						
 					## use wants to load images
 					if args.images:
-						html.append('<a href="%s" title="Opens the remote url"><img src="img/%s.%s" width="%d%%"></a>'%(i, filehash, ext, wdth))
+						html.append('<a href="%s" title="Opens the remote url"><img src="img/%s" width="%d%%"></a>'%(i, filename, wdth))
 
 					## only print links to images
 					else:
-						## show image over iframe on mouse hover -- pretty ugly
-						#html.append('<br><a href="img/%s.%s">%s</a><div class="box"><iframe src="img/%s.%s" width="500px" height="500px"></iframe></div>' % \
-						html.append('<br><a href="img/%s.%s">%s</a><div class="box" width="100%%" height="100%%"><iframe src="img/%s.%s"></iframe></div>' % \
-						(filehash,ext, i, filehash,ext) )
+						html.append('<br><a href="img/%s">%s</a><div class="box" width="100%%" height="100%%"><iframe src="img/%s"></iframe></div>' % \
+						(filename, i, filename) )
 						
 
 			else:
