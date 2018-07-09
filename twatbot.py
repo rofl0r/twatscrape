@@ -44,49 +44,53 @@ def add_owner_to_list(user, lst):
 		nl.append(y)
 	return nl
 
+def html_header():
+	return """<!DOCTYPE html><html><head>
+		<meta charset="utf-8"/>
+		<meta http-equiv="refresh" content="%d" >
+		<title>%s</title>
+		<link rel='stylesheet' type='text/css' href='css/%s.css'>
+		</head><body>""" % (args.reload, args.title, args.theme)
+
+
 def render_site():
-	html = \
-"""
-<!DOCTYPE html><html><head>
-	<meta charset="utf-8"/>
-	<meta http-equiv="refresh" content="%d" >
-	<title>%s</title>
-<style>
-table, th, td {
-   #border: 1px solid black;
-}
-th { background-color : #eeeeee ; }
-</style>
-</head><body><table>
-""" % (args.reload, args.title)
+	html = [ html_header() ]
 
 	all_tweets = []
 	for user in watchlist:
 		all_tweets.extend(add_owner_to_list(user, tweets[user]))
 	all_tweets = sorted(all_tweets, key = lambda x : x["time"], reverse=True)
 	all_tweets = remove_doubles(all_tweets)
-	#print repr(all_tweets)
+
 	for twat in all_tweets:
-		user_str = twat["user"] if twat["user"] == twat["owner"] else "%s (RT %s)" % (twat["user"], twat["owner"])
-		html += "<tr><th>%s<a href='https://twitter.com/%s/status/%s'>(%s)</a></th></tr>\n"% \
-		(user_str, twat['user'], twat["id"], format_time(twat["time"]))
-		html += "<tr><td>%s</td></tr>\n" % (twat["text"].replace('\n', '<br>'))
+		html.append( '<div class="twat-container">' )
+
+		if twat["user"].lower() == twat["owner"].lower():
+			user_str = "<a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a>" % \
+			(twat["user"], twat["id"], twat["user"])
+		else:
+			user_str = "<a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a> (RT <a target='_blank' href='https://twitter.com/%s'>%s</a>)" % \
+			(twat["user"], twat["id"], twat["user"], twat["owner"], twat["owner"])
+
+		html.append( '<p class="twat-title">%s&nbsp;-&nbsp;%s</p>' % (user_str, format_time(twat["time"])) )
+
+		html.append( '<p class="twat-text">%s</p>' % (twat["text"].replace('\n', '<br>')) )
+
 		if 'curl' in twat:
-			html += '<tr><td><center><iframe width=600px height=380px src=https://twitter.com%s?cardname=summary_large_image></iframe></center></td></tr>\n'%twat['curl']
+			html.append('<span class="twat-iframe"><iframe src="https://twitter.com%s?cardname=summary_large_image"></iframe></span>'%twat['curl'])
+
 		if 'images' in twat:
-			html += '<tr><td><table width=100% height=380px><tr>'
+			html.append('<span class="twat-image">')
 			wdth = 100/len(twat['images'])
-			for i in twat['images']:
-				alt = ''
-				href = i
-				if 'ext_tw_video' in i:
-					alt = "alt='Video'"
-					href = "https://twitter.com/%s/status/%s"%(twat['user'], twat["id"])
-				html += '<td width=%d%%><a href="%s"><img src="%s" width=100%% %s></a></td>'%(wdth, href, i, alt)
-			html += '</tr></table></td></tr>\n'
-	html += "</table></body></html>"
+			[ html.append( '<a href="%s"><img src="%s" width="%d%%"></a>'%(i, i, wdth)) for i in twat['images'] ]
+			html.append('</span>')
+
+		html.append('</div>\n')
+
+	html.append("</body></html>")
+
 	with codecs.open("index.html", 'w', 'utf-8') as h:
-		h.write(html)
+		h.write("\n".join(html))
 
 
 if __name__ == '__main__':
@@ -95,6 +99,7 @@ if __name__ == '__main__':
 	parser.add_argument('--watchlist', help="specify watchlist to use (default: watchlist.txt)", type=str, default='watchlist.txt', required=False)
 	parser.add_argument('--reload', help="reload html page every X seconds (default: disabled)", type=int, default=0, required=False)
 	parser.add_argument('--title', help="defile title (default: %s)" % title, type=str, default=title, required=False)
+	parser.add_argument('--theme', help="select theme (default: default)", default='default', type=str, required=False)
 
 	args = parser.parse_args()
 
