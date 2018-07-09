@@ -19,7 +19,7 @@ def get_twat_timestamp(twat_id):
 					return int(span.attrs['data-time'])
 	return 0
 
-def get_twats_mobile(user):
+def get_twats_mobile(user, search = False):
 	host = 'mobile.twitter.com'
 	http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, user_agent="curl/7.60.0")
 #	http.debugreq = True
@@ -78,7 +78,6 @@ def get_twats(user, search = False):
         if not search:
                 hdr, res = http.get("/%s" % user)
         else:
-                #print('doing some research (%s)' % user)
                 hdr, res = http.get("/search?q=%s" % user)
 
 	twats = []
