@@ -189,6 +189,8 @@ class Rocksock():
 				reason = self._get_ssl_exception_reason(e)
 				#if hasattr(e, 'library'): subsystem = e.library
 				raise RocksockException(RS_E_SSL_GENERIC, reason, errortype=RS_ET_SSL)
+			except socket.error as e:
+				raise RocksockException(e.errno, errortype=RS_ET_SYS)
 			except Exception as e:
 				raise e
 			"""
