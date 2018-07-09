@@ -60,7 +60,7 @@ def html_header():
 
 
 def render_site():
-	html = [ html_header() ]
+	html = []
 
 	all_tweets = []
 	for user in watchlist:
@@ -69,9 +69,13 @@ def render_site():
 	all_tweets = sorted(all_tweets, key = lambda x : x["time"], reverse=True)
 	all_tweets = remove_doubles(all_tweets)
 
-	for twat in all_tweets:
+	if args.tpp > 0:
+		pages = int( len(all_tweets) / args.tpp )
+		inc = 0
+		print('pages: %d, inc: %d' % (pages,inc))
 
-		html.append( '<div class="twat-container">' )
+	for twat in all_tweets:
+		tw = '<div class="twat-container">'
 
 		if twat["user"].lower() == twat["owner"].lower():
 			user_str = "<a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a>" % \
@@ -80,22 +84,22 @@ def render_site():
 			user_str = "<a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a> (RT <a target='_blank' href='https://twitter.com/%s'>%s</a>)" % \
 			(twat["user"], twat["id"], twat["user"], twat["owner"], twat["owner"])
 
-		html.append( '<p class="twat-title">')
-		html.append('%s&nbsp;-&nbsp;%s' % (user_str, format_time(twat["time"])))
+		tw += '<p class="twat-title">'
+		tw += '%s&nbsp;-&nbsp;%s' % (user_str, format_time(twat["time"]))
 
 		## add wayback icon
 		wayback = 'https://web.archive.org/save/https://twitter.com/%s/status/%s' % (twat["user"], twat["id"])
-		html.append('&nbsp;&nbsp;<a target="_blank" href="%s" title="wayback"><img width="12px" height="12px" src="%s"></a>' % (wayback, wayback_logo))
+		tw += '&nbsp;&nbsp;<a target="_blank" href="%s" title="wayback"><img width="12px" height="12px" src="%s"></a>' % (wayback, wayback_logo)
 
-		html.append('</p>')
+		tw += '</p>\n'
 
-		html.append( '<p class="twat-text">%s</p>' % (twat["text"].replace('\n', '<br>')) )
+		tw += '<p class="twat-text">%s</p>' % (twat["text"].replace('\n', '<br>')) 
 
 		if 'curl' in twat and args.iframe > 0:
-			html.append('<span class="twat-iframe"><iframe src="https://twitter.com%s?cardname=summary_large_image"></iframe></span>'%twat['curl'])
+			tw += '<span class="twat-iframe"><iframe src="https://twitter.com%s?cardname=summary_large_image"></iframe></span>\n'%twat['curl']
 
 		if 'images' in twat:
-			html.append('<p class="twat-image">')
+			tw += '<p class="twat-image">'
 			if len(twat['images']) > 1: wdth = (100/len(twat['images'])) - 1
 			else: wdth = 100
 
@@ -109,30 +113,59 @@ def render_site():
 						
 					## use wants to load images
 					if args.images:
-						html.append('<a href="%s" title="Opens the remote url"><img src="img/%s" width="%d%%"></a>'%(i, filename, wdth))
+						tw += '<a href="%s" title="Opens the remote url"><img src="img/%s" width="%d%%"></a>'%(i, filename, wdth)
 
 					## only print links to images
 					else:
-						html.append('<br><a href="img/%s">%s</a><div class="box" width="100%%" height="100%%"><iframe src="img/%s"></iframe></div>' % \
-						(filename, i, filename) )
+						tw += '<br><a href="img/%s">%s</a><div class="box" width="100%%" height="100%%"><iframe src="img/%s"></iframe></div>' % \
+						(filename, i, filename)
 						
 
 			else:
 				## users wants to load images
 				if args.images:
-					[ html.append( '<a href="%s"><img src="%s" width="%d%%"></a>'%(i, i, wdth)) for i in twat['images'] ]
+					for i in twat['images']: tw += '<a href="%s"><img src="%s" width="%d%%"></a>'%(i, i, wdth)
 				else:
-					[ html.append( '<a href="%s">%s</a>'%(i, i)) for i in twat['images'] ]
+					for i in twat['images']: tw += '<a href="%s">%s</a>'%(i, i)
 
 
-			html.append('</p>')
+			tw += '</p>\n'
 
-		html.append('</div>')
+		tw += '</div>\n'
 
-	html.append("</body></html>")
+		html.append(tw)
+		print(tw)
 
-	with codecs.open("index.html", 'w', 'utf-8') as h:
-		h.write("\n".join(html))
+		# when doing multipages
+		if args.tpp > 0 and len(html) >= args.tpp:
+			inc+=1
+			print('writing file ...')
+			write_html(html, inc, pages)
+			html = []
+
+	if len(html):
+		if args.tpp > 0:
+			write_html(html, 0, pages)
+		else:
+			write_html(html, False, False)
+
+
+def write_html(html, i = False, pages = False):
+	ht = [ html_header() ]
+	if i is not False and pages > 0:
+		if i > 0: filename = "index%d.html" % i
+		else: filename = "index.html"
+		ht.append('<div class="menu">')
+		[ ht.append('<a class="menu" href="index%d.html">%d</a>' % (j,j)) for j in range(1,pages - 1) ]
+		ht.append('</div>')
+
+	else:
+		filename = "index.html"
+
+	[ ht.append(i) for i in html ]
+	ht.append("</body></html>")
+	with codecs.open(filename, 'w', 'utf-8') as h:
+		h.write("\n".join(ht))
 
 def get_refresh_time(mem):
 	if mem == 'search': return args.search
@@ -170,10 +203,11 @@ def scrape(search = False, result = 0):
 			ticks = time.time()
 			memory[mem][user] = ticks
 
-	render_site()
 	## if no new twat, return False
 	if result < 1: return False
-	else: return True
+	else:
+		render_site()
+		return True
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
@@ -188,6 +222,7 @@ if __name__ == '__main__':
 	parser.add_argument('--search', help="search watchlist every X second(s) (default: disabeld)", default=0, type=int, required=False)
 	parser.add_argument('--images', help="show image (default: 1)", default=1, type=int, required=False)
 	parser.add_argument('--reload', help="reload watchlist every X secondes (default: 600)", default=600, type=int, required=False)
+	parser.add_argument('--tpp', help="twats per page - 0: unlimited (default: 0)", default=0, type=int, required=False)
 
 	args = parser.parse_args()
 
