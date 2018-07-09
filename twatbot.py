@@ -5,6 +5,7 @@ import codecs
 import argparse
 import os.path
 
+title="twatscrape"
 tweets = dict()
 
 def user_filename(user):
@@ -46,7 +47,10 @@ def add_owner_to_list(user, lst):
 def render_site():
 	html = \
 """
-<!DOCTYPE html><html><head><meta charset="utf-8"/>
+<!DOCTYPE html><html><head>
+	<meta charset="utf-8"/>
+	<meta http-equiv="refresh" content="%d" >
+	<title>%s</title>
 <style>
 table, th, td {
    #border: 1px solid black;
@@ -54,7 +58,8 @@ table, th, td {
 th { background-color : #eeeeee ; }
 </style>
 </head><body><table>
-"""
+""" % (args.reload, args.title)
+
 	all_tweets = []
 	for user in watchlist:
 		all_tweets.extend(add_owner_to_list(user, tweets[user]))
@@ -88,6 +93,8 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--dir', help="where to save twats (default: current directory)", type=str, default=None, required=False)
 	parser.add_argument('--watchlist', help="specify watchlist to use (default: watchlist.txt)", type=str, default='watchlist.txt', required=False)
+	parser.add_argument('--reload', help="reload html page every X seconds (default: disabled)", type=int, default=0, required=False)
+	parser.add_argument('--title', help="defile title (default: %s)" % title, type=str, default=title, required=False)
 
 	args = parser.parse_args()
 
