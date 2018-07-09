@@ -4,6 +4,8 @@ import json
 import codecs
 import argparse
 import os.path
+import urllib
+import hashlib
 
 title="twatscrape"
 tweets = dict()
@@ -82,7 +84,23 @@ def render_site():
 		if 'images' in twat:
 			html.append('<span class="twat-image">')
 			wdth = 100/len(twat['images'])
-			[ html.append( '<a href="%s"><img src="%s" width="%d%%"></a>'%(i, i, wdth)) for i in twat['images'] ]
+
+			## mirror images ?
+			if args.mirror > 0:
+				if not os.path.exists('img'): os.makedirs('img')
+				for i in twat['images']:
+					ext = i.split('.')[-1]
+					urllib.urlretrieve(i, 'img/image.%s' % ext)
+					filehash = hashlib.md5(open('img/image.%s' % ext, 'rb').read()).hexdigest()
+					## image already exists
+					if os.path.isfile('img/%s.%s' % (filehash, ext)): os.remove('img/image.%s' % ext)
+					## rename image to fit hash
+					else: os.rename('img/image.%s' % ext, 'img/%s.%s' % (filehash, ext))
+
+					html.append('<a href="%s"><img src="img/%s.%s" width="%d%%"></a>'%(i, filehash, ext, wdth))
+
+			else:
+				[ html.append( '<a href="%s"><img src="%s" width="%d%%"></a>'%(i, i, wdth)) for i in twat['images'] ]
 			html.append('</span>')
 
 		html.append('</div>\n')
@@ -101,6 +119,7 @@ if __name__ == '__main__':
 	parser.add_argument('--title', help="defile title (default: %s)" % title, type=str, default=title, required=False)
 	parser.add_argument('--theme', help="select theme (default: default)", default='default', type=str, required=False)
 	parser.add_argument('--iframe', help="show iframe (default: 1)", default=1, type=int, required=False)
+	parser.add_argument('--mirror', help="mirror images (default: 0)", default=0, type=int, required=False)
 
 	args = parser.parse_args()
 
