@@ -76,7 +76,7 @@ def render_site():
 
 		html.append( '<p class="twat-text">%s</p>' % (twat["text"].replace('\n', '<br>')) )
 
-		if 'curl' in twat if args.iframe > 0:
+		if 'curl' in twat and args.iframe > 0:
 			html.append('<span class="twat-iframe"><iframe src="https://twitter.com%s?cardname=summary_large_image"></iframe></span>'%twat['curl'])
 
 		if 'images' in twat:
@@ -103,8 +103,6 @@ if __name__ == '__main__':
 	parser.add_argument('--iframe', help="show iframe (default: 1)", default=1, type=int, required=False)
 
 	args = parser.parse_args()
-
-	print('arg: %s' % args.dir)
 
 	watchlist = [x.rstrip('\n') for x in open(args.watchlist, 'r').readlines()]
 
