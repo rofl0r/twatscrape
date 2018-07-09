@@ -2,11 +2,17 @@ from twat import get_twats, get_twat_timestamp
 import time
 import json
 import codecs
+import argparse
+import os.path
 
 tweets = dict()
 
 def user_filename(user):
-	return user + '.json'
+	if args.dir:
+		if not os.path.exists(args.dir):
+			os.makedirs(args.dir)
+		return '%s/%s.json' % (args.dir, user)
+	return '%s.json' % user
 
 def in_twatlist(user, twat):
 	for t in tweets[user]:
@@ -79,6 +85,11 @@ th { background-color : #eeeeee ; }
 
 
 if __name__ == '__main__':
+	parser = argparse.ArgumentParser()
+	parser.add_argument('--dir', help="where to save twats (default: current directory)", type=str, default=None, required=False)
+	args = parser.parse_args()
+
+	print('arg: %s' % args.dir)
 
 	watchlist = [x.rstrip('\n') for x in open('watchlist.txt', 'r').readlines()]
 
