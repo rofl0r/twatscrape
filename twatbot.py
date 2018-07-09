@@ -56,7 +56,7 @@ def html_header():
 <meta http-equiv="refresh" content="%d" >
 <link rel='stylesheet' type='text/css' href='css/%s.css'></head><body>
 
-""" % (args.refresh, args.title, args.theme)
+""" % (args.title, args.refresh, args.theme)
 
 
 def render_site():
@@ -152,7 +152,7 @@ def scrape(search = False, result = 0):
 			memory[mem][user] = ticks - 86400
 
 		if (ticks - memory[mem][user]) > every:
-			#print('scrapping %s (%s)' % (user, mem))
+			print('scrapping %s (%s)' % (user, mem))
 			insert_pos = 0
 
 			twats = get_twats(user, search)
@@ -179,7 +179,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--dir', help="where to save twats (default: current directory)", type=str, default=None, required=False)
 	parser.add_argument('--watchlist', help="specify watchlist to use (default: watchlist.txt)", type=str, default='watchlist.txt', required=False)
-	parser.add_argument('--refresh', help="refresh html page every X seconds (default: disabled)", type=int, default=0, required=False)
+	parser.add_argument('--refresh', help="refresh html page every X seconds (default: 300)", type=int, default=300, required=False)
 	parser.add_argument('--title', help="defile title (default: %s)" % title, type=str, default=title, required=False)
 	parser.add_argument('--theme', help="select theme (default: default)", default='default', type=str, required=False)
 	parser.add_argument('--iframe', help="show iframe (default: 1)", default=1, type=int, required=False)
@@ -187,10 +187,12 @@ if __name__ == '__main__':
 	parser.add_argument('--profile', help="check profile every X second(s) (default: 60)", default=60, type=int, required=False)
 	parser.add_argument('--search', help="search watchlist every X second(s) (default: disabeld)", default=0, type=int, required=False)
 	parser.add_argument('--images', help="show image (default: 1)", default=1, type=int, required=False)
+	parser.add_argument('--reload', help="reload watchlist every X secondes (default: 600)", default=600, type=int, required=False)
 
 	args = parser.parse_args()
 
 	watchlist = [x.rstrip('\n') for x in open(args.watchlist, 'r').readlines()]
+	if args.reload > 0: watchlist_ticks = time.time()
 
 	for user in watchlist:
 		try:
@@ -201,10 +203,14 @@ if __name__ == '__main__':
 	render_site()
 
 	while True:
+		if args.reload > 0 and (time.time() - watchlist_ticks) > args.reload:
+			watchlist = [x.rstrip('\n') for x in open(args.watchlist, 'r').readlines()]
+			watchlist_ticks = time.time()
+		
 		## if no new tweet are found
 		if not scrape() and args.search > 0:
 			## try to find old tweets
 			scrape(True)
 
-		time.sleep(10)
+		time.sleep(1)
 
