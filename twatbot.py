@@ -103,9 +103,10 @@ def render_site():
 
 			else:
 				[ html.append( '<a href="%s"><img src="%s" width="%d%%"></a>'%(i, i, wdth)) for i in twat['images'] ]
+
 			html.append('</p>')
 
-		html.append('</div>\n')
+		html.append('</div>')
 
 	html.append("</body></html>")
 
@@ -123,14 +124,14 @@ def scrape(search = False, result = 0):
 	if not mem in memory: memory[mem] = {}
 	every = get_refresh_time(mem)
 	for user in watchlist:
-		print('user: %s' % user)
 		## if user hasn't been checked yet
 		if not user in memory[mem]:
+			#print('new user: %s (%s), every: %s' % (user, mem, every))
 			## add dummy value
 			memory[mem][user] = ticks - 86400
 
 		if (ticks - memory[mem][user]) > every:
-			print('scrapping %s (%s)' % (user, mem))
+			#print('scrapping %s (%s)' % (user, mem))
 			insert_pos = 0
 			twats = get_twats(user, search)
 			for t in twats:
@@ -143,8 +144,8 @@ def scrape(search = False, result = 0):
 					print repr(t)
 					render_site()
 				#else: print('already known: %s, %s' % (user, str(t)))
-				ticks = time.time()
-				memory[mem][user] = ticks
+			ticks = time.time()
+			memory[mem][user] = ticks
 
 	## if no new twat, return False
 	if result < 1: return False
