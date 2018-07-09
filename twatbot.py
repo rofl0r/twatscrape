@@ -82,7 +82,7 @@ def render_site():
 			html.append('<span class="twat-iframe"><iframe src="https://twitter.com%s?cardname=summary_large_image"></iframe></span>'%twat['curl'])
 
 		if 'images' in twat:
-			html.append('<span class="twat-image">')
+			html.append('<p class="twat-image">')
 			wdth = 100/len(twat['images'])
 
 			## mirror images ?
@@ -101,7 +101,7 @@ def render_site():
 
 			else:
 				[ html.append( '<a href="%s"><img src="%s" width="%d%%"></a>'%(i, i, wdth)) for i in twat['images'] ]
-			html.append('</span>')
+			html.append('</p>')
 
 		html.append('</div>\n')
 
