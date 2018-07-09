@@ -11,6 +11,7 @@ title="twatscrape"
 tweets = dict()
 memory = {}
 
+wayback_logo = """data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALsAAADOCAMAAABRoYMqAAAAM1BMVEX///8AAAB/f39AQEC/v7/v7+8QEBCfn58wMDDPz89gYGCvr6+Pj49wcHAgICDf399QUFAAup0cAAADdElEQVR4nO2d27qiMAxGhVLOqO//tMM+MCM0ps1IDMV/XZdkfe5YunvycgEEfpjcfeysNeQMU1v8cO2bm7VNOlXpijXtNHhrqzjdeK8LEldW1nIMt+aZ9y/1Mcv/1vRX1nvhYOXv/30x0zhK+VdC7wXr8g87FBFm5f+8QxHx9vKfv5h7eC+8rfx9aociQ738xR2KCMXyr0pF7wWF8u9e61Bk7Fj+O3UoMnYo/+Q3vQKvlL8f7LwX/qf8dTsUGaLyf/FNr0FS+Xfj4bx/mcufKR+TDkXEXP5E+Vh2KDLm8l+rD9ZGMtyq+o9a5U9YVX5nbSOiX1fNZO0jYfO+9QfvYh5x255mcNlw5DkqAMBJKa177WRKuJsAdxvgbgPcbYC7DXC3Ae42nMu9KnMBUxwA5I6vZkSLst3XE5JVdJ0U1d99Me2YZOPHZR227tP6LqUUfrVyUzfxuM1q1t7FXbRS+O1SdjRys3mgjcmrpQhGBXVEJVwrCV/Xb0oRLrBGPpXtZ1IU14i7WoqgWTHxgYnhW+RjVEsRNgsWpaKBI32NVgovDkysa/LuaikqcWBiMZx3V0sBd7jDHe5wh3sG7oU4MD8IVkuRs/soDkxs0+Ldw9F4LAWxaZNKQU2m8oGJB3h3tRRwhzvc4Q73z3HnD+gQD/TsA2opqMD8sJB4gB8WqqXI2Z06NsEGpkaFvLtaCrjDHe5whzvcc3AfpYFrsfsuKajA7JCWCswPadVSUIfL2cDkoVfWXS0F1YwNTO7sY93VUsAd7nCHO9w/x53dVUQGZjcuqaWgmrHDQjIwOyxUS3E2d3Z6kQzMTi+qpaCa5fxdhTvc4Q53uMPd0p26G40NTO3k4d3VUuQ8L3a2+cic54HhDne4wx3ucLd0v0sDU/eU8u5qKXLec3U2dzbuwfdHwh3ucIc73OFu6f6GM3FqKXI+i3gy91YceGAfUEtxsnPDcIc73OEOd7ibuud8R9fJ3CPX4xGB+Qf0UoQnGvhRIXGiITIq1EsRtIvd7BeqxK5U1EvRr1vV0WtBu82/ZPxpbd0U5WNDl3CjaffYh9Wx2yN1U/im//4j1W5KvIu1K923TXunfvbPJgUAZ6axvtVdwLaLz+kHKbdjILi/B7jbAHcb4G4D3G3Yuuc8ngHgI8jn97K2lHA3Ae42wN2G8tK4XMl6WPMH7EFggnc/m9cAAAAASUVORK5CYII="""
 
 def user_filename(user):
 	if args.dir:
@@ -63,10 +64,12 @@ def render_site():
 	all_tweets = []
 	for user in watchlist:
 		all_tweets.extend(add_owner_to_list(user, tweets[user]))
+
 	all_tweets = sorted(all_tweets, key = lambda x : x["time"], reverse=True)
 	all_tweets = remove_doubles(all_tweets)
 
 	for twat in all_tweets:
+		wayback = 'https://web.archive.org/save/https://twitter.com/%s/status/%s' % (twat["user"], twat["id"])
 		html.append( '<div class="twat-container">' )
 
 		if twat["user"].lower() == twat["owner"].lower():
@@ -76,7 +79,8 @@ def render_site():
 			user_str = "<a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a> (RT <a target='_blank' href='https://twitter.com/%s'>%s</a>)" % \
 			(twat["user"], twat["id"], twat["user"], twat["owner"], twat["owner"])
 
-		html.append( '<p class="twat-title">%s&nbsp;-&nbsp;%s</p>' % (user_str, format_time(twat["time"])) )
+		html.append( '<p class="twat-title">%s&nbsp;-&nbsp;%s&nbsp;&nbsp;<a target="_blank" href="%s" title="wayback"><img width="16px" height="16px" src="%s"></a></p>' % \
+		(user_str, format_time(twat["time"]), wayback, wayback_logo))
 
 		html.append( '<p class="twat-text">%s</p>' % (twat["text"].replace('\n', '<br>')) )
 
@@ -99,7 +103,8 @@ def render_site():
 					## rename image to fit hash
 					else: os.rename('img/image.%s' % ext, 'img/%s.%s' % (filehash, ext))
 
-					html.append('<a href="%s"><img src="img/%s.%s" width="%d%%"></a>'%(i, filehash, ext, wdth))
+					html.append('<a href="%s" title="Opens the remote url"><img src="img/%s.%s" width="%d%%"></a>'%(i, filehash, ext, wdth))
+						
 
 			else:
 				[ html.append( '<a href="%s"><img src="%s" width="%d%%"></a>'%(i, i, wdth)) for i in twat['images'] ]
@@ -133,7 +138,9 @@ def scrape(search = False, result = 0):
 		if (ticks - memory[mem][user]) > every:
 			#print('scrapping %s (%s)' % (user, mem))
 			insert_pos = 0
+
 			twats = get_twats(user, search)
+
 			for t in twats:
 				#if t["time"] == "0m" or t["time"] == "1m":
 				if not in_twatlist(user, t):
@@ -151,7 +158,6 @@ def scrape(search = False, result = 0):
 	if result < 1: return False
 	else: return True
 
-
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--dir', help="where to save twats (default: current directory)", type=str, default=None, required=False)
@@ -163,6 +169,7 @@ if __name__ == '__main__':
 	parser.add_argument('--mirror', help="mirror images (default: 0)", default=0, type=int, required=False)
 	parser.add_argument('--profile', help="check profile every X second(s) (default: 60)", default=60, type=int, required=False)
 	parser.add_argument('--search', help="search watchlist every X second(s) (default: disabeld)", default=0, type=int, required=False)
+	parser.add_argument('--images', help="show image (default: 1)", default=1, type=int, required=False)
 
 	args = parser.parse_args()
 
@@ -177,22 +184,12 @@ if __name__ == '__main__':
 	render_site()
 
 	while True:
+		## if no new tweet are found
 		if not scrape():
+			## if search is defined
 			if args.search > 0:
+				## try to find old tweets
 				scrape(True)
 
 		time.sleep(10)
-
-		#for user in watchlist:
-		#	insert_pos = 0
-		#	twats = get_twats(user)
-		#	for t in twats:
-		#		#if t["time"] == "0m" or t["time"] == "1m":
-		#		if not in_twatlist(user, t):
-		#			#t["time"] = get_twat_timestamp(t["id"])
-		#			add_twatlist(user, t, insert_pos)
-		#			insert_pos += 1
-		#			print repr(t)
-		#			render_site()
-
 
