@@ -87,11 +87,13 @@ th { background-color : #eeeeee ; }
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--dir', help="where to save twats (default: current directory)", type=str, default=None, required=False)
+	parser.add_argument('--watchlist', help="specify watchlist to use (default: watchlist.txt)", type=str, default='watchlist.txt', required=False)
+
 	args = parser.parse_args()
 
 	print('arg: %s' % args.dir)
 
-	watchlist = [x.rstrip('\n') for x in open('watchlist.txt', 'r').readlines()]
+	watchlist = [x.rstrip('\n') for x in open(args.watchlist, 'r').readlines()]
 
 	for user in watchlist:
 		try:
@@ -102,6 +104,8 @@ if __name__ == '__main__':
 	render_site()
 
 	while True:
+		watchlist = [x.rstrip('\n') for x in open(args.watchlist, 'r').readlines()]
+
 		for user in watchlist:
 			insert_pos = 0
 			twats = get_twats(user)
