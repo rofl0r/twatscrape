@@ -1,6 +1,7 @@
 html { font-size: 14px; background: #dcdcdc; }
 a { text-decoration: none; color: blue; }
 a:hover { text-decoration: underline; }
+a.twitter-timeline-link { padding-left: 5px; }
 div.twat-container { width: 100%;}
 p.twat-title { font-weight: bold; font-size: 16px; text-decoration: bold; text-align: center; background-color: #eee;}
 p.twat-text { font-size: 14px; word-wrap: auto; display: block;}
@@ -8,6 +9,16 @@ p.twat-image { text-align: center; }
 span.twat-iframe { text-align: center; width: 600px; height: 380px; }
 img { opacity: .6; transition: all 0.5s ease-out; }
 img:hover { opacity: 1; }
+.box{
+    display: none;
+    width: 100%;
+}
+
+a:hover + .box,.box:hover{
+    display: block;
+    position: relative;
+    z-index: 100;
+}
 
 /* js search may be implemented, see: https://jsfiddle.net/ZLhAd/369/
 #searcher { position:fixed; top:0px; right:0px; }
