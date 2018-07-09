@@ -9,6 +9,8 @@ import hashlib
 
 title="twatscrape"
 tweets = dict()
+memory = {}
+
 
 def user_filename(user):
 	if args.dir:
@@ -83,7 +85,7 @@ def render_site():
 
 		if 'images' in twat:
 			html.append('<p class="twat-image">')
-			wdth = 100/len(twat['images'])
+			wdth = (100/len(twat['images'])) - 0.3
 
 			## mirror images ?
 			if args.mirror > 0:
@@ -110,6 +112,44 @@ def render_site():
 	with codecs.open("index.html", 'w', 'utf-8') as h:
 		h.write("\n".join(html))
 
+def get_refresh_time(mem):
+	if mem == 'search': return args.search
+	elif mem == 'profile': return args.profile
+
+
+def scrape(search = False, result = 0):
+	mem = 'search' if search else 'profile'
+	ticks = time.time()
+	if not mem in memory: memory[mem] = {}
+	every = get_refresh_time(mem)
+	for user in watchlist:
+		print('user: %s' % user)
+		## if user hasn't been checked yet
+		if not user in memory[mem]:
+			## add dummy value
+			memory[mem][user] = ticks - 86400
+
+		if (ticks - memory[mem][user]) > every:
+			print('scrapping %s (%s)' % (user, mem))
+			insert_pos = 0
+			twats = get_twats(user, search)
+			for t in twats:
+				#if t["time"] == "0m" or t["time"] == "1m":
+				if not in_twatlist(user, t):
+					result+=1
+					#t["time"] = get_twat_timestamp(t["id"])
+					add_twatlist(user, t, insert_pos)
+					insert_pos += 1
+					print repr(t)
+					render_site()
+				#else: print('already known: %s, %s' % (user, str(t)))
+				ticks = time.time()
+				memory[mem][user] = ticks
+
+	## if no new twat, return False
+	if result < 1: return False
+	else: return True
+
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
@@ -120,6 +160,8 @@ if __name__ == '__main__':
 	parser.add_argument('--theme', help="select theme (default: default)", default='default', type=str, required=False)
 	parser.add_argument('--iframe', help="show iframe (default: 1)", default=1, type=int, required=False)
 	parser.add_argument('--mirror', help="mirror images (default: 0)", default=0, type=int, required=False)
+	parser.add_argument('--profile', help="check profile every X second(s) (default: 60)", default=60, type=int, required=False)
+	parser.add_argument('--search', help="search watchlist every X second(s) (default: disabeld)", default=0, type=int, required=False)
 
 	args = parser.parse_args()
 
@@ -134,19 +176,22 @@ if __name__ == '__main__':
 	render_site()
 
 	while True:
-		watchlist = [x.rstrip('\n') for x in open(args.watchlist, 'r').readlines()]
+		if not scrape():
+			if args.search > 0:
+				scrape(True)
 
-		for user in watchlist:
-			insert_pos = 0
-			twats = get_twats(user)
-			for t in twats:
-				#if t["time"] == "0m" or t["time"] == "1m":
-				if not in_twatlist(user, t):
-					#t["time"] = get_twat_timestamp(t["id"])
-					add_twatlist(user, t, insert_pos)
-					insert_pos += 1
-					print repr(t)
-					render_site()
+		time.sleep(10)
 
-		time.sleep(60)
+		#for user in watchlist:
+		#	insert_pos = 0
+		#	twats = get_twats(user)
+		#	for t in twats:
+		#		#if t["time"] == "0m" or t["time"] == "1m":
+		#		if not in_twatlist(user, t):
+		#			#t["time"] = get_twat_timestamp(t["id"])
+		#			add_twatlist(user, t, insert_pos)
+		#			insert_pos += 1
+		#			print repr(t)
+		#			render_site()
+
 

@@ -71,11 +71,15 @@ def get_style_tag(tag, styles):
 		if tg.strip() == tag: return s.strip()
 	return None
 
-def get_twats(user):
+def get_twats(user, search = False):
 	host = 'twitter.com'
 	http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, user_agent="curl/7.60.0")
 #	http.debugreq = True
-	hdr, res = http.get("/" + user)
+        if not search:
+                hdr, res = http.get("/%s" % user)
+        else:
+                #print('doing some research (%s)' % user)
+                hdr, res = http.get("/search?q=%s" % user)
 
 	twats = []
 
