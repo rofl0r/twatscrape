@@ -84,20 +84,30 @@ def link_to_mirrored_image(twat, wdth, tw = ''):
 	if not os.path.exists('img'): os.makedirs('img')
 
 	for i in twat['images']:
-		## extract filename from url
-		filename = i.split('/')[-1]
-		## if file doesn't exists, fetch it
-		if not os.path.isfile('img/%s' % filename):
-			urllib.urlretrieve(i, 'img/%s' % filename )
-						
+		## extract file extension
+		ext = i.split('.')[-1]
+		## download images
+		## XXX this happens EVERY time
+		urllib.urlretrieve(i, 'image.%s' % ext)
+		## get file's md5
+		filehash = hashlib.md5(open('image.%s' % ext, 'rb').read()).hexdigest()
+		## if file already exists: remove
+		if os.path.isfile('img/%s.%s' % (filehash, ext)):
+			os.remove('image.%s' % ext)
+		## or move in new location
+		else:
+			os.rename('image.%s' % ext, 'img/%s.%s' % (filehash, ext))
+		
 		## use wants to load images
 		if args.images:
-			tw += '<a href="%s" title="Opens the remote url"><img src="img/%s" width="%d%%"></a>'%(i, filename, wdth)
+			tw += '<a href="%s" title="Opens the remote url"><img src="img/%s.%s" width="%d%%"></a>'%(i, filehash, ext, wdth)
 
 		## only print links to images
 		else:
-			tw += '<br><a href="img/%s">%s</a><div class="box" width="100%%" height="100%%"><iframe src="img/%s"></iframe></div>' % \
-			(filename, i, filename)
+			##tw += '<br><a href="img/%s.%s">%s</a><div class="box" width="100%%" height="100%%"><iframe src="img/%s.%s"></iframe></div>' % \
+			#(filehash, ext, i, filehash, ext)
+			tw += '<br><a href="img/%s.%s">%s</a></div>' % \
+			(filehash, ext, i)
 	return tw
 
 
@@ -114,7 +124,7 @@ def render_site():
 	if args.tpp > 0:
 		pages = int( len(all_tweets) / args.tpp )
 		inc = 0
-		print('pages: %d, inc: %d' % (pages,inc))
+		#print('pages: %d, inc: %d' % (pages,inc))
 
 	for twat in all_tweets:
 		tw = '<div class="twat-container">'
@@ -170,7 +180,7 @@ def render_site():
 		tw += '</div>\n'
 
 		html.append(tw)
-		print(tw)
+		#print(tw)
 
 		# when doing multipages
 		if args.tpp > 0 and len(html) >= args.tpp:
