@@ -270,15 +270,13 @@ if __name__ == '__main__':
 		if args.reload > 0 and (time.time() - watchlist_ticks) > args.reload:
 			watchlist = [x.rstrip('\n') for x in open(args.watchlist, 'r').readlines()]
 			watchlist_ticks = time.time()
-		
-		## if no new tweet are found
-		if not scrape():
-			if args.search > 0:
-				## try to find old tweets
-				if scrape(True):
-					render_site()
-		else:
+	
+		## scrape profile
+		if scrape():
+			render_site()
+
+		## search older tweets
+		elif args.search > 0 and scrape(True):
 			render_site()
 
 		time.sleep(1)
-
