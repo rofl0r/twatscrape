@@ -1,4 +1,4 @@
-from twat import get_twats, get_twat_timestamp, get_mirrored_twat
+from twat import get_twats, get_twat_timestamp, mirror_twat
 from rocksock import RocksockProxyFromURL
 import time
 import json
@@ -10,6 +10,8 @@ from HTMLParser import HTMLParser
 title="twatscrape"
 tweets = dict()
 memory = {}
+
+dirname = os.path.dirname(os.path.abspath(__file__))
 
 class MLStripper(HTMLParser):
     def __init__(self):
@@ -101,7 +103,11 @@ def render_site():
 		all_tweets.extend(add_owner_to_list(user, tweets[user]))
 
 	all_tweets = sorted(all_tweets, key = lambda x : x["time"], reverse=True)
-	all_tweets = remove_doubles(all_tweets)
+	all_tweets_no_doubles = remove_doubles(all_tweets)
+
+	if len(all_tweets) != len(all_tweets_no_doubles):
+		#print('missmatch: all_tweets: %d; nodoubles: %d' % (len(all_tweets), len(all_tweets_no_doubles)))
+		all_tweets = all_tweets_no_doubles
 
         if args.tpp > 0:
                 pagetotal = int( len(all_tweets) / args.tpp )
@@ -109,7 +115,7 @@ def render_site():
 
 	for twat in all_tweets:
 		if args.mirror > 0:
-			twat = get_mirrored_twat(twat, args.proxy)
+			twat = mirror_twat(twat, args.proxy, dirname, True)
 		
 		tw = '<div class="twat-container">'
 
@@ -234,6 +240,8 @@ def scrape(search = False, result = 0):
 				if not in_twatlist(user, t):
 					result+=1
 					#t["time"] = get_twat_timestamp(t["id"])
+					if args.mirror > 0: mirror_twat(t, args.proxy, dirname, None)
+						
 					add_twatlist(user, t, insert_pos)
 					insert_pos += 1
 					print repr(t)
