@@ -6,7 +6,7 @@ import ssl, socket
 import time
 
 class RsHttp():
-	def __init__(self, host, port=80, ssl=False, follow_redirects=False, auto_set_cookies=False, keep_alive=False, timeout=60, user_agent=None, **kwargs):
+	def __init__(self, host, port=80, ssl=False, follow_redirects=False, auto_set_cookies=False, keep_alive=False, timeout=60, user_agent=None, proxies=None, **kwargs):
 		self.host = host
 		self.port = port
 		self.use_ssl = ssl
@@ -16,6 +16,7 @@ class RsHttp():
 		self.keep_alive = keep_alive
 		self.timeout = timeout
 		self.user_agent = user_agent if user_agent else 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'
+		self.proxies = proxies
 		self.cookies = dict()
 		self.reconnect()
 
@@ -130,7 +131,7 @@ class RsHttp():
 	def reconnect(self):
 		while True:
 			try:
-				self.conn = Rocksock(host=self.host, port=self.port, ssl=self.use_ssl, timeout=self.timeout)
+				self.conn = Rocksock(host=self.host, port=self.port, proxies=self.proxies, ssl=self.use_ssl, timeout=self.timeout)
 				self.conn.connect()
 				break
 			except RocksockException as e:
