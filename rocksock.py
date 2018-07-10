@@ -396,6 +396,14 @@ class Rocksock():
 		elif prev.type == RS_PT_SOCKS5:
 			s5 = self._setup_socks5_header(prev)
 			self._connect_socks5(s5, pnum)
+		elif prev.type == RS_PT_HTTP:
+			dest = self.proxychain[pnum]
+			self.send("CONNECT %s:%d HTTP/1.1\r\n\r\n"%(dest.hostinfo.host, dest.hostinfo.port))
+			resp = self.recv()
+			if len(resp) <12:
+				raise RocksockException(RS_E_PROXY_UNEXPECTED_RESPONSE, pnum-1)
+			if resp[9] != '2':
+				raise RocksockException(RS_E_TARGETPROXY_CONNECT_FAILED, pnum-1)
 
 
 if __name__ == '__main__':
