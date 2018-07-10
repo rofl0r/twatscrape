@@ -274,7 +274,6 @@ if __name__ == '__main__':
 		except:
 			tweets[user] = []
 
-	print('herere 123')
 	render_site()
 
 	while True:
