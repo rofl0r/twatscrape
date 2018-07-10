@@ -78,6 +78,28 @@ def html_header():
 
 """ % (args.title, args.refresh, args.theme)
 
+## convert img links and eventually fetch them
+def link_to_mirrored_image(twat, wdth, tw = ''):
+	## make sure ./img path exists
+	if not os.path.exists('img'): os.makedirs('img')
+
+	for i in twat['images']:
+		## extract filename from url
+		filename = i.split('/')[-1]
+		## if file doesn't exists, fetch it
+		if not os.path.isfile('img/%s' % filename):
+			urllib.urlretrieve(i, 'img/%s' % filename )
+						
+		## use wants to load images
+		if args.images:
+			tw += '<a href="%s" title="Opens the remote url"><img src="img/%s" width="%d%%"></a>'%(i, filename, wdth)
+
+		## only print links to images
+		else:
+			tw += '<br><a href="img/%s">%s</a><div class="box" width="100%%" height="100%%"><iframe src="img/%s"></iframe></div>' % \
+			(filename, i, filename)
+	return tw
+
 
 def render_site():
 	html = []
@@ -131,28 +153,16 @@ def render_site():
 
 			## mirror images ?
 			if args.mirror > 0:
-				if not os.path.exists('img'): os.makedirs('img')
-				for i in twat['images']:
-					filename = i.split('/')[-1]
-					if not os.path.isfile('img/%s' % filename):
-						urllib.urlretrieve(i, 'img/%s' % filename )
-						
-					## use wants to load images
-					if args.images:
-						tw += '<a href="%s" title="Opens the remote url"><img src="img/%s" width="%d%%"></a>'%(i, filename, wdth)
-
-					## only print links to images
-					else:
-						tw += '<br><a href="img/%s">%s</a><div class="box" width="100%%" height="100%%"><iframe src="img/%s"></iframe></div>' % \
-						(filename, i, filename)
+				tw += link_to_mirrored_image(twat, wdth)
 						
 
+			## user wants to see the pictures
+			elif args.images > 0:
+				for i in twat['images']: tw += '<a href="%s"><img src="%s" width="%d%%"></a>'%(i, i, wdth)
+
+			## or only show a link to them
 			else:
-				## users wants to load images
-				if args.images:
-					for i in twat['images']: tw += '<a href="%s"><img src="%s" width="%d%%"></a>'%(i, i, wdth)
-				else:
-					for i in twat['images']: tw += '<a href="%s">%s</a>'%(i, i)
+				for i in twat['images']: tw += '<a href="%s">%s</a>'%(i, i)
 
 
 			tw += '</p>\n'
