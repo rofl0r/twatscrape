@@ -223,7 +223,6 @@ def scrape(search = False, result = 0):
 			memory[mem][user] = ticks - 86400
 
 		if (ticks - memory[mem][user]) > every:
-			print('scrapping %s (%s)' % (user, mem))
 			insert_pos = 0
 
 			twats = get_twats(user, search, proxies=args.proxy)
