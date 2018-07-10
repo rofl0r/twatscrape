@@ -18,7 +18,7 @@ def get_mirrored_twat(twat, proxies = None):
                         directory = '/'.join(split[3: len(split) - 1])
                         filename = split[-1]
                         uri = '%s/%s' % (directory, filename)
-                        print('url: %s, host: %s, dir: %s, filename: %s, uri: %s' % (url, host, directory, filename, uri))
+                        #print('url: %s, host: %s, dir: %s, filename: %s, uri: %s' % (url, host, directory, filename, uri))
 
                         if not os.path.isdir(directory):
                                 os.makedirs( directory )
