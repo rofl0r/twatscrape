@@ -68,7 +68,7 @@ def html_header():
 <meta charset="utf-8"/>
 <meta http-equiv="refresh" content="%d" >
 <link rel='stylesheet' type='text/css' href='css/%s.css'></head><body>
-
+</head><body>
 """ % (args.title, args.refresh, args.theme)
 
 def build_iconbar(twat):
@@ -195,6 +195,8 @@ def write_html(html, page = None, pages = None):
         #print('filename: %s' % filename)
 
         [ ht.append(i) for i in html ]
+
+	ht.append('<script src="dist/shareSelectedText-footer.js"></script>')
         ht.append("</body></html>")
         with codecs.open(filename, 'w', 'utf-8') as h:
                 h.write("\n".join(ht))
@@ -272,6 +274,7 @@ if __name__ == '__main__':
 		except:
 			tweets[user] = []
 
+	print('herere 123')
 	render_site()
 
 	while True:

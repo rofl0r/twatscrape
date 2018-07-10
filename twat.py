@@ -5,6 +5,7 @@ import os.path
 
 ## TODO: also mirror links to pdfs, etc
 def get_mirrored_twat(twat, proxies = None):
+	print('get_mirrored: start')
 
         ## deal with emojis
         soup = soupify(twat["text"])
@@ -24,6 +25,7 @@ def get_mirrored_twat(twat, proxies = None):
                                 os.makedirs( directory )
 
                         if not os.path.isfile('%s/%s' % (directory,filename)):
+				#print('downloading %s' % uri)
                                 http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
                                 hdr, res = http.get('/%s' % uri)
                                 with open('%s/%s' % (directory, filename), 'w') as h:
@@ -51,6 +53,7 @@ def get_mirrored_twat(twat, proxies = None):
                                         h.write(res)
                         twat['images'][x] = 'img/%s.%s' % (filehash, ext)
 
+	print('get_mirrored_twat: end')
         return twat
 
 
