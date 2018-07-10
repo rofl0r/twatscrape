@@ -19,9 +19,9 @@ def get_twat_timestamp(twat_id):
 					return int(span.attrs['data-time'])
 	return 0
 
-def get_twats_mobile(user, search = False):
+def get_twats_mobile(user, search = False, proxies=None):
 	host = 'mobile.twitter.com'
-	http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, user_agent="curl/7.60.0")
+	http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
 #	http.debugreq = True
 	hdr, res = http.get("/" + user)
 
@@ -71,9 +71,9 @@ def get_style_tag(tag, styles):
 		if tg.strip() == tag: return s.strip()
 	return None
 
-def get_twats(user, search = False):
+def get_twats(user, search = False, proxies=None):
 	host = 'twitter.com'
-	http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, user_agent="curl/7.60.0")
+	http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
 #	http.debugreq = True
         if not search:
                 hdr, res = http.get("/%s" % user)

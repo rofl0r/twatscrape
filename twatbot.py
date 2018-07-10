@@ -1,4 +1,5 @@
 from twat import get_twats, get_twat_timestamp
+from rocksock import RocksockProxyFromURL
 import time
 import json
 import codecs
@@ -239,7 +240,7 @@ def scrape(search = False, result = 0):
 			print('scrapping %s (%s)' % (user, mem))
 			insert_pos = 0
 
-			twats = get_twats(user, search)
+			twats = get_twats(user, search, proxies=args.proxy)
 
 			for t in twats:
 				#if t["time"] == "0m" or t["time"] == "1m":
@@ -272,8 +273,10 @@ if __name__ == '__main__':
 	parser.add_argument('--images', help="show image (default: 1)", default=1, type=int, required=False)
 	parser.add_argument('--reload', help="reload watchlist every X secondes (default: 600)", default=600, type=int, required=False)
 	parser.add_argument('--tpp', help="twats per page - 0: unlimited (default: 0)", default=0, type=int, required=False)
+	parser.add_argument('--proxy', help="use a proxy (syntax: socks5://ip:port)", default=None, type=str, required=False)
 
 	args = parser.parse_args()
+	args.proxy = [RocksockProxyFromURL(args.proxy)] if args.proxy else None
 
 	watchlist = [x.rstrip('\n') for x in open(args.watchlist, 'r').readlines()]
 	if args.reload > 0: watchlist_ticks = time.time()
