@@ -1,18 +1,28 @@
 html { font-size: 14px; background: #eee; Font-Family: Monospace; color: white;}
+span.iconbar { position: absolute; right: 2%; width: 10%;}
+img.icon { height: 20px; width: 20px;}
+
+
 a { text-decoration: underline; color: white; }
 /*a:hover { text-decoration: underline; }*/
 
-img.Emoji { height: 25px; width: 25px; }
+div.menu { height: 15px; text-align: center; font-size: 12px; color: black;}
+a.menu { color: blue; }
+
+
 a:focus { outline: thin dotted; }
-a.twitter-timeline-link { padding-left: 5px; }
 div.twat-container { width: 100%; background: #666; color: white; border: 1px solid white; margin: 1%; margin-top: 5px; margin-bottom: 5px; width: 98%;}
 div.twat-container:hover { border: 1px solid darkgrey; box-shadow: 1px -1px 3px white; }
 
 /*p.twat-title:hover { border: 1px dotted lightgrey; }*/
 p.twat-text { font-size: 14px; word-wrap: auto; display: block; padding: 1%; margin: 0; Font-Family: Monospace;}
 span.twat-iframe { text-align: center; width: 600px; height: 380px; }
-p.twat-image { text-align: center; margin: 0; padding: 1%;}
+p.twat-image { text-align: center; margin: 0;}
 img { opacity: .6; transition: all 0.5s ease-out; }
 img:hover { opacity: 1; }
 iframe { border: 1px dotted white; width: 100%; height: 380px; margin: 0; }
-p.twat-title { border: 1px solid transparent; font-weight: bold; font-size: 16px; text-align: center; background-color: #777; height: 20px; margin: 0;}
+div.twat-title { border: 1px solid transparent; font-weight: bold; font-size: 16px; text-align: center; background-color: #777; height: 20px; margin: 0;}
+
+/* twitter-related values */
+img.Emoji { height: 20px; width: 20px; }
+a.twitter-timeline-link { padding-left: 5px; }

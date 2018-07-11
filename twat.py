@@ -1,5 +1,79 @@
 from http2 import RsHttp
 from soup_parser import soupify
+import hashlib
+import os.path
+
+## TODO: also mirror links to pdfs, etc
+def mirror_twat(twat, proxies = None, dirname = None, mirror = None):
+	if not dirname: dirname = os.path.dirname(os.path.abspath(__file__))
+
+	if 'owner' in twat: owner = twat['owner']
+	else: owner = twat['user']
+
+
+        ## deal with emojis
+        soup = soupify(twat["text"])
+
+        for img in soup.body.find_all('img'):
+                if 'class' in img.attrs and 'Emoji' in img.attrs['class']:
+                        src = img.attrs['src']
+                        url = src.encode('utf-8', 'replace')
+			if not '://' in url: url = 'https://abs.twimg.com/%s' % url
+
+                        split = url.split('/')
+                        host = split[2]
+                        directory = '/'.join(split[3: len(split) - 1])
+                        filename = split[-1]
+                        uri = '%s/%s' % (directory, filename)
+
+                        if not os.path.isdir(directory):
+                                os.makedirs( directory )
+
+                        if not os.path.exists('%s/%s' % (directory,filename)):
+                        	#print('url: %s, host: %s, dir: %s, filename: %s, uri: %s' % (url, host, directory, filename, uri))
+                                http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
+                                hdr, res = http.get('/%s' % uri)
+                                with open('%s/%s' % (directory, filename), 'w') as h:
+                                        h.write(res)
+
+                        if mirror: twat['text'] = twat['text'].replace(src, '%s/%s' % (directory, filename))
+
+
+        ## mirror posted pictures
+        if 'images' in twat:
+
+		if not os.path.isdir('twats/%s/%s' % (owner, twat["id"])):
+			os.makedirs('twats/%s/%s' % (owner, twat["id"]))
+
+                if not os.path.isdir('img'):
+                	os.makedirs('img')
+
+                for x in xrange(0, len(twat['images'])):
+			#print(twat['images'][x])
+	                i = twat['images'][x]
+        	        i = i.encode('utf-8', 'replace')
+                	ext = i.split('.')[-1]
+			if not os.path.exists('%s/twats/%s/%s/IMG_%d.%s' % (dirname, owner, twat["id"], x, ext)):
+                        	host = i.split('/')[2]
+	                        uri = '/'.join(i.split('/')[3:])
+
+        	                http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
+                	        hdr, res = http.get('/%s' % uri)
+                        	filehash = hashlib.md5(res).hexdigest()
+				if not os.path.exists('img/%s.%s' % (filehash,ext)):
+					with open('img/%s.%s' % (filehash, ext), 'w') as h:
+						h.write(res)
+
+				os.symlink('%s/img/%s.%s' % (dirname, filehash, ext), '%s/twats/%s/%s/IMG_%d.%s' % (dirname, owner, twat["id"], x, ext))
+
+			else:
+				filehash = hashlib.md5(open('twats/%s/%s/IMG_%d.%s' % (owner, twat["id"], x, ext), 'rb').read()).hexdigest()	
+
+                        if mirror: twat['images'][x] = 'img/%s.%s' % (filehash, ext)
+                        #twat['images'][x] = 'twats/%s/%s/%s.%s' % (owner, twat["id"], x, ext)
+
+        return twat
+
 
 def add_tweet(id, user, time, text):
 	print "%s (%s) -> %s" % (user, time, id)
