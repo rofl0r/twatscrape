@@ -71,22 +71,7 @@ def get_style_tag(tag, styles):
 		if tg.strip() == tag: return s.strip()
 	return None
 
-def get_twats(user, search = False, proxies=None):
-	host = 'twitter.com'
-	http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
-#	http.debugreq = True
-        if not search:
-                hdr, res = http.get("/%s" % user)
-        else:
-                hdr, res = http.get("/search?q=%s" % user)
-
-	twats = []
-
-#	print hdr
-#	print res
-
-	soup = soupify (res)
-
+def extract_twats(soup, twats):
 	for div in soup.body.find_all('div'): # , attrs={'class':'tweet  '}):
 		if 'class' in div.attrs and 'tweet' in div.attrs["class"]:
 
@@ -157,6 +142,24 @@ def get_twats(user, search = False, proxies=None):
 
 				twats.append(vals)
 #				add_tweet(tweet_id, tweet_user, tweet_time, tweet_text)
+	return twats
+
+def get_twats(user, search = False, proxies=None):
+	host = 'twitter.com'
+	http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
+#	http.debugreq = True
+        if not search:
+                hdr, res = http.get("/%s" % user)
+        else:
+                hdr, res = http.get("/search?q=%s" % user)
+
+	twats = []
+
+#	print hdr
+#	print res
+
+	soup = soupify (res)
+	twats = extract_twats(soup, twats)
 
 	return twats
 
