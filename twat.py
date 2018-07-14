@@ -1,5 +1,6 @@
 from http2 import RsHttp
 from soup_parser import soupify
+import json
 
 def add_tweet(id, user, time, text):
 	print "%s (%s) -> %s" % (user, time, id)
@@ -144,7 +145,12 @@ def extract_twats(soup, twats):
 #				add_tweet(tweet_id, tweet_user, tweet_time, tweet_text)
 	return twats
 
-def get_twats(user, search = False, proxies=None):
+# count: specify the number of twats that shall be fetched.
+# the actual number delivered could be slightly more than specified.
+# if 0 is specified, only the most recent page (containing typically 20 tweets)
+# is harvested. if -1 is specified, the entire timeline will be harvested back
+# to the very first tweet.
+def get_twats(user, search = False, proxies=None, count=0):
 	host = 'twitter.com'
 	http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
 #	http.debugreq = True
@@ -158,8 +164,21 @@ def get_twats(user, search = False, proxies=None):
 #	print hdr
 #	print res
 
-	soup = soupify (res)
-	twats = extract_twats(soup, twats)
+	break_loop = False
+
+	while True:
+		soup = soupify (res)
+		twats = extract_twats(soup, twats)
+		if count == 0 or break_loop or (count != -1 and len(twats) >= count):
+			break
+
+		# fetch additional tweets that are not in the initial set of 20:
+		last_id = twats[len(twats)-1]["rid"] if "rid" in twats[len(twats)-1] else twats[len(twats)-1]["id"]
+		hdr, res = http.xhr_get("https://twitter.com/i/profiles/show/%s/timeline/tweets?include_available_features=1&include_entities=1&max_position=%s&reset_error_state=false"%(user, last_id))
+		if not "200 OK" in hdr: break
+		resp = json.loads(res)
+		if not resp["has_more_items"]: break_loop = True
+		res = resp["items_html"]
 
 	return twats
 
