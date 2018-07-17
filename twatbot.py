@@ -5,8 +5,6 @@ import json
 import codecs
 import argparse
 import os.path
-#import urllib
-#import hashlib
 from HTMLParser import HTMLParser
 
 title="twatscrape"
@@ -36,18 +34,18 @@ def build_socialbar(twat):
 
 
 class MLStripper(HTMLParser):
-    def __init__(self):
-        self.reset()
-        self.fed = []
-    def handle_data(self, d):
-        self.fed.append(d)
-    def get_data(self):
-        return ''.join(self.fed)
+	def __init__(self):
+		self.reset()
+		self.fed = []
+	def handle_data(self, d):
+		self.fed.append(d)
+	def get_data(self):
+		return ''.join(self.fed)
 
 def strip_tags(html):
-    s = MLStripper()
-    s.feed(html)
-    return s.get_data()
+	s = MLStripper()
+	s.feed(html)
+	return s.get_data()
 
 
 def user_filename(user):
