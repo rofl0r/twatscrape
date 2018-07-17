@@ -1,12 +1,12 @@
-from twat import get_twats, get_twat_timestamp
+from twat import get_twats, get_twat_timestamp, mirror_twat, mirrored_twat
 from rocksock import RocksockProxyFromURL
 import time
 import json
 import codecs
 import argparse
 import os.path
-import urllib
-import hashlib
+#import urllib
+#import hashlib
 from HTMLParser import HTMLParser
 
 title="twatscrape"
@@ -151,6 +151,7 @@ def render_site():
 		#tw += '&nbsp;&nbsp;<a target="_blank" href="%s" title="wayback"><img width="12px" height="12px" src="%s"></a>' % (wayback, wayback_logo)
 
 		tw += '</div>\n'
+		if args.mirror: twat['text'] = mirrored_twat(twat, args=args)
 
 		tw += '<p class="twat-text">%s</p>' % (twat["text"].replace('\n', '<br>')) 
 
@@ -163,8 +164,10 @@ def render_site():
 			else: wdth = 100
 
 			## mirror images ?
-			if args.mirror > 0:
-				tw += link_to_mirrored_image(twat, wdth)
+			if 'i' in args.mirror: 
+				#tw += link_to_mirrored_image(twat, wdth)
+				for i in twat['images']:
+					tw += '<a href="%s" title="open remote location"><img src="%s/%d/%s"></a>' % (i, twat['user'].lower(), int(twat['id']), i.split('/')[-1])
 						
 
 			## user wants to see the pictures
@@ -249,6 +252,7 @@ def scrape(search = False, result = 0):
 					#t["time"] = get_twat_timestamp(t["id"])
 					add_twatlist(user, t, insert_pos)
 					insert_pos += 1
+					if args.mirror: mirror_twat(t, args=args)
 					print repr(t)
 					#render_site()
 				#else: print('already known: %s, %s' % (user, str(t)))
@@ -267,13 +271,14 @@ if __name__ == '__main__':
 	parser.add_argument('--title', help="defile title (default: %s)" % title, type=str, default=title, required=False)
 	parser.add_argument('--theme', help="select theme (default: default)", default='default', type=str, required=False)
 	parser.add_argument('--iframe', help="show iframe (default: 1)", default=1, type=int, required=False)
-	parser.add_argument('--mirror', help="mirror images (default: 0)", default=0, type=int, required=False)
 	parser.add_argument('--profile', help="check profile every X second(s) (default: 60)", default=60, type=int, required=False)
 	parser.add_argument('--search', help="search watchlist every X second(s) (default: disabeld)", default=0, type=int, required=False)
 	parser.add_argument('--images', help="show image (default: 1)", default=1, type=int, required=False)
 	parser.add_argument('--reload', help="reload watchlist every X secondes (default: 600)", default=600, type=int, required=False)
 	parser.add_argument('--tpp', help="twats per page - 0: unlimited (default: 0)", default=0, type=int, required=False)
 	parser.add_argument('--proxy', help="use a proxy (syntax: socks5://ip:port)", default=None, type=str, required=False)
+	parser.add_argument('--mirror', help="mirror [i]mages, [f]iles and/or [e]mojis (default: None)", default='', type=str, required=False)
+	parser.add_argument('--ext', help="space-delimited extension to tech when mirroring files (default: None)", default=None, type=str, required=False)
 
 	args = parser.parse_args()
 	args.proxy = [RocksockProxyFromURL(args.proxy)] if args.proxy else None
@@ -282,6 +287,7 @@ if __name__ == '__main__':
 	if args.reload > 0: watchlist_ticks = time.time()
 
 	for user in watchlist:
+		if user.startswith(';'): continue
 		try:
 			tweets[user] = json.loads(open(user_filename(user), 'r').read())
 		except:
