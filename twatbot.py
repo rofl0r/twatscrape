@@ -94,39 +94,6 @@ def html_header():
 
 """ % (args.title, args.refresh, args.theme)
 
-## convert img links and eventually fetch them
-def link_to_mirrored_image(twat, wdth, tw = ''):
-	## make sure ./img path exists
-	if not os.path.exists('img'): os.makedirs('img')
-
-	for i in twat['images']:
-		## extract file extension
-		ext = i.split('.')[-1]
-		## download images
-		## XXX this happens EVERY time
-		urllib.urlretrieve(i, 'image.%s' % ext)
-		## get file's md5
-		filehash = hashlib.md5(open('image.%s' % ext, 'rb').read()).hexdigest()
-		## if file already exists: remove
-		if os.path.isfile('img/%s.%s' % (filehash, ext)):
-			os.remove('image.%s' % ext)
-		## or move in new location
-		else:
-			os.rename('image.%s' % ext, 'img/%s.%s' % (filehash, ext))
-		
-		## use wants to load images
-		if args.images:
-			tw += '<a href="%s" title="Opens the remote url"><img src="img/%s.%s" width="%d%%"></a>'%(i, filehash, ext, wdth)
-
-		## only print links to images
-		else:
-			##tw += '<br><a href="img/%s.%s">%s</a><div class="box" width="100%%" height="100%%"><iframe src="img/%s.%s"></iframe></div>' % \
-			#(filehash, ext, i, filehash, ext)
-			tw += '<br><a href="img/%s.%s">%s</a></div>' % \
-			(filehash, ext, i)
-	return tw
-
-
 def render_site():
 	html = []
 
@@ -176,7 +143,6 @@ def render_site():
 
 			## mirror images ?
 			if 'i' in args.mirror: 
-				#tw += link_to_mirrored_image(twat, wdth)
 				for i in twat['images']:
 					tw += '<a href="%s" title="open remote location"><img src="%s/%d/%s"></a>' % (i, twat['user'].lower(), int(twat['id']), i.split('/')[-1])
 						
@@ -283,7 +249,6 @@ if __name__ == '__main__':
 	parser.add_argument('--theme', help="select theme (default: default)", default='default', type=str, required=False)
 	parser.add_argument('--iframe', help="show iframe (default: 1)", default=1, type=int, required=False)
 	parser.add_argument('--profile', help="check profile every X second(s) (default: 60)", default=60, type=int, required=False)
-	parser.add_argument('--search', help="search watchlist every X second(s) (default: disabeld)", default=0, type=int, required=False)
 	parser.add_argument('--images', help="show image (default: 1)", default=1, type=int, required=False)
 	parser.add_argument('--reload', help="reload watchlist every X secondes (default: 600)", default=600, type=int, required=False)
 	parser.add_argument('--tpp', help="twats per page - 0: unlimited (default: 0)", default=0, type=int, required=False)
@@ -315,10 +280,6 @@ if __name__ == '__main__':
 	
 		## scrape profile
 		if scrape():
-			render_site()
-
-		## search older tweets
-		elif args.search > 0 and scrape(True):
 			render_site()
 
 		time.sleep(1)
