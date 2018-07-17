@@ -254,7 +254,7 @@ def scrape(search = False, result = 0):
 			print('scrapping %s (%s)' % (user, mem))
 			insert_pos = 0
 
-			twats = get_twats(user, search, proxies=args.proxy)
+			twats = get_twats(user, search, proxies=args.proxy, count=args.count)
 
 			for t in twats:
 				#if t["time"] == "0m" or t["time"] == "1m":
@@ -291,7 +291,7 @@ if __name__ == '__main__':
 	parser.add_argument('--social', help="show 'social' bar (default: 0)", default=0, type=int, required=False)
 	parser.add_argument('--mirror', help="mirror [i]mages, [f]iles and/or [e]mojis (default: None)", default='', type=str, required=False)
 	parser.add_argument('--ext', help="space-delimited extension to tech when mirroring files (default: None)", default=None, type=str, required=False)
-
+	parser.add_argument('--count', help="Fetch $count latests tweets (default: 20). Use -1 to fetch the whole timeline", default=0, type=int, required=False)
 
 	args = parser.parse_args()
 	args.proxy = [RocksockProxyFromURL(args.proxy)] if args.proxy else None
