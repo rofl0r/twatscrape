@@ -296,6 +296,7 @@ if __name__ == '__main__':
 	if args.reload > 0: watchlist_ticks = time.time()
 
 	for user in watchlist:
+		if user.startswith(';'): continue
 		try:
 			tweets[user] = json.loads(open(user_filename(user), 'r').read())
 		except:
