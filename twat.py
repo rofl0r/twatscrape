@@ -1,6 +1,134 @@
 from http2 import RsHttp
 from soup_parser import soupify
 import json
+import os.path
+import hashlib
+
+def _mirror_file(i, dirname, owner, tid, filename, args):
+	if not os.path.isdir('%s/%s/%d' % (dirname, owner, tid)):
+		os.makedirs('%s/%s/%d' % (dirname, owner, tid))
+
+	host = i.split('/')[2]
+	uri = '/'.join(i.split('/')[3:])
+	ext = filename.split('.')[-1]
+
+	http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
+	hdr, res = http.get('/%s' % uri)
+	filehash = hashlib.md5(res).hexdigest()
+	if not os.path.exists('%s/data/%s.%s' % (dirname, filehash,ext)):
+		print('mirrored: i: %s, dn: %s, owner: %s, tid: %d, filename: %s, args: %s' % (i, dirname, owner, int(tid), filename, str(args)))
+		with open('%s/data/%s.%s' % (dirname, filehash, ext), 'w') as h:
+			h.write(res)
+
+	os.symlink('%s/data/%s.%s' % (dirname, filehash, ext), '%s/%s/%d/%s' % (dirname, owner, tid, filename))
+
+	return filehash
+
+def mirrored_twat(twat, dirname=None, args=None):
+	# XXX needs to fix this
+	if not dirname: dirname = os.path.dirname(os.path.abspath(__file__))
+
+	if 'owner' in twat: owner = twat['owner'].lower()
+	else: owner = twat['user'].lower()
+
+	if args.ext: filtre = str(args.ext).split(',')
+	else: filtre = []
+
+	soup = soupify(twat["text"])
+
+	# linked files
+	if 'f' in args.mirror:
+		for a in soup.body.find_all('a'):
+			if 'data-expanded-url' in a.attrs:
+				shrt = a['href']
+				deu = a.attrs['data-expanded-url'].encode('utf-8', 'replace')
+				ext = deu.split('.')[-1]
+				if ext in filtre:
+					filename = deu.split('/')[-1]
+					twat['text'] = twat['text'].replace(shrt, '%s/%d/%s' % (owner, int(twat['id']), filename))
+
+	# emojis
+	if 'e' in args.mirror:
+		for img in soup.body.find_all('img'):
+			if 'class' in img.attrs and 'Emoji' in img.attrs['class']:
+				src = img.attrs['src'].encode('utf-8', 'replace')
+				split = src.split('/')
+				twat['text'] = twat['text'].replace(src, '/%s' % '/'.join(split[3:]))
+
+	return twat['text']
+				
+
+def mirror_twat(twat, args=None, dirname=None):
+	# XXX needs to fix this
+	if not dirname: dirname = os.path.dirname(os.path.abspath(__file__))
+
+	if 'owner' in twat: owner = twat['owner'].lower()
+	else: owner = twat['user'].lower()
+
+	if not os.path.isdir('%s/data' % dirname): os.makedirs( '%s/data' % dirname )
+
+	proxies = args.proxy if args.proxy else None
+
+	if args.ext: filtre = str(args.ext).split(',')
+	else: filtre = []
+
+	## soupify user's text
+	soup = soupify(twat["text"])
+
+	## try to automatically mirror links posted by the user,
+	## if it matches the extension list.
+
+	if 'f' in args.mirror:
+		for a in soup.body.find_all('a'):
+			if 'data-expanded-url' in a.attrs:
+				shrt = a['href']
+				deu = a.attrs['data-expanded-url'].encode('utf-8', 'replace')
+				ext = deu.split('.')[-1]
+
+				if ext in filtre:
+					filename = deu.split('/')[-1]
+					if not os.path.exists('%s/%s/%d/%s' % (dirname, owner, int(twat["id"]), filename)):
+						filehash = _mirror_file(deu, dirname, owner, int(twat['id']), filename, args)
+
+	## mirror posted pictures
+	if 'images' in twat and 'i' in args.mirror:
+		if not os.path.isdir('%s/%s/%s' % (dirname, owner, twat["id"])):
+			os.makedirs('%s/%s/%s' % (dirname, owner, twat["id"]))
+
+		for x in xrange(0, len(twat['images'])):
+			i = twat['images'][x].encode('utf-8', 'replace')
+
+			if '?format=' in i:
+				i = i.split('&')[0]
+				fmt = i.split('=')[1]
+				i = '%s.%s' % (i.split('?')[0], fmt)
+
+			filename = i.split('/')[-1]
+			ext = i.split('.')[-1]
+			if not os.path.exists('%s/%s/%d/%s' % (dirname, owner, int(twat['id']), filename)):
+				filehash = _mirror_file(i, dirname, owner.lower(), int(twat['id']), filename, args)
+
+	## deal with emojis
+	if 'e' in args.mirror:
+		for img in soup.body.find_all('img'):
+			if 'class' in img.attrs and 'Emoji' in img.attrs['class']:
+				src = img.attrs['src'].encode('utf-8', 'replace')
+				split = src.split('/')
+				host = split[2]
+				emodir = '/'.join(split[3: len(split) - 1])
+				filename = split[-1]
+				uri = '%s/%s' % (emodir, filename)
+
+				if not os.path.isdir(emodir):
+					os.makedirs( emodir )
+
+				if not os.path.exists('%s/%s' % (emodir,filename)):
+					http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
+					hdr, res = http.get('/%s' % uri)
+					with open('%s/%s' % (emodir, filename), 'w') as h:
+						h.write(res)
+					print('saved emojis "%s"' % filename)
+
 
 def add_tweet(id, user, time, text):
 	print "%s (%s) -> %s" % (user, time, id)
