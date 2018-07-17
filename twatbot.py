@@ -128,7 +128,11 @@ def render_site():
 		#tw += '&nbsp;&nbsp;<a target="_blank" href="%s" title="wayback"><img width="12px" height="12px" src="%s"></a>' % (wayback, wayback_logo)
 
 		tw += '</div>\n'
+		## link to mirrored filed, emojis and such
 		if args.mirror: twat['text'] = mirrored_twat(twat, args=args)
+		## strip html ?
+		if args.nohtml: twat['text']= strip_tags(twat['text'])
+		
 
 		tw += '<p class="twat-text">%s</p>' % (twat["text"].replace('\n', '<br>')) 
 
@@ -256,6 +260,7 @@ if __name__ == '__main__':
 	parser.add_argument('--ext', help="space-delimited extension to tech when mirroring files (default: None)", default=None, type=str, required=False)
 	parser.add_argument('--count', help="Fetch $count latests tweets (default: 20). Use -1 to fetch the whole timeline", default=0, type=int, required=False)
 	parser.add_argument('--social', help="show 'social' bar (default: 0)", default=0, type=int, required=False)
+	parser.add_argument('--nohtml', help="strip html from tweets (default: 0)", default=0, type=int, required=False)
 	
 
 	args = parser.parse_args()
