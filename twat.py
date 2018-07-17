@@ -4,7 +4,7 @@ import json
 import os.path
 import hashlib
 
-def _mirror_file(i, dirname, owner, tid, filename, args):
+def _mirror_file(i, dirname, owner, tid, filename, args=None):
 	if not os.path.isdir('%s/%s/%d' % (dirname, owner, tid)):
 		os.makedirs('%s/%s/%d' % (dirname, owner, tid))
 
@@ -16,7 +16,7 @@ def _mirror_file(i, dirname, owner, tid, filename, args):
 	hdr, res = http.get('/%s' % uri)
 	filehash = hashlib.md5(res).hexdigest()
 	if not os.path.exists('%s/data/%s.%s' % (dirname, filehash,ext)):
-		print('mirrored: i: %s, dn: %s, owner: %s, tid: %d, filename: %s, args: %s' % (i, dirname, owner, int(tid), filename, str(args)))
+		#print('mirrored: i: %s, dn: %s, owner: %s, tid: %d, filename: %s, args: %s' % (i, dirname, owner, int(tid), filename, str(args)))
 		with open('%s/data/%s.%s' % (dirname, filehash, ext), 'w') as h:
 			h.write(res)
 
@@ -46,6 +46,10 @@ def mirrored_twat(twat, dirname=None, args=None):
 				if ext in filtre:
 					filename = deu.split('/')[-1]
 					twat['text'] = twat['text'].replace(shrt, '%s/%d/%s' % (owner, int(twat['id']), filename))
+
+				## still replace shorten urls with expanded ones
+				else:
+					twat['text'] = twat['text'].replace(shrt, deu)
 
 	# emojis
 	if 'e' in args.mirror:
