@@ -295,7 +295,6 @@ def get_twats(user, search = False, proxies=None, count=0):
 	break_loop = False
 
 	while True:
-		print('hererer')
 		soup = soupify (res)
 		twats = extract_twats(soup, twats)
 		if count == 0 or break_loop or (count != -1 and len(twats) >= count):
