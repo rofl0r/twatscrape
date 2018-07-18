@@ -13,9 +13,7 @@ tweets = dict()
 memory = {}
 
 def build_socialbar(twat):
-	bar = '<div class="iconbar">'
-	with open('logos.json') as jdata:
-		logos = json.load(jdata)
+	bar = '\n<div class="iconbar">'
 
 	for i in [ 'twitter', 'wayback', 'json' ]:
 		if len(bar): bar += '&nbsp;'
@@ -27,7 +25,7 @@ def build_socialbar(twat):
 		elif i == 'json':
 			bar += '<a target="_blank" href="%s">%s</a>' % (user_filename(twat['owner']), '&#128190;')
 
-	bar += '</div>'
+	bar += '</div>\n'
 	return bar
 
 
@@ -206,14 +204,14 @@ def write_html(html, page=None, pages=None, individual=False):
 				div.append('<a class="menu" href="%s">%d</a>' % (indx,j))
 
 		if len(div):
-			ht.append('<div class="menu">%s</div>' % '&nbsp;'.join(div))
+			ht.append('\n<div class="menu">%s</div>\n' % '&nbsp;'.join(div))
 
 	else:
 		filename = "index.html"
 
 	[ ht.append(i) for i in html ]
 
-	ht.append("</body></html>")
+	ht.append("\n</body></html>")
 
 	if individual:
 		userdir = os.path.dirname(user_filename(individual))
