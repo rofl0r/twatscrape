@@ -174,8 +174,6 @@ def render_site():
 		if args.tpp > 0 and len(html) >= args.tpp:
 			write_html(html=html,page=page, pages=pagetotal, individual=False)
 			page -= 1
-			#inc+=1
-			#write_html(html, inc, pages)
 			html = []
 
 	if len(html):
@@ -193,7 +191,7 @@ def write_html(html, page=None, pages=None, individual=False):
 		if realpage > 0: filename = "index%s.html" % str(realpage)
 		else: filename = "index.html"
 
-		for j in range(0, pages):
+		for j in range(0, pages + 1):
 			if j == realpage:
 				div.append(str(realpage))
 
