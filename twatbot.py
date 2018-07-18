@@ -133,8 +133,7 @@ def htmlize_twat(twat):
 		## mirror images ?
 		if 'i' in args.mirror: 
 			for i in twat['images']:
-				tw += '<a href="%s" title="open remote location"><img src="%s/%d/%s"></a>' % (i, twat['user'].lower(), int(twat['id']), i.split('/')[-1])
-					
+				tw += '<a href="%s" title="open remote location"><img src="%s/%d/%s" width="%d%%"></a>' % (i, twat['user'].lower(), int(twat['id']), i.split('/')[-1], wdth)
 
 		## user wants to see the pictures
 		elif args.images > 0:
