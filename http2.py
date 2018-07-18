@@ -58,6 +58,9 @@ class RsHttp():
 	def _make_get_request(self, url, extras=[]):
 		return self._make_request('GET', url, extras)
 
+	def _make_head_request(self, url, extras=[]):
+		return self._make_request('HEAD', url, extras)
+
 	def _make_post_request(self, url, values, extras=[]):
 		data = urllib.urlencode(values)
 		extras.append('Content-Type: application/x-www-form-urlencoded')
@@ -194,8 +197,13 @@ class RsHttp():
 				self.reconnect()
 
 
-	def get(self, url, extras=[]):
-		req = self._make_get_request(url, extras)
+	def get(self, url, extras=[], head=None):
+
+		## when using HEAD
+		if head: req = self._make_head_request(url, extras)
+		## or GET request
+		else: req = self._make_get_request(url, extras)
+
 		hdr, res, redirect = self._send(req)
 
 		if redirect != '' and self.follow_redirects:
