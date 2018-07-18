@@ -21,16 +21,11 @@ def build_socialbar(twat):
 		if len(bar): bar += '&nbsp;'
 		if i == 'twitter':
 			## not sure if this works (probably not)
-			bar += '<a target="_blank" href="https://twitter.com/home?status=RT %s: %s" title="retweet">%s</a>' % \
-			(twat['owner'], urllib.quote_plus(strip_tags(twat['text']).encode('utf-8', 'remove')), u'\xF0\x9F\x90\xA6')
-			#bar += '<a target="_blank" href="https://twitter.com/home?status=RT %s: %s" title="retweet"><img class="icon" src="data:%s;base64,%s"></a>' % \
-			#(twat['owner'], urllib.quote_plus(strip_tags(twat['text']).encode('utf-8', 'remove')), logos[i]['data'], logos[i]['base64'])
+			bar += '<a target="_blank" href="https://api.twitter.com/1.1/statuses/retweets/%d.json" title="retweet">%s</a>' % (int(twat['id']), '&#128038;')
 		elif i == 'wayback':
-			bar += '<a target="_blank" href="https://web.archive.org/save/https://twitter.com/%s/status/%s" title="wayback"><img class="icon" src="data:%s;base64,%s"></a>' % \
-			(twat['user'], twat['id'], logos[i]['data'], logos[i]['base64'])
+			bar += '<a target="_blank" href="https://web.archive.org/save/https://twitter.com/%s/status/%s" title="wayback">%s</a>' % (twat['user'], twat['id'], '&#9852;')
 		elif i == 'json':
-			bar += '<a target="_blank" href="%s"><img class="icon" src="data:%s;base64,%s"></a>' % \
-			(user_filename(twat['owner']), logos[i]['data'], logos[i]['base64'])
+			bar += '<a target="_blank" href="%s">%s</a>' % (user_filename(twat['owner']), '&#128190;')
 
 	bar += '</div>'
 	return bar
