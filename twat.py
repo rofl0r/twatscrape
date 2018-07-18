@@ -4,9 +4,9 @@ import json
 import os.path
 import hashlib
 
-def _mirror_file(i, dirname, owner, tid, filename, args=None):
-	if not os.path.isdir('%s/%s/%d' % (dirname, owner, tid)):
-		os.makedirs('%s/%s/%d' % (dirname, owner, tid))
+def _mirror_file(i, dirname, user, tid, filename, args=None):
+	if not os.path.isdir('%s/%s' % (dirname, user)):
+		os.makedirs('%s/%s' % (dirname, user))
 
 	host = i.split('/')[2]
 	uri = '/'.join(i.split('/')[3:])
@@ -16,11 +16,12 @@ def _mirror_file(i, dirname, owner, tid, filename, args=None):
 	hdr, res = http.get('/%s' % uri)
 	filehash = hashlib.md5(res).hexdigest()
 	if not os.path.exists('%s/data/%s.%s' % (dirname, filehash,ext)):
-		#print('mirrored: i: %s, dn: %s, owner: %s, tid: %d, filename: %s, args: %s' % (i, dirname, owner, int(tid), filename, str(args)))
+		#print('mirrored: i: %s, dn: %s, user: %s, tid: %d, filename: %s, args: %s' % (i, dirname, user, int(tid), filename, str(args)))
 		with open('%s/data/%s.%s' % (dirname, filehash, ext), 'w') as h:
 			h.write(res)
 
-	os.symlink('%s/data/%s.%s' % (dirname, filehash, ext), '%s/%s/%d/%s' % (dirname, owner, tid, filename))
+	#print('symlink %s/data/%s.%s -> %s/%s/%s-%s' % (dirname, filehash, ext, dirname, user, tid, filename))
+	os.symlink('%s/data/%s.%s' % (dirname, filehash, ext), '%s/%s/%s-%s' % (dirname, user, tid, filename))
 
 	return filehash
 
@@ -28,8 +29,7 @@ def mirrored_twat(twat, dirname=None, args=None):
 	# XXX needs to fix this
 	if not dirname: dirname = os.path.dirname(os.path.abspath(__file__))
 
-	if 'owner' in twat: owner = twat['owner'].lower()
-	else: owner = twat['user'].lower()
+	user = twat['user'].lower()
 
 	if args.ext: filtre = str(args.ext).split(',')
 	else: filtre = []
@@ -45,7 +45,7 @@ def mirrored_twat(twat, dirname=None, args=None):
 				ext = deu.split('.')[-1]
 				if ext in filtre:
 					filename = deu.split('/')[-1]
-					twat['text'] = twat['text'].replace(shrt, '%s/%d/%s' % (owner, int(twat['id']), filename))
+					twat['text'] = twat['text'].replace(shrt, '%s/%s-%s' % (user, twat['id'], filename))
 
 				## still replace shorten urls with expanded ones
 				else:
@@ -66,12 +66,14 @@ def mirror_twat(twat, args=None, dirname=None):
 	# XXX needs to fix this
 	if not dirname: dirname = os.path.dirname(os.path.abspath(__file__))
 
-	if 'owner' in twat: owner = twat['owner'].lower()
-	else: owner = twat['user'].lower()
+	if 'owner' in twat:
+		user = twat['owner'].lower()
+	else:
+		user = twat['user'].lower()
 
 	if not os.path.isdir('%s/data' % dirname): os.makedirs( '%s/data' % dirname )
 
-	proxies = args.proxy if args.proxy else None
+	#proxies = args.proxy if args.proxy else None
 
 	if args.ext: filtre = str(args.ext).split(',')
 	else: filtre = []
@@ -91,13 +93,11 @@ def mirror_twat(twat, args=None, dirname=None):
 
 				if ext in filtre:
 					filename = deu.split('/')[-1]
-					if not os.path.exists('%s/%s/%d/%s' % (dirname, owner, int(twat["id"]), filename)):
-						filehash = _mirror_file(deu, dirname, owner, int(twat['id']), filename, args)
+					if not os.path.exists('%s/%s/%s-%s' % (dirname, user, twat["id"], filename)):
+						filehash = _mirror_file(deu, dirname, user, twat['id'], filename, args)
 
 	## mirror posted pictures
 	if 'images' in twat and 'i' in args.mirror:
-		if not os.path.isdir('%s/%s/%s' % (dirname, owner, twat["id"])):
-			os.makedirs('%s/%s/%s' % (dirname, owner, twat["id"]))
 
 		for x in xrange(0, len(twat['images'])):
 			i = twat['images'][x].encode('utf-8', 'replace')
@@ -109,8 +109,9 @@ def mirror_twat(twat, args=None, dirname=None):
 
 			filename = i.split('/')[-1]
 			ext = i.split('.')[-1]
-			if not os.path.exists('%s/%s/%d/%s' % (dirname, owner, int(twat['id']), filename)):
-				filehash = _mirror_file(i, dirname, owner.lower(), int(twat['id']), filename, args)
+			#if not os.path.exists('%s/%s/%d/%s' % (dirname, user, int(twat['id']), filename)):
+			if not os.path.exists('%s/%s/%s-%s' % (dirname, user, twat['id'], filename)):
+				filehash = _mirror_file(i, dirname, user, twat['id'], filename, args)
 
 	## deal with emojis
 	if 'e' in args.mirror:
@@ -127,7 +128,7 @@ def mirror_twat(twat, args=None, dirname=None):
 					os.makedirs( emodir )
 
 				if not os.path.exists('%s/%s' % (emodir,filename)):
-					http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
+					http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
 					hdr, res = http.get('/%s' % uri)
 					with open('%s/%s' % (emodir, filename), 'w') as h:
 						h.write(res)
