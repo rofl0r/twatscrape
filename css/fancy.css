@@ -1,12 +1,12 @@
 html { font-size: 14px; background: #eee; Font-Family: Monospace; color: white;}
-div.iconbar { position: relative; float: right; margin-right: 1%;}
-img.icon { height: 18px; width: 18px;}
+div.iconbar { position: relative; float: right; margin-right: 1%; font-size: 14px;}
+/*img.icon { height: 18px; width: 18px;}*/
 
 
 a { text-decoration: underline; color: white; }
 /*a:hover { text-decoration: underline; }*/
 
-div.menu { height: 15px; text-align: center; font-size: 12px; color: black;}
+div.menu { position: relative; left: 0; right: 0; top: 1%; height: 15px; text-align: center; font-size: 12px; color: black;}
 a.menu { color: blue; }
 
 
