@@ -46,11 +46,8 @@ def strip_tags(html):
 
 def user_filename(user):
 	user = user.lower()
-	if args.dir:
-		if not os.path.exists(args.dir):
-			os.makedirs(args.dir)
-		return '%s/%s.json' % (args.dir, user)
-	return '%s.json' % user
+	if not os.path.exists(user): os.makedirs(user)
+	return '%s/%s.json' % (user,user)
 
 def in_twatlist(user, twat):
 	for t in tweets[user]:
