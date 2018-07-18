@@ -20,8 +20,10 @@ def build_socialbar(twat):
 		if len(bar): bar += '&nbsp;'
 		if i == 'twitter':
 			## not sure if this works (probably not)
-			bar += '<a target="_blank" href="https://twitter.com/home?status=RT %s: %s" title="retweet"><img class="icon" src="data:%s;base64,%s"></a>' % \
-			(twat['owner'], urllib.quote_plus(strip_tags(twat['text']).encode('utf-8', 'remove')), logos[i]['data'], logos[i]['base64'])
+			bar += '<a target="_blank" href="https://twitter.com/home?status=RT %s: %s" title="retweet">%s</a>' % \
+			(twat['owner'], urllib.quote_plus(strip_tags(twat['text']).encode('utf-8', 'remove')), u'\xF0\x9F\x90\xA6')
+			#bar += '<a target="_blank" href="https://twitter.com/home?status=RT %s: %s" title="retweet"><img class="icon" src="data:%s;base64,%s"></a>' % \
+			#(twat['owner'], urllib.quote_plus(strip_tags(twat['text']).encode('utf-8', 'remove')), logos[i]['data'], logos[i]['base64'])
 		elif i == 'wayback':
 			bar += '<a target="_blank" href="https://web.archive.org/save/https://twitter.com/%s/status/%s" title="wayback"><img class="icon" src="data:%s;base64,%s"></a>' % \
 			(twat['user'], twat['id'], logos[i]['data'], logos[i]['base64'])
@@ -93,6 +95,65 @@ def html_header():
 
 """ % (args.title, args.refresh, args.theme)
 
+
+def htmlize_twat(twat):
+	tw = '<div class="twat-container">'
+
+	if twat["user"].lower() == twat["owner"].lower():
+		user_str = "<a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a>" % \
+		(twat["user"], twat["id"], twat["user"])
+
+	else:
+		user_str = "<a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a> (RT <a target='_blank' href='https://twitter.com/%s'>%s</a>)" % \
+		(twat["user"], twat["id"], twat["user"], twat["owner"], twat["owner"])
+
+	tw += '<div class="twat-title">'
+
+	## add social bar
+	if args.social: tw += build_socialbar(twat)
+
+	tw += '%s&nbsp;-&nbsp;%s' % (user_str, format_time(twat["time"]))
+
+	tw += '</div>\n'
+	## link to mirrored filed, emojis and such
+	if args.mirror: twat['text'] = mirrored_twat(twat, args=args)
+	## strip html ?
+	if args.nohtml: twat['text']= strip_tags(twat['text'])
+		
+	tw += '<p class="twat-text">%s</p>' % (twat["text"].replace('\n', '<br>')) 
+
+	if 'curl' in twat and args.iframe > 0:
+		tw += '<span class="twat-iframe"><iframe src="https://twitter.com%s?cardname=summary_large_image"></iframe></span>\n'%twat['curl']
+
+	if 'images' in twat:
+		tw += '<p class="twat-image">'
+		if len(twat['images']) > 1: wdth = (100/len(twat['images'])) - 1
+		else: wdth = 100
+
+		## mirror images ?
+		if 'i' in args.mirror: 
+			for i in twat['images']:
+				tw += '<a href="%s" title="open remote location"><img src="%s/%d/%s"></a>' % (i, twat['user'].lower(), int(twat['id']), i.split('/')[-1])
+					
+
+		## user wants to see the pictures
+		elif args.images > 0:
+			for i in twat['images']: tw += '<a href="%s"><img src="%s" width="%d%%"></a>'%(i, i, wdth)
+
+		## or only show a link to them
+		else:
+			for i in twat['images']: tw += '<a href="%s">%s</a>'%(i, i)
+
+
+		tw += '</p>\n'
+
+	tw += '</div>\n'
+
+	return tw
+
+def markdownize_twat(twat):
+	return True
+
 def render_site():
 	html = []
 
@@ -109,67 +170,13 @@ def render_site():
 		#print('pages: %d, inc: %d' % (pages,inc))
 
 	for twat in all_tweets:
-		tw = '<div class="twat-container">'
-
-		if twat["user"].lower() == twat["owner"].lower():
-			user_str = "<a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a>" % \
-			(twat["user"], twat["id"], twat["user"])
-		else:
-			user_str = "<a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a> (RT <a target='_blank' href='https://twitter.com/%s'>%s</a>)" % \
-			(twat["user"], twat["id"], twat["user"], twat["owner"], twat["owner"])
-
-		tw += '<div class="twat-title">'
-
-		## add social bar
-		if args.social: tw += build_socialbar(twat)
-
-		tw += '%s&nbsp;-&nbsp;%s' % (user_str, format_time(twat["time"]))
-
-		#tw += '&nbsp;&nbsp;<a target="_blank" href="%s" title="wayback"><img width="12px" height="12px" src="%s"></a>' % (wayback, wayback_logo)
-
-		tw += '</div>\n'
-		## link to mirrored filed, emojis and such
-		if args.mirror: twat['text'] = mirrored_twat(twat, args=args)
-		## strip html ?
-		if args.nohtml: twat['text']= strip_tags(twat['text'])
-		
-
-		tw += '<p class="twat-text">%s</p>' % (twat["text"].replace('\n', '<br>')) 
-
-		if 'curl' in twat and args.iframe > 0:
-			tw += '<span class="twat-iframe"><iframe src="https://twitter.com%s?cardname=summary_large_image"></iframe></span>\n'%twat['curl']
-
-		if 'images' in twat:
-			tw += '<p class="twat-image">'
-			if len(twat['images']) > 1: wdth = (100/len(twat['images'])) - 1
-			else: wdth = 100
-
-			## mirror images ?
-			if 'i' in args.mirror: 
-				for i in twat['images']:
-					tw += '<a href="%s" title="open remote location"><img src="%s/%d/%s"></a>' % (i, twat['user'].lower(), int(twat['id']), i.split('/')[-1])
-						
-
-			## user wants to see the pictures
-			elif args.images > 0:
-				for i in twat['images']: tw += '<a href="%s"><img src="%s" width="%d%%"></a>'%(i, i, wdth)
-
-			## or only show a link to them
-			else:
-				for i in twat['images']: tw += '<a href="%s">%s</a>'%(i, i)
-
-
-			tw += '</p>\n'
-
-		tw += '</div>\n'
-
-		html.append(tw)
+		if args.md: html.append(markdownize_twat(twat))
+		else: html.append(htmlize_twat(twat))
 		#print(tw)
 
 		# when doing multipages
 		if args.tpp > 0 and len(html) >= args.tpp:
 			inc+=1
-			print('writing file ...')
 			write_html(html, inc, pages)
 			html = []
 
@@ -261,10 +268,13 @@ if __name__ == '__main__':
 	parser.add_argument('--count', help="Fetch $count latests tweets (default: 20). Use -1 to fetch the whole timeline", default=0, type=int, required=False)
 	parser.add_argument('--social', help="show 'social' bar (default: 0)", default=0, type=int, required=False)
 	parser.add_argument('--nohtml', help="strip html from tweets (default: 0)", default=0, type=int, required=False)
-	
+	parser.add_argument('--md', help="output markdown content (default: 0) -- NOT WORKING", default=0, type=int, required=False)
 
 	args = parser.parse_args()
 	args.proxy = [RocksockProxyFromURL(args.proxy)] if args.proxy else None
+
+	## markdown is not working, yet. Force to html.
+	args.md = 0
 
 	watchlist = [x.rstrip('\n') for x in open(args.watchlist, 'r').readlines()]
 	if args.reload > 0: watchlist_ticks = time.time()
