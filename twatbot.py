@@ -101,20 +101,20 @@ def htmlize_twat(twat):
 		user_str = "<a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a> (RT <a target='_blank' href='https://twitter.com/%s'>%s</a>)" % \
 		(twat["user"], twat["id"], twat["user"], twat["owner"], twat["owner"])
 
-	tw += '<div class="twat-title">'
+	tw += '\n<div class="twat-title">'
 
 	## add social bar
 	if args.social: tw += build_socialbar(twat)
 
 	tw += '%s&nbsp;-&nbsp;%s' % (user_str, format_time(twat["time"]))
 
-	tw += '</div>\n'
+	tw += '\n</div>\n'
 	## link to mirrored filed, emojis and such
 	if args.mirror: twat['text'] = mirrored_twat(twat, args=args)
 	## strip html ?
 	if args.nohtml: twat['text']= strip_tags(twat['text'])
 		
-	tw += '<p class="twat-text">%s</p>' % (twat["text"].replace('\n', '<br>')) 
+	tw += '<p class="twat-text">%s</p>\n' % (twat["text"].replace('\n', '<br>')) 
 
 	if 'curl' in twat and args.iframe > 0:
 		tw += '<span class="twat-iframe"><iframe src="https://twitter.com%s?cardname=summary_large_image"></iframe></span>\n'%twat['curl']
