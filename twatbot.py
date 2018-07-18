@@ -164,9 +164,12 @@ def render_site():
 	all_tweets = remove_doubles(all_tweets)
 
 	if args.tpp > 0:
-		pages = int( len(all_tweets) / args.tpp )
-		inc = 0
+		#pages = int( len(all_tweets) / args.tpp )
+		#inc = 0
 		#print('pages: %d, inc: %d' % (pages,inc))
+		pagetotal = int( len(all_tweets) / args.tpp )
+		page = pagetotal
+
 
 	for twat in all_tweets:
 		if args.md: html.append(markdownize_twat(twat))
@@ -175,31 +178,51 @@ def render_site():
 
 		# when doing multipages
 		if args.tpp > 0 and len(html) >= args.tpp:
-			inc+=1
-			write_html(html, inc, pages)
+			write_html(html=html,page=page, pages=pagetotal, individual=False)
+			page -= 1
+			#inc+=1
+			#write_html(html, inc, pages)
 			html = []
 
 	if len(html):
 		if args.tpp > 0:
-			write_html(html, 0, pages)
+			write_html(html=html, page=0, pages=pagetotal, individual=False)
 		else:
-			write_html(html, False, False)
+			write_html(html=html, page=None, pages=None, individual=False)
 
 
-def write_html(html, i = False, pages = False):
+def write_html(html, page=None, pages=None, individual=False):
 	ht = [ html_header() ]
-	if i is not False and pages > 0:
-		if i > 0: filename = "index%d.html" % i
+	if page is not None and pages is not None:
+		div = []
+		realpage = int(pages - page)
+		if realpage > 0: filename = "index%s.html" % str(realpage)
 		else: filename = "index.html"
-		ht.append('<div class="menu">')
-		[ ht.append('<a class="menu" href="index%d.html">%d</a>' % (j,j)) for j in range(1,pages - 1) ]
-		ht.append('</div>')
+
+		for j in range(0, pages):
+			if j == realpage:
+				div.append(str(realpage))
+
+			else:
+				if j > 0: indx = "index%d.html" % j
+				else: indx = "index.html"
+				div.append('<a class="menu" href="%s">%d</a>' % (indx,j))
+
+		if len(div):
+			ht.append('<div class="menu">%s</div>' % '&nbsp;'.join(div))
 
 	else:
 		filename = "index.html"
 
 	[ ht.append(i) for i in html ]
+
 	ht.append("</body></html>")
+
+	if individual:
+		userdir = os.path.dirname(user_filename(individual))
+		#print('userdir: %s, filename: %s' % (userdir, filename))
+		filename = '%s/%s' % (userdir,filename)
+
 	with codecs.open(filename, 'w', 'utf-8') as h:
 		h.write("\n".join(ht))
 
