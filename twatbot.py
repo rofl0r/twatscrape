@@ -47,6 +47,7 @@ def strip_tags(html):
 
 
 def user_filename(user):
+	user = user.lower()
 	if args.dir:
 		if not os.path.exists(args.dir):
 			os.makedirs(args.dir)
