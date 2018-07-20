@@ -55,6 +55,9 @@ class RsHttp():
 			print s
 		return s
 
+	def _make_head_request(self, url, extras=[]):
+		return self._make_request('HEAD', url, extras)
+
 	def _make_get_request(self, url, extras=[]):
 		return self._make_request('GET', url, extras)
 
@@ -185,12 +188,18 @@ class RsHttp():
 				break
 		return host, port, ssl, url
 
-	def _send(self, req):
+
+	def _send_and_recv(self, req):
+		if self._send_raw(req):
+			return self._get_response()
+		else: return "", "", ""
+
+	def _send_raw(self, req):
 		if self.conn is None: self.reconnect()
 		while True:
 			try:
 				self.conn.send(req)
-				return self._get_response()
+				return True
 			except RocksockException as e:
 				self.conn.disconnect()
 				self.reconnect()
@@ -207,7 +216,7 @@ class RsHttp():
 
 	def get(self, url, extras=[]):
 		req = self._make_get_request(url, extras)
-		hdr, res, redirect = self._send(req)
+		hdr, res, redirect = self._send_and_recv(req)
 
 		if redirect != '' and self.follow_redirects:
 			host, port, use_ssl, url = self.parse_url(redirect)
@@ -221,9 +230,25 @@ class RsHttp():
 
 		return hdr, res
 
+	def head(self, url, extras=[]):
+		req = self._make_head_request(url, extras)
+		self._send_raw(req)
+		s = ''
+		res = ''
+		#'HTTP/1.1 302 Found\r\n'
+		l = self.conn.recvline().strip()
+		s = l + '\n'
+		foo, code, msg = l.split(' ', 2)
+		while True:
+			l = self.conn.recvline().strip()
+			s += l + '\n'
+			if l == '': break
+		return s
+
+
 	def post(self, url, values, extras=[]):
 		req = self._make_post_request(url, values, extras)
-		hdr, res, redirect = self._send(req)
+		hdr, res, redirect = self._send_and_recv(req)
 		return hdr, res
 
 	def xhr_get(self, url):
