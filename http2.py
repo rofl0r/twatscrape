@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from rocksock import Rocksock, RocksockException
+import rocksock
 import urllib, zlib
 import ssl, socket
 import time
@@ -140,6 +141,11 @@ class RsHttp():
 				self.conn.connect()
 				break
 			except RocksockException as e:
+				if e.errortype == rocksock.RS_ET_GAI and e.error==-2:
+					# -2: Name does not resolve
+					self.conn.disconnect()
+					self.conn = None
+					return False
 				print e.get_errormessage()
 				time.sleep(0.05)
 				continue
@@ -195,23 +201,25 @@ class RsHttp():
 		else: return "", "", ""
 
 	def _send_raw(self, req):
-		if self.conn is None: self.reconnect()
+		if self.conn is None:
+			if not self.reconnect(): return False
+			else: print "connect success"
 		while True:
 			try:
 				self.conn.send(req)
 				return True
 			except RocksockException as e:
 				self.conn.disconnect()
-				self.reconnect()
+				if not self.reconnect(): return False
 			except IOError:
 				self.conn.disconnect()
-				self.reconnect()
+				if not self.reconnect(): return False
 			except EOFError:
 				self.conn.disconnect()
-				self.reconnect()
+				if not self.reconnect(): return False
 			except ssl.SSLError:
 				self.conn.disconnect()
-				self.reconnect()
+				if not self.reconnect(): return False
 
 
 	def get(self, url, extras=[]):
@@ -232,7 +240,7 @@ class RsHttp():
 
 	def head(self, url, extras=[]):
 		req = self._make_head_request(url, extras)
-		self._send_raw(req)
+		if not self._send_raw(req): return ""
 		s = ''
 		res = ''
 		#'HTTP/1.1 302 Found\r\n'
