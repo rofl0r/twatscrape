@@ -184,7 +184,7 @@ class Rocksock():
 
 		if self.sslcontext:
 			try:
-				self.sock = self.sslcontext.wrap_socket(self.sock)
+				self.sock = self.sslcontext.wrap_socket(self.sock, server_hostname=self.proxychain[len(self.proxychain)-1].hostinfo.host)
 			except ssl.SSLError as e:
 				reason = self._get_ssl_exception_reason(e)
 				#if hasattr(e, 'library'): subsystem = e.library
