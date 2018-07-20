@@ -159,8 +159,17 @@ class RsHttp():
 			ssl = False
 			url = url[7:]
 			port = 80
+		elif url.startswith('/'):
+			# can happen with a redirect
+			url = url[1:]
+			port = 0
+		else:
+			raise
 
 		if not '/' in url: url = url + '/'
+
+		if port == 0:
+			return "", 0, False, url
 
 		port_index = -1
 		for i in range(len(url)):
@@ -202,9 +211,10 @@ class RsHttp():
 
 		if redirect != '' and self.follow_redirects:
 			host, port, use_ssl, url = self.parse_url(redirect)
-			self.host = host
-			self.port = port
-			self.use_ssl = use_ssl
+			if port != 0:
+				self.host = host
+				self.port = port
+				self.use_ssl = use_ssl
 			self.conn.disconnect()
 			self.conn = None
 			return self.get(url, extras)
