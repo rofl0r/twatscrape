@@ -67,6 +67,8 @@ class RsHttp():
 
 	def _get_response(self):
 		def parse_header_fields(line):
+			if not ':' in line: return line.rstrip(' '), ""
+			if not ': ' in line: return line.split(':', 1)
 			return line.split(': ', 1)
 
 		chunked = False
