@@ -1,2 +1,6 @@
 *.pyc
-
+*.html
+*.json
+*.patch
+data/
+watchlist.txt
