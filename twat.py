@@ -154,10 +154,10 @@ def get_twats(user, search = False, proxies=None, count=0):
 	host = 'twitter.com'
 	http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
 #	http.debugreq = True
-        if not search:
-                hdr, res = http.get("/%s" % user)
-        else:
-                hdr, res = http.get("/search?q=%s" % user)
+	if not search:
+		hdr, res = http.get("/%s" % user)
+	else:
+		hdr, res = http.get("/search?q=%s" % user)
 
 	twats = []
 
