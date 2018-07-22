@@ -13,6 +13,9 @@ def _mirror_file(i, dirname, user, tid, filename, args=None):
 	ext = filename.split('.')[-1]
 
 	http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
+	while not http.connect():
+		# FIXME : what should happen on connect error ?
+		pass
 	hdr, res = http.get('/%s' % uri)
 	filehash = hashlib.md5(res).hexdigest()
 	if not os.path.exists('%s/data/%s.%s' % (dirname, filehash,ext)):
@@ -129,6 +132,9 @@ def mirror_twat(twat, args=None, dirname=None):
 
 				if not os.path.exists('%s/%s' % (emodir,filename)):
 					http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
+					while not http.connect():
+						# FIXME : what should happen on connect error ?
+						pass
 					hdr, res = http.get('/%s' % uri)
 					with open('%s/%s' % (emodir, filename), 'w') as h:
 						h.write(res)
@@ -143,6 +149,9 @@ def add_tweet(id, user, time, text):
 def get_twat_timestamp(twat_id):
 	host = 'twitter.com'
 	http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, user_agent="curl/7.60.0")
+	while not http.connect():
+		# FIXME : what should happen on connect error ?
+		pass
 	hdr, res = http.get(twat_id)
 	soup = soupify (res)
 	for small in soup.body.find_all('small', attrs={'class':'time'}):
@@ -157,6 +166,9 @@ def get_twats_mobile(user, search = False, proxies=None):
 	host = 'mobile.twitter.com'
 	http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
 #	http.debugreq = True
+	while not http.connect():
+		# FIXME : what should happen on connect error ?
+		pass
 	hdr, res = http.get("/" + user)
 
 	twats = []
@@ -287,6 +299,9 @@ def get_twats(user, search = False, proxies=None, count=0):
 	host = 'twitter.com'
 	http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
 #	http.debugreq = True
+	while not http.connect():
+		# FIXME : what should happen on connect error ?
+		pass
 	if not search:
 		hdr, res = http.get("/%s" % user)
 	else:

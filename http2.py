@@ -7,7 +7,7 @@ import ssl, socket
 import time
 
 class RsHttp():
-	def __init__(self, host, port=80, ssl=False, follow_redirects=False, auto_set_cookies=False, keep_alive=False, timeout=60, user_agent=None, proxies=None, **kwargs):
+	def __init__(self, host, port=80, ssl=False, follow_redirects=False, auto_set_cookies=False, keep_alive=False, timeout=60, user_agent=None, proxies=None, max_tries=10, **kwargs):
 		self.host = host
 		self.port = port
 		self.use_ssl = ssl
@@ -19,7 +19,10 @@ class RsHttp():
 		self.user_agent = user_agent if user_agent else 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'
 		self.proxies = proxies
 		self.cookies = dict()
-		self.reconnect()
+		self.max_tries = max_tries
+
+	def connect(self):
+		return self.reconnect()
 
 	def _key_match(self, want, got):
 		return want.lower() == got.lower()
@@ -135,11 +138,13 @@ class RsHttp():
 		return (s, res, redirect)
 
 	def reconnect(self):
-		while True:
+		tries = 0
+		while tries < self.max_tries:
+			tries += 1
 			try:
 				self.conn = Rocksock(host=self.host, port=self.port, proxies=self.proxies, ssl=self.use_ssl, timeout=self.timeout)
 				self.conn.connect()
-				break
+				return True
 			except RocksockException as e:
 				if e.errortype == rocksock.RS_ET_GAI and e.error==-2:
 					# -2: Name does not resolve
@@ -157,6 +162,7 @@ class RsHttp():
 				print "ssle" + e.reason
 				time.sleep(0.05)
 				continue
+		return False
 
 	def parse_url(self, url):
 		host = ''
@@ -278,6 +284,8 @@ if __name__ == '__main__':
 	host = 'www.cnn.com'
 	http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True)
 	http.debugreq = True
+	if not http.connect():
+		print "sorry, couldn't connect"
 	hdr, res = http.get("/")
 	print hdr
 	print res
