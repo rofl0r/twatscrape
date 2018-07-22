@@ -26,9 +26,8 @@ def _mirror_file(i, dirname, user, tid, filename, args=None):
 		return
 
 	http = RsHttp(host=host, port=port, timeout=15, ssl=use_ssl, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
-	while not http.connect():
-		# FIXME : what should happen on connect error ?
-		pass
+
+	if not http.connect(): return None
 	hdr, res = http.get('/%s' % uri)
 	filehash = hashlib.md5(res).hexdigest()
 	if not os.path.exists('%s/data/%s.%s' % (dirname, filehash,ext)):
