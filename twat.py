@@ -25,9 +25,34 @@ def _mirror_file(i, dirname, user, tid, filename, args=None):
 		print('unsuported protocol: "%s"' % proto)
 		return
 
+	if args.ext: filtre = str(args.ext).split(',')
+	else: filtre = []
+
 	http = RsHttp(host=host, port=port, timeout=15, ssl=use_ssl, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
 
 	if not http.connect(): return None
+
+	hdr = http.head('/%s' % uri)
+	# extract second part of the Content-Type: line
+	value = [ str(i.split(':')[1]).strip() for i in hdr.split('\n') if i.lower().startswith('content-type:') ]
+	if ';' in value[0]: value[0] = value[0].split(';')[0]
+	value = value[0].split('/')
+
+	## values don't match anything
+	if not value[0] in filtre and not value[1] in filtre: return
+
+	# XXX : mirror html files
+	## we actually don't save html files
+	## what about making automated save
+	## thru the wayback machine ?
+	if 'html' in value: return
+
+	## previous http object cannot be re-used
+	http = RsHttp(host=host, port=port, timeout=15, ssl=use_ssl, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
+
+	## do nothing if we cannot connect
+	if not http.connect(): return
+
 	hdr, res = http.get('/%s' % uri)
 	filehash = hashlib.md5(res).hexdigest()
 	if not os.path.exists('%s/data/%s.%s' % (dirname, filehash,ext)):
@@ -47,9 +72,6 @@ def mirrored_twat(twat, dirname=None, args=None):
 
 	user = twat['user'].lower()
 
-	if args.ext: filtre = str(args.ext).split(',')
-	else: filtre = []
-
 	soup = soupify(twat["text"])
 
 	# linked files
@@ -59,8 +81,10 @@ def mirrored_twat(twat, dirname=None, args=None):
 				shrt = a['href']
 				deu = a.attrs['data-expanded-url'].encode('utf-8', 'replace')
 				ext = deu.split('.')[-1]
-				if ext in filtre:
-					filename = deu.split('/')[-1]
+				#if ext in filtre:
+				filename = deu.split('/')[-1]
+				## file was mirrored
+				if os.path.exists('%s/%s-%s' % (user, twat['id'], filename)):
 					twat['text'] = twat['text'].replace(shrt, '%s/%s-%s' % (user, twat['id'], filename))
 
 				## still replace shorten urls with expanded ones
@@ -91,9 +115,6 @@ def mirror_twat(twat, args=None, dirname=None):
 
 	#proxies = args.proxy if args.proxy else None
 
-	if args.ext: filtre = str(args.ext).split(',')
-	else: filtre = []
-
 	## soupify user's text
 	soup = soupify(twat["text"])
 
@@ -107,10 +128,9 @@ def mirror_twat(twat, args=None, dirname=None):
 				deu = a.attrs['data-expanded-url'].encode('utf-8', 'replace')
 				ext = deu.split('.')[-1]
 
-				if ext in filtre:
-					filename = deu.split('/')[-1]
-					if not os.path.exists('%s/%s/%s-%s' % (dirname, user, twat["id"], filename)):
-						_mirror_file(deu, dirname, user, twat['id'], filename, args)
+				filename = deu.split('/')[-1]
+				if not os.path.exists('%s/%s/%s-%s' % (dirname, user, twat["id"], filename)):
+					_mirror_file(deu, dirname, user, twat['id'], filename, args)
 
 	## mirror posted pictures
 	if 'images' in twat and 'i' in args.mirror:
