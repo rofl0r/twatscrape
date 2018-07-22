@@ -203,7 +203,7 @@ class RsHttp():
 	def _send_raw(self, req):
 		if self.conn is None:
 			if not self.reconnect(): return False
-			else: print "connect success"
+#			else: print "connect success"
 		while True:
 			try:
 				self.conn.send(req)
