@@ -24,7 +24,10 @@ def _mirror_file(i, dirname, user, tid, filename, args=None):
 			h.write(res)
 
 	#print('symlink %s/data/%s.%s -> %s/%s/%s-%s' % (dirname, filehash, ext, dirname, user, tid, filename))
-	os.symlink('%s/data/%s.%s' % (dirname, filehash, ext), '%s/%s/%s-%s' % (dirname, user, tid, filename))
+	#os.symlink('%s/data/%s.%s' % (dirname, filehash, ext), '%s/%s/%s-%s' % (dirname, user, tid, filename))
+	if not os.path.exists('%s/%s-%s' % (user,tid,filename)):
+		os.symlink('../data/%s.%s' % (filehash, ext), '%s/%s-%s' % (user, tid, filename))
+
 
 	return filehash
 
