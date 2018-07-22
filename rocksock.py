@@ -164,9 +164,10 @@ class Rocksock():
 		try:
 			x = af+1
 		except TypeError:
-			print "GOT A WEIRD AF"
-			print af
-			raise RocksockException(-6666, af, errortype=RS_ET_GAI)
+			raise RocksockException(-3, "unexpected problem resolving DNS, try again", errortype=RS_ET_GAI)
+#			print "GOT A WEIRD AF"
+#			print af
+#			raise RocksockException(-6666, af, errortype=RS_ET_GAI)
 
 		self.sock = socket.socket(af, socket.SOCK_STREAM)
 		self.sock.settimeout(None if self.timeout == 0 else self.timeout)
