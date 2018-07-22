@@ -8,11 +8,24 @@ def _mirror_file(i, dirname, user, tid, filename, args=None):
 	if not os.path.isdir('%s/%s' % (dirname, user)):
 		os.makedirs('%s/%s' % (dirname, user))
 
+	proto = i.split(':')[0]
 	host = i.split('/')[2]
 	uri = '/'.join(i.split('/')[3:])
 	ext = filename.split('.')[-1]
 
-	http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
+	if proto == 'http':
+		port = 80
+		use_ssl = False
+
+	elif proto == 'https':
+		port = 443
+		use_ssl = True
+
+	else:
+		print('unsuported protocol: "%s"' % proto)
+		return
+
+	http = RsHttp(host=host, port=port, timeout=15, ssl=use_ssl, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
 	while not http.connect():
 		# FIXME : what should happen on connect error ?
 		pass
