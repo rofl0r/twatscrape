@@ -201,10 +201,18 @@ class RsHttp():
 		return host, port, ssl, url
 
 
-	def _send_and_recv(self, req):
+	def _send_and_recv_i(self, req):
 		if self._send_raw(req):
 			return self._get_response()
 		else: return "", "", ""
+
+	def _send_and_recv(self, req):
+		tries = 0
+		while tries < self.max_tries:
+			tries += 1
+			a = self._catch(self._send_and_recv_i, None, req)
+			if a is not None: return a
+		return "", "", ""
 
 	def _catch(self, func, failret, *args):
 		try:
@@ -226,12 +234,8 @@ class RsHttp():
 	def _send_raw(self, req):
 		if self.conn is None:
 			if not self.reconnect(): return False
-#			else: print "connect success"
-		tries = 0
-		while tries < self.max_tries:
-			tries += 1
-			res = self._catch(self.conn.send, False, req)
-			if res is not False: return True
+		res = self.conn.send(req)
+		if res is not False: return True
 		return False
 
 
@@ -251,7 +255,7 @@ class RsHttp():
 
 		return hdr, res
 
-	def head(self, url, extras=[]):
+	def _head_i(self, url, extras=[]):
 		req = self._make_head_request(url, extras)
 		if not self._send_raw(req): return ""
 		s = ''
@@ -266,6 +270,13 @@ class RsHttp():
 			if l == '': break
 		return s
 
+	def head(self, url, extras=[]):
+		tries = 0
+		while tries < self.max_tries:
+			tries += 1
+			res = self._catch(self._head_i, None, url, extras)
+			if res is not None: return res
+		return ""
 
 	def post(self, url, values, extras=[]):
 		req = self._make_post_request(url, values, extras)
