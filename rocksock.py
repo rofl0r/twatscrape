@@ -219,7 +219,7 @@ class Rocksock():
 		return select.select([self.sock], [], [], 0)[0]
 
 	def send(self, buf):
-		self.sock.sendall(buf)
+		return self.sock.sendall(buf)
 
 	def _get_ssl_exception_reason(self, e):
 		s = ''
