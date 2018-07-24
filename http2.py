@@ -293,6 +293,9 @@ if __name__ == '__main__':
 	http.debugreq = True
 	if not http.connect():
 		print "sorry, couldn't connect"
-	hdr, res = http.get("/")
-	print hdr
-	print res
+	else:
+		hdr  = http.head("/")
+		print hdr
+		hdr, res = http.get("/")
+		print hdr
+		print res
