@@ -206,26 +206,33 @@ class RsHttp():
 			return self._get_response()
 		else: return "", "", ""
 
+	def _catch(self, func, failret, *args):
+		try:
+			return func(*args)
+		except RocksockException as e:
+			self.conn.disconnect()
+			if not self.reconnect(): return failret
+		except IOError:
+			self.conn.disconnect()
+			if not self.reconnect(): return failret
+		except EOFError:
+			self.conn.disconnect()
+			if not self.reconnect(): return failret
+		except ssl.SSLError:
+			self.conn.disconnect()
+			if not self.reconnect(): return failret
+
+
 	def _send_raw(self, req):
 		if self.conn is None:
 			if not self.reconnect(): return False
 #			else: print "connect success"
-		while True:
-			try:
-				self.conn.send(req)
-				return True
-			except RocksockException as e:
-				self.conn.disconnect()
-				if not self.reconnect(): return False
-			except IOError:
-				self.conn.disconnect()
-				if not self.reconnect(): return False
-			except EOFError:
-				self.conn.disconnect()
-				if not self.reconnect(): return False
-			except ssl.SSLError:
-				self.conn.disconnect()
-				if not self.reconnect(): return False
+		tries = 0
+		while tries < self.max_tries:
+			tries += 1
+			res = self._catch(self.conn.send, False, req)
+			if res is not False: return True
+		return False
 
 
 	def get(self, url, extras=[]):
