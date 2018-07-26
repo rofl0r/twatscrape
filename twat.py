@@ -8,12 +8,6 @@ def _mirror_file(i, dirname, user, tid, filename, args=None):
 	if not os.path.isdir('%s/%s' % (dirname, user)):
 		os.makedirs('%s/%s' % (dirname, user))
 
-	uri = '/'.join(i.split('/')[3:])
-	ext = filename.split('.')[-1]
-
-	if args.ext: filtre = str(args.ext).split(',')
-	else: filtre = []
-
 	## dummy RsHttp call
 	http = RsHttp('localhost', follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
 
@@ -21,6 +15,12 @@ def _mirror_file(i, dirname, user, tid, filename, args=None):
 	http = RsHttp(host, ssl=ssl, port=port, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
 
 	if not http.connect(): return None
+
+	uri = '/'.join(i.split('/')[3:])
+	ext = filename.split('.')[-1]
+
+	if args.ext: filtre = str(args.ext).split(',')
+	else: filtre = []
 
 	hdr = http.head('/%s' % uri)
 
@@ -44,7 +44,7 @@ def _mirror_file(i, dirname, user, tid, filename, args=None):
 	if 'html' in value: return
 
 	## previous http object cannot be re-used
-	http = RsHttp(host, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
+	http = RsHttp(host, ssl=ssl, port=port, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
 
 	## do nothing if we cannot connect
 	if not http.connect(): return
