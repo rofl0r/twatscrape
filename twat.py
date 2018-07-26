@@ -8,34 +8,30 @@ def _mirror_file(i, dirname, user, tid, filename, args=None):
 	if not os.path.isdir('%s/%s' % (dirname, user)):
 		os.makedirs('%s/%s' % (dirname, user))
 
-	proto = i.split(':')[0]
-	host = i.split('/')[2]
 	uri = '/'.join(i.split('/')[3:])
 	ext = filename.split('.')[-1]
-
-	if proto == 'http':
-		port = 80
-		use_ssl = False
-
-	elif proto == 'https':
-		port = 443
-		use_ssl = True
-
-	else:
-		print('unsuported protocol: "%s"' % proto)
-		return
 
 	if args.ext: filtre = str(args.ext).split(',')
 	else: filtre = []
 
-	http = RsHttp(host=host, port=port, timeout=15, ssl=use_ssl, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
+	## dummy RsHttp call
+	http = RsHttp('localhost', follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
+
+	host, port, ssl, url = http.parse_url(i)
+	http = RsHttp(host, ssl=ssl, port=port, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
 
 	if not http.connect(): return None
 
 	hdr = http.head('/%s' % uri)
+
+	#print('header: %s' % hdr)
 	# extract second part of the Content-Type: line
 	value = [ str(i.split(':')[1]).strip() for i in hdr.split('\n') if i.lower().startswith('content-type:') ]
-	if ';' in value[0]: value[0] = value[0].split(';')[0]
+
+	## server does not provide Content-Type info
+	if not len(value): return
+	## content type contains ';' (usually when html)
+	elif ';' in value[0]: value[0] = value[0].split(';')[0]
 	value = value[0].split('/')
 
 	## values don't match anything
@@ -48,20 +44,18 @@ def _mirror_file(i, dirname, user, tid, filename, args=None):
 	if 'html' in value: return
 
 	## previous http object cannot be re-used
-	http = RsHttp(host=host, port=port, timeout=15, ssl=use_ssl, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
+	http = RsHttp(host, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
 
 	## do nothing if we cannot connect
 	if not http.connect(): return
 
-	hdr, res = http.get('/%s' % uri)
+	#hdr, res = http.get('/%s' % uri)
+	hdr, res = http.get('/%s' % i)
 	filehash = hashlib.md5(res).hexdigest()
 	if not os.path.exists('%s/data/%s.%s' % (dirname, filehash,ext)):
-		#print('mirrored: i: %s, dn: %s, user: %s, tid: %d, filename: %s, args: %s' % (i, dirname, user, int(tid), filename, str(args)))
 		with open('%s/data/%s.%s' % (dirname, filehash, ext), 'w') as h:
 			h.write(res)
 
-	#print('symlink %s/data/%s.%s -> %s/%s/%s-%s' % (dirname, filehash, ext, dirname, user, tid, filename))
-	#os.symlink('%s/data/%s.%s' % (dirname, filehash, ext), '%s/%s/%s-%s' % (dirname, user, tid, filename))
 	if not os.path.exists('%s/%s-%s' % (user,tid,filename)):
 		os.symlink('../data/%s.%s' % (filehash, ext), '%s/%s-%s' % (user, tid, filename))
 
