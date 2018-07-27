@@ -98,8 +98,6 @@ def htmlize_twat(twat):
 	else:
 		user_str = "<a target='_blank' href='https://twitter.com/%s'>%s</a> (RT <a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a>" % \
 		(twat['owner'], twat['owner'], twat['user'], twat['id'], twat['user'])
-		#user_str = "<a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a> (RT <a target='_blank' href='https://twitter.com/%s'>%s</a>)" % \
-		#(twat["user"], twat["id"], twat["user"], twat["owner"], twat["owner"])
 
 	tw += '\n<div class="twat-title">'
 
@@ -127,7 +125,6 @@ def htmlize_twat(twat):
 		## mirror images ?
 		if 'i' in args.mirror: 
 			for i in twat['images']:
-				#tw += '<a href="%s" title="open remote location"><img src="%s/%d/%s" width="%d%%"></a>' % (i, twat['user'].lower(), int(twat['id']), i.split('/')[-1], wdth)
 				tw += '<a href="%s" title="open remote location"><img src="%s/%s-%s" width="%d%%"></a>' % (i, twat['user'].lower(), twat['id'], i.split('/')[-1], wdth)
 
 		## user wants to see the pictures
@@ -137,7 +134,6 @@ def htmlize_twat(twat):
 		## or only show a link to them
 		else:
 			for i in twat['images']: tw += '<a href="%s">%s</a>'%(i, i)
-
 
 		tw += '</p>\n'
 
@@ -159,9 +155,6 @@ def render_site():
 	all_tweets = remove_doubles(all_tweets)
 
 	if args.tpp > 0:
-		#pages = int( len(all_tweets) / args.tpp )
-		#inc = 0
-		#print('pages: %d, inc: %d' % (pages,inc))
 		pagetotal = int( len(all_tweets) / args.tpp )
 		page = pagetotal
 
@@ -169,7 +162,6 @@ def render_site():
 	for twat in all_tweets:
 		if args.md: html.append(markdownize_twat(twat))
 		else: html.append(htmlize_twat(twat))
-		#print(tw)
 
 		# when doing multipages
 		if args.tpp > 0 and len(html) >= args.tpp:
@@ -213,7 +205,6 @@ def write_html(html, page=None, pages=None, individual=False):
 
 	if individual:
 		userdir = os.path.dirname(user_filename(individual))
-		#print('userdir: %s, filename: %s' % (userdir, filename))
 		filename = '%s/%s' % (userdir,filename)
 
 	with codecs.open(filename, 'w', 'utf-8') as h:
@@ -237,7 +228,6 @@ def scrape(search = False, result = 0):
 
 		## if user hasn't been checked yet
 		if not user in memory[mem]:
-			#print('new user: %s (%s), every: %s' % (user, mem, every))
 			## add dummy value
 			memory[mem][user] = ticks - 86400
 
@@ -257,7 +247,6 @@ def scrape(search = False, result = 0):
 					if args.mirror: mirror_twat(t, args=args)
 					print repr(t)
 					#render_site()
-				#else: print('already known: %s, %s' % (user, str(t)))
 			ticks = time.time()
 			memory[mem][user] = ticks
 
