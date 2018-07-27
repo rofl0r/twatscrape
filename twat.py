@@ -49,8 +49,7 @@ def _mirror_file(i, dirname, user, tid, filename, args=None):
 	## do nothing if we cannot connect
 	if not http.connect(): return
 
-	#hdr, res = http.get('/%s' % uri)
-	hdr, res = http.get('/%s' % i)
+	hdr, res = http.get('/%s' % uri)
 	filehash = hashlib.md5(res).hexdigest()
 	if not os.path.exists('%s/data/%s.%s' % (dirname, filehash,ext)):
 		with open('%s/data/%s.%s' % (dirname, filehash, ext), 'w') as h:
