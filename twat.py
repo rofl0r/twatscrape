@@ -8,34 +8,62 @@ def _mirror_file(i, dirname, user, tid, filename, args=None):
 	if not os.path.isdir('%s/%s' % (dirname, user)):
 		os.makedirs('%s/%s' % (dirname, user))
 
-	host = i.split('/')[2]
+	## dummy RsHttp call
+	http = RsHttp('localhost', follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
+
+	host, port, ssl, url = http.parse_url(i)
+	http = RsHttp(host, ssl=ssl, port=port, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
+
+	if not http.connect(): return None
+
 	uri = '/'.join(i.split('/')[3:])
 	ext = filename.split('.')[-1]
 
-	http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
-	while not http.connect():
-		# FIXME : what should happen on connect error ?
-		pass
+	if args.ext: filtre = str(args.ext).split(',')
+	else: filtre = []
+
+	hdr = http.head('/%s' % uri)
+
+	#print('header: %s' % hdr)
+	# extract second part of the Content-Type: line
+	value = [ str(i.split(':')[1]).strip() for i in hdr.split('\n') if i.lower().startswith('content-type:') ]
+
+	## server does not provide Content-Type info
+	if not len(value): return
+	## content type contains ';' (usually when html)
+	elif ';' in value[0]: value[0] = value[0].split(';')[0]
+	value = value[0].split('/')
+
+	## values don't match anything
+	if not value[0] in filtre and not value[1] in filtre: return
+
+	# XXX : mirror html files
+	## we actually don't save html files
+	## what about making automated save
+	## thru the wayback machine ?
+	if 'html' in value: return
+
+	## previous http object cannot be re-used
+	http = RsHttp(host, ssl=ssl, port=port, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
+
+	## do nothing if we cannot connect
+	if not http.connect(): return
+
 	hdr, res = http.get('/%s' % uri)
 	filehash = hashlib.md5(res).hexdigest()
 	if not os.path.exists('%s/data/%s.%s' % (dirname, filehash,ext)):
-		#print('mirrored: i: %s, dn: %s, user: %s, tid: %d, filename: %s, args: %s' % (i, dirname, user, int(tid), filename, str(args)))
 		with open('%s/data/%s.%s' % (dirname, filehash, ext), 'w') as h:
 			h.write(res)
 
-	#print('symlink %s/data/%s.%s -> %s/%s/%s-%s' % (dirname, filehash, ext, dirname, user, tid, filename))
-	os.symlink('%s/data/%s.%s' % (dirname, filehash, ext), '%s/%s/%s-%s' % (dirname, user, tid, filename))
+	if not os.path.exists('%s/%s-%s' % (user,tid,filename)):
+		os.symlink('../data/%s.%s' % (filehash, ext), '%s/%s-%s' % (user, tid, filename))
 
-	return filehash
 
 def mirrored_twat(twat, dirname=None, args=None):
 	# XXX needs to fix this
 	if not dirname: dirname = os.path.dirname(os.path.abspath(__file__))
 
 	user = twat['user'].lower()
-
-	if args.ext: filtre = str(args.ext).split(',')
-	else: filtre = []
 
 	soup = soupify(twat["text"])
 
@@ -46,8 +74,10 @@ def mirrored_twat(twat, dirname=None, args=None):
 				shrt = a['href']
 				deu = a.attrs['data-expanded-url'].encode('utf-8', 'replace')
 				ext = deu.split('.')[-1]
-				if ext in filtre:
-					filename = deu.split('/')[-1]
+				#if ext in filtre:
+				filename = deu.split('/')[-1]
+				## file was mirrored
+				if os.path.exists('%s/%s-%s' % (user, twat['id'], filename)):
 					twat['text'] = twat['text'].replace(shrt, '%s/%s-%s' % (user, twat['id'], filename))
 
 				## still replace shorten urls with expanded ones
@@ -78,9 +108,6 @@ def mirror_twat(twat, args=None, dirname=None):
 
 	#proxies = args.proxy if args.proxy else None
 
-	if args.ext: filtre = str(args.ext).split(',')
-	else: filtre = []
-
 	## soupify user's text
 	soup = soupify(twat["text"])
 
@@ -94,10 +121,9 @@ def mirror_twat(twat, args=None, dirname=None):
 				deu = a.attrs['data-expanded-url'].encode('utf-8', 'replace')
 				ext = deu.split('.')[-1]
 
-				if ext in filtre:
-					filename = deu.split('/')[-1]
-					if not os.path.exists('%s/%s/%s-%s' % (dirname, user, twat["id"], filename)):
-						filehash = _mirror_file(deu, dirname, user, twat['id'], filename, args)
+				filename = deu.split('/')[-1]
+				if not os.path.exists('%s/%s/%s-%s' % (dirname, user, twat["id"], filename)):
+					_mirror_file(deu, dirname, user, twat['id'], filename, args)
 
 	## mirror posted pictures
 	if 'images' in twat and 'i' in args.mirror:
@@ -114,7 +140,7 @@ def mirror_twat(twat, args=None, dirname=None):
 			ext = i.split('.')[-1]
 			#if not os.path.exists('%s/%s/%d/%s' % (dirname, user, int(twat['id']), filename)):
 			if not os.path.exists('%s/%s/%s-%s' % (dirname, user, twat['id'], filename)):
-				filehash = _mirror_file(i, dirname, user, twat['id'], filename, args)
+				_mirror_file(i, dirname, user, twat['id'], filename, args)
 
 	## deal with emojis
 	if 'e' in args.mirror:
