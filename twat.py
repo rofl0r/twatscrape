@@ -8,16 +8,21 @@ def _mirror_file(i, dirname, user, tid, filename, args=None):
 	if not os.path.isdir('%s/%s' % (dirname, user)):
 		os.makedirs('%s/%s' % (dirname, user))
 
-	host = i.split('/')[2]
+	## dummy RsHttp call
+	http = RsHttp('localhost', follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
+
+	host, port, ssl, url = http.parse_url(i)
+	http = RsHttp(host, ssl=ssl, port=port, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
+
+	## do nothing if we cannot connect
+	if not http.connect(): return None
+
 	uri = '/'.join(i.split('/')[3:])
 	ext = filename.split('.')[-1]
 
-	http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
-	while not http.connect():
-		# FIXME : what should happen on connect error ?
-		pass
 	hdr, res = http.get('/%s' % uri)
 	filehash = hashlib.md5(res).hexdigest()
+
 	if not os.path.exists('%s/data/%s.%s' % (dirname, filehash,ext)):
 		#print('mirrored: i: %s, dn: %s, user: %s, tid: %d, filename: %s, args: %s' % (i, dirname, user, int(tid), filename, str(args)))
 		with open('%s/data/%s.%s' % (dirname, filehash, ext), 'w') as h:
