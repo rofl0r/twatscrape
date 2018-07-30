@@ -58,8 +58,6 @@ def _mirror_file(i, dirname, user, tid, filename, args=None):
 	if not os.path.exists('%s/%s-%s' % (user,tid,filename)):
 		os.symlink('../data/%s.%s' % (filehash, ext), '%s/%s-%s' % (user, tid, filename))
 
-	return filehash
-
 def mirrored_twat(twat, dirname=None, args=None):
 	# XXX needs to fix this
 	if not dirname: dirname = os.path.dirname(os.path.abspath(__file__))
@@ -123,7 +121,7 @@ def mirror_twat(twat, args=None, dirname=None):
 
 				filename = deu.split('/')[-1]
 				if not os.path.exists('%s/%s/%s-%s' % (dirname, user, twat["id"], filename)):
-					filehash = _mirror_file(deu, dirname, user, twat['id'], filename, args)
+					_mirror_file(deu, dirname, user, twat['id'], filename, args)
 
 	## mirror posted pictures
 	if 'images' in twat and 'i' in args.mirror:
@@ -140,7 +138,7 @@ def mirror_twat(twat, args=None, dirname=None):
 			ext = i.split('.')[-1]
 			#if not os.path.exists('%s/%s/%d/%s' % (dirname, user, int(twat['id']), filename)):
 			if not os.path.exists('%s/%s/%s-%s' % (dirname, user, twat['id'], filename)):
-				filehash = _mirror_file(i, dirname, user, twat['id'], filename, args)
+				_mirror_file(i, dirname, user, twat['id'], filename, args)
 
 	## deal with emojis
 	if 'e' in args.mirror:
