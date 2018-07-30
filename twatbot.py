@@ -127,8 +127,12 @@ def htmlize_twat(twat):
 		## mirror images ?
 		if 'i' in args.mirror: 
 			for i in twat['images']:
-				#tw += '<a href="%s" title="open remote location"><img src="%s/%d/%s" width="%d%%"></a>' % (i, twat['user'].lower(), int(twat['id']), i.split('/')[-1], wdth)
-				tw += '<a href="%s" title="open remote location"><img src="%s/%s-%s" width="%d%%"></a>' % (i, twat['user'].lower(), twat['id'], i.split('/')[-1], wdth)
+				## link image to upstream url
+				if args.upstream_img:
+					tw += '<a href="%s" title="open remote location"><img src="%s/%s-%s" width="%d%%"></a>' % (i, twat['user'].lower(), twat['id'], i.split('/')[-1], wdth)
+				## only provide local links
+				else:
+					tw += '<a href="%s/%s-%s" title="open remote location"><img src="%s/%s-%s" width="%d%%"></a>' % (twat['user'].lower(), twat['id'], i.split('/')[-1], twat['user'].lower(), twat['id'], i.split('/')[-1], wdth)
 
 		## user wants to see the pictures
 		elif args.images > 0:
@@ -284,6 +288,7 @@ if __name__ == '__main__':
 	parser.add_argument('--mirror', help="mirror [i]mages, [f]iles and/or [e]mojis (default: None)", default='', type=str, required=False)
 	parser.add_argument('--ext', help="space-delimited extension to tech when mirroring files (default: None)", default=None, type=str, required=False)
 	parser.add_argument('--count', help="Fetch $count latests tweets (default: 20). Use -1 to fetch the whole timeline", default=0, type=int, required=False)
+	parser.add_argument('--upstream-img', help="make image point to the defaut url (default: 0)", default=0, type=int, required=False)
 
 	args = parser.parse_args()
 	args.proxy = [RocksockProxyFromURL(args.proxy)] if args.proxy else None
