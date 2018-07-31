@@ -5,7 +5,6 @@ import json
 import codecs
 import argparse
 import os.path
-import urllib
 import random
 from HTMLParser import HTMLParser
 
