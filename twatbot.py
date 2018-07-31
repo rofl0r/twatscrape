@@ -6,6 +6,7 @@ import codecs
 import argparse
 import os.path
 import urllib
+import random
 from HTMLParser import HTMLParser
 
 title="twatscrape"
@@ -156,6 +157,7 @@ def render_site():
 	html = []
 
 	all_tweets = []
+	random.shuffle(watchlist)
 	for user in watchlist:
 		all_tweets.extend(add_owner_to_list(user, tweets[user]))
 
