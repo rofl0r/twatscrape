@@ -343,6 +343,9 @@ def get_twats(user, search = False, proxies=None, count=0):
 
 		# fetch additional tweets that are not in the initial set of 20:
 		last_id = twats[len(twats)-1]["rid"] if "rid" in twats[len(twats)-1] else twats[len(twats)-1]["id"]
+		# rshttp objects cannot be re-used
+		http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
+		if not http.connect(): return
 		hdr, res = http.xhr_get("https://twitter.com/i/profiles/show/%s/timeline/tweets?include_available_features=1&include_entities=1&max_position=%s&reset_error_state=false"%(user, last_id))
 		if not "200 OK" in hdr: break
 		resp = json.loads(res)
