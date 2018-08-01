@@ -326,7 +326,7 @@ def get_twats(user, search = False, proxies=None, count=0):
 	while not http.connect():
 		# FIXME : what should happen on connect error ?
 		pass
-	hdr, res = http.get("/search?q=%s" % user)
+	hdr, res = http.get("/%s" % user)
 
 	twats = []
 
