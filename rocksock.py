@@ -219,6 +219,8 @@ class Rocksock():
 		return select.select([self.sock], [], [], 0)[0]
 
 	def send(self, buf):
+		if self.sock is None:
+			raise RocksockException(RS_E_NO_SOCKET)
 		return self.sock.sendall(buf)
 
 	def _get_ssl_exception_reason(self, e):
