@@ -79,15 +79,14 @@ def add_owner_to_list(user, lst):
 	return nl
 
 def html_header():
-	return	"""<!DOCTYPE html><html><head>
-<title>%s</title>
-<meta charset="utf-8"/>
-<meta http-equiv="refresh" content="%d" >
-<link rel='stylesheet' type='text/css' href='css/%s.css'></head><body>
+	header = """<!DOCTYPE html><html><head>
+<title>%s</title><meta charset="utf-8"/>""" % args.title
+	## autorefresh the page ?
+	if args.refresh: header += """<meta http-equiv="refresh" content="%d" >""" % args.refresh
+	header += """<link rel='stylesheet' type='text/css' href='css/%s.css'></head><body>""" % args.theme
 
-""" % (args.title, args.refresh, args.theme)
-
-
+	return header
+	
 def htmlize_twat(twat):
 	tw = '<div class="twat-container">'
 
@@ -274,7 +273,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--dir', help="where to save twats (default: current directory)", type=str, default=None, required=False)
 	parser.add_argument('--watchlist', help="specify watchlist to use (default: watchlist.txt)", type=str, default='watchlist.txt', required=False)
-	parser.add_argument('--refresh', help="refresh html page every X seconds (default: 300)", type=int, default=300, required=False)
+	parser.add_argument('--refresh', help="refresh html page every X seconds - 0: disabled (default: 0)", type=int, default=0, required=False)
 	parser.add_argument('--title', help="defile title (default: %s)" % title, type=str, default=title, required=False)
 	parser.add_argument('--theme', help="select theme (default: default)", default='default', type=str, required=False)
 	parser.add_argument('--iframe', help="show iframe (default: 1)", default=1, type=int, required=False)
