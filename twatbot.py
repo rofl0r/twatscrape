@@ -5,7 +5,7 @@ import json
 import codecs
 import argparse
 import os.path
-import urllib
+import random
 from HTMLParser import HTMLParser
 
 title="twatscrape"
@@ -79,15 +79,14 @@ def add_owner_to_list(user, lst):
 	return nl
 
 def html_header():
-	return	"""<!DOCTYPE html><html><head>
-<title>%s</title>
-<meta charset="utf-8"/>
-<meta http-equiv="refresh" content="%d" >
-<link rel='stylesheet' type='text/css' href='css/%s.css'></head><body>
+	header = """<!DOCTYPE html><html><head>
+<title>%s</title><meta charset="utf-8"/>""" % args.title
+	## autorefresh the page ?
+	if args.refresh: header += """<meta http-equiv="refresh" content="%d" >""" % args.refresh
+	header += """<link rel='stylesheet' type='text/css' href='css/%s.css'></head><body>""" % args.theme
 
-""" % (args.title, args.refresh, args.theme)
-
-
+	return header
+	
 def htmlize_twat(twat):
 	tw = '<div class="twat-container">'
 
@@ -127,8 +126,12 @@ def htmlize_twat(twat):
 		## mirror images ?
 		if 'i' in args.mirror: 
 			for i in twat['images']:
-				#tw += '<a href="%s" title="open remote location"><img src="%s/%d/%s" width="%d%%"></a>' % (i, twat['user'].lower(), int(twat['id']), i.split('/')[-1], wdth)
-				tw += '<a href="%s" title="open remote location"><img src="%s/%s-%s" width="%d%%"></a>' % (i, twat['user'].lower(), twat['id'], i.split('/')[-1], wdth)
+				## link image to upstream url
+				if args.upstream_img:
+					tw += '<a href="%s" title="open remote location"><img src="%s/%s-%s" width="%d%%"></a>' % (i, twat['user'].lower(), twat['id'], i.split('/')[-1], wdth)
+				## only provide local links
+				else:
+					tw += '<a href="%s/%s-%s" title="view local image"><img src="%s/%s-%s" width="%d%%"></a>' % (twat['user'].lower(), twat['id'], i.split('/')[-1], twat['user'].lower(), twat['id'], i.split('/')[-1], wdth)
 
 		## user wants to see the pictures
 		elif args.images > 0:
@@ -152,6 +155,7 @@ def render_site():
 	html = []
 
 	all_tweets = []
+	random.shuffle(watchlist)
 	for user in watchlist:
 		all_tweets.extend(add_owner_to_list(user, tweets[user]))
 
@@ -269,7 +273,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--dir', help="where to save twats (default: current directory)", type=str, default=None, required=False)
 	parser.add_argument('--watchlist', help="specify watchlist to use (default: watchlist.txt)", type=str, default='watchlist.txt', required=False)
-	parser.add_argument('--refresh', help="refresh html page every X seconds (default: 300)", type=int, default=300, required=False)
+	parser.add_argument('--refresh', help="refresh html page every X seconds - 0: disabled (default: 0)", type=int, default=0, required=False)
 	parser.add_argument('--title', help="defile title (default: %s)" % title, type=str, default=title, required=False)
 	parser.add_argument('--theme', help="select theme (default: default)", default='default', type=str, required=False)
 	parser.add_argument('--iframe', help="show iframe (default: 1)", default=1, type=int, required=False)
@@ -284,6 +288,7 @@ if __name__ == '__main__':
 	parser.add_argument('--mirror', help="mirror [i]mages, [f]iles and/or [e]mojis (default: None)", default='', type=str, required=False)
 	parser.add_argument('--ext', help="space-delimited extension to tech when mirroring files (default: None)", default=None, type=str, required=False)
 	parser.add_argument('--count', help="Fetch $count latests tweets (default: 20). Use -1 to fetch the whole timeline", default=0, type=int, required=False)
+	parser.add_argument('--upstream-img', help="make image point to the defaut url (default: 0)", default=0, type=int, required=False)
 
 	args = parser.parse_args()
 	args.proxy = [RocksockProxyFromURL(args.proxy)] if args.proxy else None
