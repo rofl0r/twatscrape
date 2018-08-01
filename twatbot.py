@@ -6,6 +6,7 @@ import codecs
 import argparse
 import os.path
 import random
+import sys
 from HTMLParser import HTMLParser
 
 title="twatscrape"
@@ -246,7 +247,8 @@ def scrape(search = False, result = 0):
 			memory[mem][user] = ticks - 86400
 
 		if (ticks - memory[mem][user]) > every:
-			print('scrapping %s (%s)' % (user, mem))
+			sys.stdout.write('scraping %s (%s) ...' % (user, mem))
+			sys.stdout.flush()
 			insert_pos = 0
 
 			twats = get_twats(user, search, proxies=args.proxy, count=args.count)
@@ -264,6 +266,7 @@ def scrape(search = False, result = 0):
 				#else: print('already known: %s, %s' % (user, str(t)))
 			ticks = time.time()
 			memory[mem][user] = ticks
+			print " done"
 
 	## if no new twat, return False
 	if result < 1: return False
