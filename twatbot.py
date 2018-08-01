@@ -126,33 +126,20 @@ def htmlize_twat(twat):
 
 		## mirror images ?
 		if 'i' in args.mirror: 
-			for i in twat['images']:
-				## link image to upstream url
-				if args.upstream_img:
-					## link image
-					if args.linkimg:
-						tw += '<a href="%s" title="open remote location"><img src="%s/%s-%s" width="%d%%"></a>' % (i, twat['user'].lower(), twat['id'], i.split('/')[-1], wdth)
-					else:
-						tw += '<img src="%s/%s-%s" width="%d%%">' % (twat['user'].lower(), twat['id'], i.split('/')[-1], wdth)
+			for x in xrange(0, len(twat['images'])):
+				i = twat['images'][x]
+				twat['images'][x] = '%s/%s-%s#%s' % (twat['user'].lower(), twat['id'], i.split('/')[-1], twat['images'][x])
 
-				## only provide local links
-				else:
-					if args.linkimg:
-						tw += '<a href="%s/%s-%s" title="view local image"><img src="%s/%s-%s" width="%d%%"></a>' % (twat['user'].lower(), twat['id'], i.split('/')[-1], twat['user'].lower(), twat['id'], i.split('/')[-1], wdth)
-					else:
-						tw += '<img src="%s/%s-%s" width="%d%%">' % (twat['user'].lower(), twat['id'], i.split('/')[-1], wdth)
-
-		## user wants to see unmirrored pictures
-		elif args.images > 0:
+		for i in twat['images']:
+			## embed images within <a></a>
 			if args.linkimg:
-				for i in twat['images']: tw += '<a href="%s"><img src="%s" width="%d%%"></a>'%(i, i, wdth)
+				tw += '<a href="%s" title="open in new window"><img src="%s" width="%d%%"></a>' % (i, i, wdth)
+			## non-embeded img
+			elif args.images:
+				tw += '<img src="%s" width="%d%%">' % (i, wdth)
+			## user only wants to see links to the img
 			else:
-				for i in twat['images']: tw += '<img src="%s" width="%d%%">'%(i, wdth)
-				
-		## or only show a link to them
-		else:
-			for i in twat['images']: tw += '<a href="%s">%s</a>'%(i, i)
-
+				tw += '<a href="%s">%s</a>' % (i,i)
 
 		tw += '</p>\n'
 
