@@ -126,22 +126,20 @@ def htmlize_twat(twat):
 
 		## mirror images ?
 		if 'i' in args.mirror: 
-			for i in twat['images']:
-				## link image to upstream url
-				if args.upstream_img:
-					tw += '<a href="%s" title="open remote location"><img src="%s/%s-%s" width="%d%%"></a>' % (i, twat['user'].lower(), twat['id'], i.split('/')[-1], wdth)
-				## only provide local links
-				else:
-					tw += '<a href="%s/%s-%s" title="view local image"><img src="%s/%s-%s" width="%d%%"></a>' % (twat['user'].lower(), twat['id'], i.split('/')[-1], twat['user'].lower(), twat['id'], i.split('/')[-1], wdth)
+			for x in xrange(0, len(twat['images'])):
+				i = twat['images'][x]
+				twat['images'][x] = '%s/%s-%s#%s' % (twat['user'].lower(), twat['id'], i.split('/')[-1], twat['images'][x])
 
-		## user wants to see the pictures
-		elif args.images > 0:
-			for i in twat['images']: tw += '<a href="%s"><img src="%s" width="%d%%"></a>'%(i, i, wdth)
-
-		## or only show a link to them
-		else:
-			for i in twat['images']: tw += '<a href="%s">%s</a>'%(i, i)
-
+		for i in twat['images']:
+			## embed images within <a></a>
+			if args.linkimg:
+				tw += '<a href="%s" title="open in new window"><img src="%s" width="%d%%"></a>' % (i, i, wdth)
+			## non-embeded img
+			elif args.images:
+				tw += '<img src="%s" width="%d%%">' % (i, wdth)
+			## user only wants to see links to the img
+			else:
+				tw += '<a href="%s">%s</a>' % (i,i)
 
 		tw += '</p>\n'
 
@@ -292,6 +290,7 @@ if __name__ == '__main__':
 	parser.add_argument('--ext', help="space-delimited extension to tech when mirroring files (default: None)", default=None, type=str, required=False)
 	parser.add_argument('--count', help="Fetch $count latests tweets (default: 20). Use -1 to fetch the whole timeline", default=0, type=int, required=False)
 	parser.add_argument('--upstream-img', help="make image point to the defaut url (default: 0)", default=0, type=int, required=False)
+	parser.add_argument('--linkimg', help="embed image withing <a> - default: 1", default=1, type=int, required=False)
 
 	args = parser.parse_args()
 	args.proxy = [RocksockProxyFromURL(args.proxy)] if args.proxy else None
