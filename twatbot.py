@@ -313,6 +313,9 @@ if __name__ == '__main__':
 		except:
 			tweets[user] = []
 
+		## resume/retry mirroring process
+		for t in tweets[user]: mirror_twat(t, args=args)
+
 	render_site()
 
 	while True:
