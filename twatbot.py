@@ -293,6 +293,7 @@ if __name__ == '__main__':
 	parser.add_argument('--ext', help="space-delimited extension to tech when mirroring files (default: None)", default=None, type=str, required=False)
 	parser.add_argument('--count', help="Fetch $count latests tweets (default: 20). Use -1 to fetch the whole timeline", default=0, type=int, required=False)
 	parser.add_argument('--upstream-img', help="make image point to the defaut url (default: 0)", default=0, type=int, required=False)
+	parser.add_argument('--linkimg', help="embed image withing <a> - default: 1", default=1, type=int, required=False)
 
 	args = parser.parse_args()
 	args.proxy = [RocksockProxyFromURL(args.proxy)] if args.proxy else None
