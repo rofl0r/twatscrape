@@ -36,8 +36,11 @@ def _mirror_file(i, dirname, user, tid, filename, args=None, content_type=None):
 		elif ';' in value[0]: value[0] = value[0].split(';')[0]
 		value = value[0].split('/')
 
-		## values don't match anything
-		if not value[0] in filtre and not value[1] in filtre: return
+		## when filtering extensions (--ext)
+		## if unset, everything is mirrored
+		if len(filtre):
+			## values don't match anything
+			if not value[0] in filtre and not value[1] in filtre: return
 
 		# XXX : mirror html files
 		## we actually don't save html files
