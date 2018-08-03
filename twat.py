@@ -12,7 +12,7 @@ def _mirror_file(i, dirname, user, tid, filename, args=None):
 	http = RsHttp('localhost', follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
 
 	host, port, ssl, url = http.parse_url(i)
-	http = RsHttp(host, ssl=ssl, port=port, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
+	http = RsHttp(host, ssl=ssl, port=port, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
 
 	## do nothing if we cannot connect
 	if not http.connect(): return None
@@ -44,7 +44,7 @@ def _mirror_file(i, dirname, user, tid, filename, args=None):
 	if 'html' in value: return
 
 	## previous http object cannot be re-used
-	http = RsHttp(host, ssl=ssl, port=port, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
+	http = RsHttp(host, ssl=ssl, port=port, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
 
 	## do nothing if we cannot connect
 	if not http.connect(): return
@@ -155,7 +155,7 @@ def mirror_twat(twat, args=None, dirname=None):
 					os.makedirs( emodir )
 
 				if not os.path.exists('%s/%s' % (emodir,filename)):
-					http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
+					http = RsHttp(host=host, port=443, timeout=15, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
 					while not http.connect():
 						# FIXME : what should happen on connect error ?
 						pass
@@ -172,7 +172,7 @@ def add_tweet(id, user, time, text):
 # twat_id looks like: '/username/status/id'
 def get_twat_timestamp(twat_id):
 	host = 'twitter.com'
-	http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, user_agent="curl/7.60.0")
+	http = RsHttp(host=host, port=443, timeout=15, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, user_agent="curl/7.60.0")
 	while not http.connect():
 		# FIXME : what should happen on connect error ?
 		pass
@@ -188,7 +188,7 @@ def get_twat_timestamp(twat_id):
 
 def get_twats_mobile(user, search = False, proxies=None):
 	host = 'mobile.twitter.com'
-	http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
+	http = RsHttp(host=host, port=443, timeout=15, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
 #	http.debugreq = True
 	while not http.connect():
 		# FIXME : what should happen on connect error ?
@@ -321,7 +321,7 @@ def extract_twats(soup, twats):
 # to the very first tweet.
 def get_twats(user, search = False, proxies=None, count=0):
 	host = 'twitter.com'
-	http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
+	http = RsHttp(host=host, port=443, timeout=15, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
 #	http.debugreq = True
 	while not http.connect():
 		# FIXME : what should happen on connect error ?
@@ -344,7 +344,7 @@ def get_twats(user, search = False, proxies=None, count=0):
 		# fetch additional tweets that are not in the initial set of 20:
 		last_id = twats[len(twats)-1]["rid"] if "rid" in twats[len(twats)-1] else twats[len(twats)-1]["id"]
 		# rshttp objects cannot be re-used
-		http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
+		http = RsHttp(host=host, port=443, timeout=15, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
 		if not http.connect(): return
 		hdr, res = http.xhr_get("https://twitter.com/i/profiles/show/%s/timeline/tweets?include_available_features=1&include_entities=1&max_position=%s&reset_error_state=false"%(user, last_id))
 		if not "200 OK" in hdr: break
