@@ -8,6 +8,7 @@ import os.path
 import random
 import sys
 from HTMLParser import HTMLParser
+from http2 import RsHttp
 
 title="twatscrape"
 tweets = dict()
@@ -251,7 +252,7 @@ def scrape(search = False, result = 0):
 			sys.stdout.flush()
 			insert_pos = 0
 
-			twats = get_twats(user, search, proxies=args.proxy, count=args.count)
+			twats = get_twats(user, search, proxies=args.proxy, count=args.count, http=twitter_rshttp)
 
 			for t in twats:
 				#if t["time"] == "0m" or t["time"] == "1m":
@@ -298,6 +299,9 @@ if __name__ == '__main__':
 
 	## markdown is not working, yet. Force to html.
 	args.md = 0
+
+	## global rshttp object used with get_twats()
+	twitter_rshttp = RsHttp('twitter.com', ssl=True, port=443, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
 
 	watchlist = [x.rstrip('\n') for x in open(args.watchlist, 'r').readlines()]
 	if args.reload > 0: watchlist_ticks = time.time()
