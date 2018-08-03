@@ -4,7 +4,7 @@ import json
 import os.path
 import hashlib
 
-def _mirror_file(i, dirname, user, tid, filename, args=None):
+def _mirror_file(i, dirname, user, tid, filename, args=None, content_type=None):
 	if not os.path.isdir('%s/%s' % (dirname, user)):
 		os.makedirs('%s/%s' % (dirname, user))
 
@@ -20,34 +20,36 @@ def _mirror_file(i, dirname, user, tid, filename, args=None):
 	uri = '/'.join(i.split('/')[3:])
 	ext = filename.split('.')[-1]
 
-	if args.ext: filtre = str(args.ext).split(',')
-	else: filtre = []
+	if content_type:
 
-	hdr = http.head('/%s' % uri)
+		if args.ext: filtre = str(args.ext).split(',')
+		else: filtre = []
 
-	# extract second part of the Content-Type: line
-	value = [ str(i.split(':')[1]).strip() for i in hdr.split('\n') if i.lower().startswith('content-type:') ]
+		hdr = http.head('/%s' % uri)
 
-	## server does not provide Content-Type info
-	if not len(value): return
-	# content type contains ';' (usually when html)
-	elif ';' in value[0]: value[0] = value[0].split(';')[0]
-	value = value[0].split('/')
+		# extract second part of the Content-Type: line
+		value = [ str(i.split(':')[1]).strip() for i in hdr.split('\n') if i.lower().startswith('content-type:') ]
 
-	## values don't match anything
-	if not value[0] in filtre and not value[1] in filtre: return
+		## server does not provide Content-Type info
+		if not len(value): return
+		# content type contains ';' (usually when html)
+		elif ';' in value[0]: value[0] = value[0].split(';')[0]
+		value = value[0].split('/')
 
-	# XXX : mirror html files
-	## we actually don't save html files
-	## what about making automated save
-	## thru the wayback machine ?
-	if 'html' in value: return
+		## values don't match anything
+		if not value[0] in filtre and not value[1] in filtre: return
 
-	## previous http object cannot be re-used
-	http = RsHttp(host, ssl=ssl, port=port, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
+		# XXX : mirror html files
+		## we actually don't save html files
+		## what about making automated save
+		## thru the wayback machine ?
+		if 'html' in value: return
 
-	## do nothing if we cannot connect
-	if not http.connect(): return
+		## previous http object cannot be re-used
+		http = RsHttp(host, ssl=ssl, port=port, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
+
+		## do nothing if we cannot connect
+		if not http.connect(): return
 
 	hdr, res = http.get('/%s' % uri)
 	filehash = hashlib.md5(res).hexdigest()
@@ -121,7 +123,7 @@ def mirror_twat(twat, args=None, dirname=None):
 
 				filename = deu.split('/')[-1]
 				if not os.path.exists('%s/%s/%s-%s' % (dirname, user, twat["id"], filename)):
-					_mirror_file(deu, dirname, user, twat['id'], filename, args)
+					_mirror_file(deu, dirname, user, twat['id'], filename, args, content_type=True)
 
 	## mirror posted pictures
 	if 'images' in twat and 'i' in args.mirror:
