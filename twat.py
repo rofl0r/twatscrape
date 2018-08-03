@@ -5,8 +5,8 @@ import os.path
 import hashlib
 
 def _mirror_file(i, dirname, user, tid, filename, args=None, content_type=None):
-	if not os.path.isdir('%s/%s' % (dirname, user)):
-		os.makedirs('%s/%s' % (dirname, user))
+	if not os.path.isdir('%s/users/%s' % (dirname, user)):
+		os.makedirs('%s/users/%s' % (dirname, user))
 
 	## dummy RsHttp call
 	http = RsHttp('localhost', follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
@@ -60,8 +60,8 @@ def _mirror_file(i, dirname, user, tid, filename, args=None, content_type=None):
 		with open('%s/data/%s.%s' % (dirname, filehash, ext), 'w') as h:
 			h.write(res)
 
-	if not os.path.exists('%s/%s-%s' % (user,tid,filename)):
-		os.symlink('../data/%s.%s' % (filehash, ext), '%s/%s-%s' % (user, tid, filename))
+	if not os.path.exists('users/%s/%s-%s' % (user,tid,filename)):
+		os.symlink('../../data/%s.%s' % (filehash, ext), 'users/%s/%s-%s' % (user, tid, filename))
 
 def mirrored_twat(twat, dirname=None, args=None):
 	# XXX needs to fix this
