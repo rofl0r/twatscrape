@@ -269,6 +269,10 @@ def scrape(search = False, result = 0):
 			memory[mem][user] = ticks
 			print " done"
 
+	## avoid fetching the whole timeline everytime
+	## XXX: easyfix
+	if args.count == -1: args.count = 0
+
 	## if no new twat, return False
 	if result < 1: return False
 	else: return True
