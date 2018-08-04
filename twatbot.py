@@ -131,10 +131,10 @@ def htmlize_twat(twat):
 			for i in twat['images']:
 				## link image to upstream url
 				if args.upstream_img:
-					tw += '<a href="%s" title="open remote location"><img src="%s/%s-%s" width="%d%%"></a>' % (i, twat['user'].lower(), twat['id'], i.split('/')[-1], wdth)
+					tw += '<a href="%s" title="open remote location"><img src="users/%s/%s-%s" width="%d%%"></a>' % (i, twat['user'].lower(), twat['id'], i.split('/')[-1], wdth)
 				## only provide local links
 				else:
-					tw += '<a href="%s/%s-%s" title="view local image"><img src="%s/%s-%s" width="%d%%"></a>' % (twat['user'].lower(), twat['id'], i.split('/')[-1], twat['user'].lower(), twat['id'], i.split('/')[-1], wdth)
+					tw += '<a href="%s/%s-%s" title="view local image"><img src="users/%s/%s-%s" width="%d%%"></a>' % (twat['user'].lower(), twat['id'], i.split('/')[-1], twat['user'].lower(), twat['id'], i.split('/')[-1], wdth)
 
 		## user wants to see the pictures
 		elif args.images > 0:
