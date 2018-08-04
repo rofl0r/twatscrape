@@ -20,15 +20,12 @@ running = True
 def build_socialbar(twat):
 	bar = '\n<div class="iconbar">'
 
-	for i in [ 'twitter', 'wayback', 'json' ]:
-		if len(bar): bar += '&nbsp;'
-		if i == 'twitter':
-			## not sure if this works (probably not)
-			bar += '<a target="_blank" href="https://api.twitter.com/1.1/statuses/retweets/%d.json" title="retweet">%s</a>' % (int(twat['id']), '&#128038;')
-		elif i == 'wayback':
-			bar += '<a target="_blank" href="https://web.archive.org/save/https://twitter.com/%s/status/%s" title="wayback">%s</a>' % (twat['user'], twat['id'], '&#9852;')
-		elif i == 'json':
-			bar += '<a target="_blank" href="%s">%s</a>' % (user_filename(twat['owner']), '&#128190;')
+	## twitter
+	bar += '<a target="_blank" href="https://api.twitter.com/1.1/statuses/retweets/%d.json" title="retweet">%s</a>' % (int(twat['id']), '&#128038;')
+	## wayback machine
+	bar += '<a target="_blank" href="https://web.archive.org/save/https://twitter.com/%s/status/%s" title="wayback">%s</a>' % (twat['user'], twat['id'], '&#9852;')
+	## json file
+	bar += '<a target="_blank" href="%s">%s</a>' % (user_filename(twat['owner']), '&#128190;')
 
 	bar += '</div>\n'
 	return bar
