@@ -95,7 +95,6 @@ def mirrored_twat(twat, args=None):
 				twat['text'] = twat['text'].replace(src, '/%s' % '/'.join(split[3:]))
 
 	return twat['text']
-				
 
 def mirror_twat(twat, args=None):
 
@@ -117,13 +116,11 @@ def mirror_twat(twat, args=None):
 	if 'f' in args.mirror:
 		for a in soup.body.find_all('a'):
 			if 'data-expanded-url' in a.attrs:
-				shrt = a['href']
-				deu = a.attrs['data-expanded-url']
-				ext = deu.split('.')[-1]
+				filename = a.attrs['data-expanded-url'].split('/')[-1]
 
-				filename = deu.split('/')[-1]
-				if not os.path.exists('users/%s/%s-%s' % (user, twat["id"], filename)):
-					_mirror_file(deu, user, twat['id'], filename, args, content_type=True)
+				## if filename isn't empty, and doesn't xists
+				if len(filename) and not os.path.exists('users/%s/%s-%s' % (user, twat['id'], filename)):
+					_mirror_file(a.attrs['data-expanded-url'], user, twat['id'], filename, args, content_type=True)
 
 	## mirror posted pictures
 	if 'images' in twat and 'i' in args.mirror:
