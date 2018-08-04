@@ -179,18 +179,18 @@ def render_site():
 
 		# when doing multipages
 		if args.tpp > 0 and len(html) >= args.tpp:
-			write_html(html=html,page=page, pages=pagetotal, individual=False)
+			write_html(html=html,page=page, pages=pagetotal)
 			page -= 1
 			html = []
 
 	if len(html):
 		if args.tpp > 0:
-			write_html(html=html, page=0, pages=pagetotal, individual=False)
+			write_html(html=html, page=0, pages=pagetotal)
 		else:
-			write_html(html=html, page=None, pages=None, individual=False)
+			write_html(html=html, page=None, pages=None)
 
 
-def write_html(html, page=None, pages=None, individual=False):
+def write_html(html, page=None, pages=None):
 	ht = [ html_header() ]
 	if page is not None and pages is not None:
 		div = []
@@ -216,11 +216,6 @@ def write_html(html, page=None, pages=None, individual=False):
 	[ ht.append(i) for i in html ]
 
 	ht.append("\n</body></html>")
-
-	if individual:
-		userdir = os.path.dirname(user_filename(individual))
-		#print('userdir: %s, filename: %s' % (userdir, filename))
-		filename = '%s/%s' % (userdir,filename)
 
 	with codecs.open(filename, 'w', 'utf-8') as h:
 		h.write("\n".join(ht))
