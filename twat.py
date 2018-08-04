@@ -122,7 +122,7 @@ def mirror_twat(twat, args=None):
 				ext = deu.split('.')[-1]
 
 				filename = deu.split('/')[-1]
-				if not os.path.exists('%s/%s-%s' % (user, twat["id"], filename)):
+				if not os.path.exists('users/%s/%s-%s' % (user, twat["id"], filename)):
 					_mirror_file(deu, user, twat['id'], filename, args, content_type=True)
 
 	## mirror posted pictures
@@ -138,7 +138,7 @@ def mirror_twat(twat, args=None):
 
 			filename = i.split('/')[-1]
 			ext = i.split('.')[-1]
-			if not os.path.exists('%s/%s-%s' % (user, twat['id'], filename)):
+			if not os.path.exists('users/%s/%s-%s' % (user, twat['id'], filename)):
 				_mirror_file(i, user, twat['id'], filename, args)
 
 	## deal with emojis
