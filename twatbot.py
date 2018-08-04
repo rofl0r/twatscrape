@@ -99,8 +99,6 @@ def htmlize_twat(twat):
 	else:
 		user_str = "<a target='_blank' href='https://twitter.com/%s'>%s</a> (RT <a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a>)" % \
 		(twat['owner'], twat['owner'], twat['user'], twat['id'], twat['user'])
-		#user_str = "<a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a> (RT <a target='_blank' href='https://twitter.com/%s'>%s</a>)" % \
-		#(twat["user"], twat["id"], twat["user"], twat["owner"], twat["owner"])
 
 	tw += '\n<div class="twat-title">'
 
@@ -165,9 +163,6 @@ def render_site():
 	all_tweets = remove_doubles(all_tweets)
 
 	if args.tpp > 0:
-		#pages = int( len(all_tweets) / args.tpp )
-		#inc = 0
-		#print('pages: %d, inc: %d' % (pages,inc))
 		pagetotal = int( len(all_tweets) / args.tpp )
 		page = pagetotal
 
@@ -179,18 +174,18 @@ def render_site():
 
 		# when doing multipages
 		if args.tpp > 0 and len(html) >= args.tpp:
-			write_html(html=html,page=page, pages=pagetotal, individual=False)
+			write_html(html=html,page=page, pages=pagetotal)
 			page -= 1
 			html = []
 
 	if len(html):
 		if args.tpp > 0:
-			write_html(html=html, page=0, pages=pagetotal, individual=False)
+			write_html(html=html, page=0, pages=pagetotal)
 		else:
-			write_html(html=html, page=None, pages=None, individual=False)
+			write_html(html=html, page=None, pages=None)
 
 
-def write_html(html, page=None, pages=None, individual=False):
+def write_html(html, page=None, pages=None):
 	ht = [ html_header() ]
 	if page is not None and pages is not None:
 		div = []
@@ -217,24 +212,12 @@ def write_html(html, page=None, pages=None, individual=False):
 
 	ht.append("\n</body></html>")
 
-	if individual:
-		userdir = os.path.dirname(user_filename(individual))
-		#print('userdir: %s, filename: %s' % (userdir, filename))
-		filename = '%s/%s' % (userdir,filename)
-
 	with codecs.open(filename, 'w', 'utf-8') as h:
 		h.write("\n".join(ht))
 
-def get_refresh_time(mem):
-	if mem == 'search': return args.search
-	elif mem == 'profile': return args.profile
-
-
-def scrape(search = False):
-	mem = 'search' if search else 'profile'
+def scrape():
 	ticks = time.time()
-	if not mem in memory: memory[mem] = {}
-	every = get_refresh_time(mem)
+	every = args.profile
 	for user in watchlist:
 		result = False
 		try:
@@ -243,17 +226,16 @@ def scrape(search = False):
 			tweets[user] = []
 
 		## if user hasn't been checked yet
-		if not user in memory[mem]:
-			#print('new user: %s (%s), every: %s' % (user, mem, every))
+		if not user in memory:
 			## add dummy value
-			memory[mem][user] = ticks - 86400
+			memory[user] = ticks - 86400
 
-		if (ticks - memory[mem][user]) > every:
-			sys.stdout.write('scraping %s (%s) ...' % (user, mem))
+		if (ticks - memory[user]) > every:
+			sys.stdout.write('scraping %s...' % user)
 			sys.stdout.flush()
 			insert_pos = 0
 
-			twats = get_twats(user, search, proxies=args.proxy, count=args.count, http=twitter_rshttp)
+			twats = get_twats(user, proxies=args.proxy, count=args.count, http=twitter_rshttp)
 
 			for t in twats:
 				#if t["time"] == "0m" or t["time"] == "1m":
@@ -264,10 +246,9 @@ def scrape(search = False):
 					insert_pos += 1
 					if args.mirror: mirror_twat(t, args=args)
 					print repr(t)
-					#render_site()
-				#else: print('already known: %s, %s' % (user, str(t)))
+
 			ticks = time.time()
-			memory[mem][user] = ticks
+			memory[user] = ticks
 			print " done"
 		if result: render_site()
 

@@ -90,12 +90,11 @@ def mirrored_twat(twat, args=None):
 	if 'e' in args.mirror:
 		for img in soup.body.find_all('img'):
 			if 'class' in img.attrs and 'Emoji' in img.attrs['class']:
-				src = img.attrs['src'].encode('utf-8', 'replace')
+				src = img.attrs['src']
 				split = src.split('/')
 				twat['text'] = twat['text'].replace(src, '/%s' % '/'.join(split[3:]))
 
 	return twat['text']
-				
 
 def mirror_twat(twat, args=None):
 
@@ -117,19 +116,17 @@ def mirror_twat(twat, args=None):
 	if 'f' in args.mirror:
 		for a in soup.body.find_all('a'):
 			if 'data-expanded-url' in a.attrs:
-				shrt = a['href']
-				deu = a.attrs['data-expanded-url'].encode('utf-8', 'replace')
-				ext = deu.split('.')[-1]
+				filename = a.attrs['data-expanded-url'].split('/')[-1]
 
-				filename = deu.split('/')[-1]
-				if not os.path.exists('users/%s/%s-%s' % (user, twat["id"], filename)):
-					_mirror_file(deu, user, twat['id'], filename, args, content_type=True)
+				## if filename isn't empty, and doesn't xists
+				if len(filename) and not os.path.exists('users/%s/%s-%s' % (user, twat['id'], filename)):
+					_mirror_file(a.attrs['data-expanded-url'], user, twat['id'], filename, args, content_type=True)
 
 	## mirror posted pictures
 	if 'images' in twat and 'i' in args.mirror:
 
 		for x in xrange(0, len(twat['images'])):
-			i = twat['images'][x].encode('utf-8', 'replace')
+			i = twat['images'][x]
 
 			if '?format=' in i:
 				i = i.split('&')[0]
@@ -142,28 +139,9 @@ def mirror_twat(twat, args=None):
 				_mirror_file(i, user, twat['id'], filename, args)
 
 	## deal with emojis
-	if 'e' in args.mirror:
-		for img in soup.body.find_all('img'):
-			if 'class' in img.attrs and 'Emoji' in img.attrs['class']:
-				src = img.attrs['src'].encode('utf-8', 'replace')
-				split = src.split('/')
-				host = split[2]
-				emodir = '/'.join(split[3: len(split) - 1])
-				filename = split[-1]
-				uri = '%s/%s' % (emodir, filename)
-
-				if not os.path.isdir(emodir):
-					os.makedirs( emodir )
-
-				if not os.path.exists('%s/%s' % (emodir,filename)):
-					http = RsHttp(host=host, port=443, timeout=15, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
-					while not http.connect():
-						# FIXME : what should happen on connect error ?
-						pass
-					hdr, res = http.get('/%s' % uri)
-					with open('%s/%s' % (emodir, filename), 'w') as h:
-						h.write(res)
-					print('saved emojis "%s"' % filename)
+	## XXX there's no need to mirror emojis, as the
+	## link contains the 'alt=""' attribute, allowing
+	## to display unicode icon. just as the socialbar thing
 
 
 def add_tweet(id, user, time, text):
@@ -187,7 +165,7 @@ def get_twat_timestamp(twat_id):
 					return int(span.attrs['data-time'])
 	return 0
 
-def get_twats_mobile(user, search = False, proxies=None):
+def get_twats_mobile(user, proxies=None):
 	host = 'mobile.twitter.com'
 	http = RsHttp(host=host, port=443, timeout=15, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
 #	http.debugreq = True
@@ -320,7 +298,7 @@ def extract_twats(soup, twats):
 # if 0 is specified, only the most recent page (containing typically 20 tweets)
 # is harvested. if -1 is specified, the entire timeline will be harvested back
 # to the very first tweet.
-def get_twats(user, search = False, proxies=None, count=0, http=None):
+def get_twats(user, proxies=None, count=0, http=None):
 	host = 'twitter.com'
 	if not http:
 		http = RsHttp(host=host, port=443, timeout=15, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
