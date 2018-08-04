@@ -231,12 +231,13 @@ def get_refresh_time(mem):
 	elif mem == 'profile': return args.profile
 
 
-def scrape(search = False, result = 0):
+def scrape(search = False):
 	mem = 'search' if search else 'profile'
 	ticks = time.time()
 	if not mem in memory: memory[mem] = {}
 	every = get_refresh_time(mem)
 	for user in watchlist:
+		result = False
 		try:
 			tweets[user] = json.loads(open(user_filename(user), 'r').read())
 		except:
@@ -258,7 +259,7 @@ def scrape(search = False, result = 0):
 			for t in twats:
 				#if t["time"] == "0m" or t["time"] == "1m":
 				if not in_twatlist(user, t):
-					result+=1
+					result = True
 					#t["time"] = get_twat_timestamp(t["id"])
 					add_twatlist(user, t, insert_pos)
 					insert_pos += 1
@@ -269,15 +270,11 @@ def scrape(search = False, result = 0):
 			ticks = time.time()
 			memory[mem][user] = ticks
 			print " done"
+		if result: render_site()
 
 	## avoid fetching the whole timeline everytime
 	## XXX: easyfix
 	if args.count == -1: args.count = 0
-
-	## if no new twat, return False
-	if result < 1: return False
-	else: return True
-
 
 def resume_retry_mirroring(watchlist):
 	start_time = time.time()
