@@ -9,6 +9,7 @@ import random
 import sys
 from HTMLParser import HTMLParser
 from http2 import RsHttp
+from threading import Thread
 
 title="twatscrape"
 tweets = dict()
@@ -277,6 +278,16 @@ def scrape(search = False, result = 0):
 	if result < 1: return False
 	else: return True
 
+
+def resume_retry_mirroring(watchlist):
+	start_time = time.time()
+	print('resumt_retry_mirroring: thread started')
+	for user in watchlist:
+		for t in tweets[user]:
+			mirror_twat(t, args=args)
+	elapsed_time = time.time() - start_time
+	print('resumt_retry_mirroring: end of thread, duration: %s' % time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
+
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--dir', help="where to save twats (default: current directory)", type=str, default=None, required=False)
@@ -298,6 +309,7 @@ if __name__ == '__main__':
 	parser.add_argument('--count', help="Fetch $count latests tweets (default: 20). Use -1 to fetch the whole timeline", default=0, type=int, required=False)
 	parser.add_argument('--upstream-img', help="make image point to the defaut url (default: 0)", default=0, type=int, required=False)
 	parser.add_argument('--linkimg', help="embed image withing <a> - default: 1", default=1, type=int, required=False)
+	parser.add_argument('--resume', help="resume/retry mirroring at startup - default: 0", default=None, type=int, required=False)
 
 	args = parser.parse_args()
 	args.proxy = [RocksockProxyFromURL(args.proxy)] if args.proxy else None
@@ -318,9 +330,10 @@ if __name__ == '__main__':
 		except:
 			tweets[user] = []
 
-		## resume/retry mirroring process
-		if args.mirror:
-			for t in tweets[user]: mirror_twat(t, args=args)
+	## resume/retry mirroring process
+	if args.resume and args.mirror:
+		thread_resume_mirroring = Thread(target=resume_retry_mirroring, args=(watchlist,))
+		thread_resume_mirroring.start()
 
 	render_site()
 
@@ -330,7 +343,5 @@ if __name__ == '__main__':
 			watchlist_ticks = time.time()
 	
 		## scrape profile
-		if scrape():
-			render_site()
-
+		scrape()
 		time.sleep(1)
