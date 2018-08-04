@@ -139,28 +139,9 @@ def mirror_twat(twat, args=None):
 				_mirror_file(i, user, twat['id'], filename, args)
 
 	## deal with emojis
-	if 'e' in args.mirror:
-		for img in soup.body.find_all('img'):
-			if 'class' in img.attrs and 'Emoji' in img.attrs['class']:
-				src = img.attrs['src']
-				split = src.split('/')
-				host = split[2]
-				emodir = '/'.join(split[3: len(split) - 1])
-				filename = split[-1]
-				uri = '%s/%s' % (emodir, filename)
-
-				if not os.path.isdir(emodir):
-					os.makedirs( emodir )
-
-				if not os.path.exists('%s/%s' % (emodir,filename)):
-					http = RsHttp(host=host, port=443, timeout=15, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
-					while not http.connect():
-						# FIXME : what should happen on connect error ?
-						pass
-					hdr, res = http.get('/%s' % uri)
-					with open('%s/%s' % (emodir, filename), 'w') as h:
-						h.write(res)
-					print('saved emojis "%s"' % filename)
+	## XXX there's no need to mirror emojis, as the
+	## link contains the 'alt=""' attribute, allowing
+	## to display unicode icon. just as the socialbar thing
 
 
 def add_tweet(id, user, time, text):
