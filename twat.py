@@ -90,7 +90,7 @@ def mirrored_twat(twat, args=None):
 	if 'e' in args.mirror:
 		for img in soup.body.find_all('img'):
 			if 'class' in img.attrs and 'Emoji' in img.attrs['class']:
-				src = img.attrs['src'].encode('utf-8', 'replace')
+				src = img.attrs['src']
 				split = src.split('/')
 				twat['text'] = twat['text'].replace(src, '/%s' % '/'.join(split[3:]))
 
@@ -118,7 +118,7 @@ def mirror_twat(twat, args=None):
 		for a in soup.body.find_all('a'):
 			if 'data-expanded-url' in a.attrs:
 				shrt = a['href']
-				deu = a.attrs['data-expanded-url'].encode('utf-8', 'replace')
+				deu = a.attrs['data-expanded-url']
 				ext = deu.split('.')[-1]
 
 				filename = deu.split('/')[-1]
@@ -129,7 +129,7 @@ def mirror_twat(twat, args=None):
 	if 'images' in twat and 'i' in args.mirror:
 
 		for x in xrange(0, len(twat['images'])):
-			i = twat['images'][x].encode('utf-8', 'replace')
+			i = twat['images'][x]
 
 			if '?format=' in i:
 				i = i.split('&')[0]
@@ -145,7 +145,7 @@ def mirror_twat(twat, args=None):
 	if 'e' in args.mirror:
 		for img in soup.body.find_all('img'):
 			if 'class' in img.attrs and 'Emoji' in img.attrs['class']:
-				src = img.attrs['src'].encode('utf-8', 'replace')
+				src = img.attrs['src']
 				split = src.split('/')
 				host = split[2]
 				emodir = '/'.join(split[3: len(split) - 1])
