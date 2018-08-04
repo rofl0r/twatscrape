@@ -80,8 +80,8 @@ def mirrored_twat(twat, dirname=None, args=None):
 				ext = deu.split('.')[-1]
 				filename = deu.split('/')[-1]
 				## file was mirrored
-				if os.path.exists('%s/%s-%s' % (user, twat['id'], filename)):
-					twat['text'] = twat['text'].replace(shrt, '%s/%s-%s' % (user, twat['id'], filename))
+				if os.path.exists('users/%s/%s-%s' % (user, twat['id'], filename)):
+					twat['text'] = twat['text'].replace(shrt, 'users/%s/%s-%s' % (user, twat['id'], filename))
 
 				## still replace shorten urls with expanded ones
 				else:
