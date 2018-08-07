@@ -1,5 +1,6 @@
 from http2 import RsHttp
 from soup_parser import soupify
+import time
 import json
 import os.path
 import hashlib
@@ -242,7 +243,7 @@ def get_style_tag(tag, styles):
 		if tg.strip() == tag: return s.strip()
 	return None
 
-def extract_twats(soup, twats):
+def extract_twats(soup, twats, timestamp):
 	for div in soup.body.find_all('div'): # , attrs={'class':'tweet  '}):
 		if 'class' in div.attrs and 'tweet' in div.attrs["class"]:
 
@@ -305,7 +306,7 @@ def extract_twats(soup, twats):
 
 
 			if tweet_user != None and tweet_id:
-				vals = {'id':tweet_id, 'user':tweet_user, 'time':tweet_time, 'text':tweet_text}
+				vals = {'id':tweet_id, 'user':tweet_user, 'time':tweet_time, 'text':tweet_text, 'fetched':timestamp}
 				if retweet_id: vals['rid'] = retweet_id
 				if card_url: vals['curl'] = card_url
 				if images: vals['images'] = images
@@ -325,6 +326,11 @@ def get_twats(user, search = False, proxies=None, count=0, http=None):
 	if not http:
 		http = RsHttp(host=host, port=443, timeout=15, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
 #	http.debugreq = True
+
+	# make sure all tweets fetched in a single invocation get the same timestamp,
+	# otherwise ordering might become messed up, once we sort them
+	timestamp = int(time.time())
+
 	while not http.connect():
 		# FIXME : what should happen on connect error ?
 		pass
@@ -339,7 +345,7 @@ def get_twats(user, search = False, proxies=None, count=0, http=None):
 
 	while True:
 		soup = soupify (res)
-		twats = extract_twats(soup, twats)
+		twats = extract_twats(soup, twats, timestamp)
 		if count == 0 or break_loop or (count != -1 and len(twats) >= count):
 			break
 

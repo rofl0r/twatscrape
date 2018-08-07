@@ -169,7 +169,7 @@ def render_site():
 	for user in watchlist:
 		all_tweets.extend(add_owner_to_list(user, tweets[user]))
 
-	all_tweets = sorted(all_tweets, key = lambda x : x["time"], reverse=True)
+	all_tweets = sorted(all_tweets, key = lambda x : (x['fetched'] if 'rid' in x and 'fetched' in x else x["time"], x['time']), reverse=True)
 	all_tweets = remove_doubles(all_tweets)
 
 	if args.tpp > 0:
