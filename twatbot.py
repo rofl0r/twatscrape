@@ -109,7 +109,8 @@ def htmlize_twat(twat):
 	## add social bar
 	if args.social: tw += build_socialbar(twat)
 
-	tw += '%s&nbsp;-&nbsp;%s' % (user_str, format_time(twat["time"]))
+	time_str = 'unknown' if twat["time"] == 0 else format_time(twat["time"])
+	tw += '%s&nbsp;-&nbsp;%s' % (user_str, time_str)
 
 	tw += '\n</div>\n'
 	## link to mirrored filed, emojis and such
@@ -142,6 +143,16 @@ def htmlize_twat(twat):
 				tw += '<a href="%s" title="%s"><img src="%s" width="%d%%"></a>' % (href, title, img_path, wdth)
 
 		tw += '</p>\n'
+
+	if 'quote' in twat:
+		pseudo_twat = {
+			'user' : twat['quote']['user'],
+			'owner' : twat['quote']['user'],
+			'id' : twat['quote']['id'],
+			'text' : twat['quote']['text'],
+			'time' : 0
+		}
+		tw += htmlize_twat(pseudo_twat)
 
 	tw += '</div>\n'
 
