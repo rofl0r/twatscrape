@@ -45,6 +45,8 @@ def strip_tags(html):
 	s.feed(html)
 	return s.get_data()
 
+def file_exists(fn):
+	return os.path.exists(fn)
 
 def user_filename(user):
 	user = user.lower()
@@ -125,28 +127,19 @@ def htmlize_twat(twat):
 		if len(twat['images']) > 1: wdth = (100/len(twat['images'])) - 1
 		else: wdth = 100
 
-		## mirror images ?
-		if 'i' in args.mirror: 
-			for i in twat['images']:
+		for i in twat['images']:
+			if args.images <= 0:
+				tw += '<a href="%s">%s</a>'%(i, i)
+			else:
 				img_path = "users/%s/%s-%s" % (twat['user'].lower(), twat['id'], i.split('/')[-1])
+				if not file_exists(img_path): img_path = i
 				if args.upstream_img:
-					## link image to upstream url
 					href = i
-					title = "open remote location"
+					title = "view remote image"
 				else:
-					## only provide local links
 					href = img_path
 					title = "view local image"
 				tw += '<a href="%s" title="%s"><img src="%s" width="%d%%"></a>' % (href, title, img_path, wdth)
-
-		## user wants to see the pictures
-		elif args.images > 0:
-			for i in twat['images']: tw += '<a href="%s"><img src="%s" width="%d%%"></a>'%(i, i, wdth)
-
-		## or only show a link to them
-		else:
-			for i in twat['images']: tw += '<a href="%s">%s</a>'%(i, i)
-
 
 		tw += '</p>\n'
 
