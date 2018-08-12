@@ -119,7 +119,7 @@ def mirror_twat(twat, args=None):
 		for a in soup.body.find_all('a'):
 			if 'data-expanded-url' in a.attrs:
 				shrt = a['href']
-				deu = a.attrs['data-expanded-url'].encode('utf-8', 'replace')
+				deu = a.attrs['data-expanded-url']
 				ext = deu.split('.')[-1]
 
 				filename = deu.split('/')[-1]
