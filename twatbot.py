@@ -318,6 +318,14 @@ if __name__ == '__main__':
 	parser.add_argument('--resume', help="resume/retry mirroring at startup - default: 0", default=None, type=int, required=False)
 
 	args = parser.parse_args()
+
+	if args.dir:
+		if not os.path.exists(args.dir):
+			os.makedirs(args.dir)
+		if not os.path.exists(args.dir + '/css'):
+			os.symlink(os.getcwd() + '/css', args.dir + '/css')
+		os.chdir(args.dir)
+
 	args.proxy = [RocksockProxyFromURL(args.proxy)] if args.proxy else None
 
 	## markdown is not working, yet. Force to html.
