@@ -335,11 +335,14 @@ def extract_twats(soup, twats, timestamp):
 					next_twat = twats[len(twats)-1]
 					vals['next'] = next_twat['id']
 					if retweet_id:
+						pr_time = 0
 						if 'rid' in next_twat:
-							pr_time = next_twat['rid_time'] - 1
+							if 'rid_time' in next_twat:
+								pr_time = next_twat['rid_time'] - 1
 						else:
 							pr_time = next_twat['time'] - 1
-						vals['rid_time'] = pr_time
+
+						if pr_time != 0: vals['rid_time'] = pr_time
 
 				twats.append(vals)
 #				add_tweet(tweet_id, tweet_user, tweet_time, tweet_text)
