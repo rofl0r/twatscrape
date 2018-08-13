@@ -5,28 +5,36 @@ import json
 import os.path
 import hashlib
 
-def _mirror_file(i, user, tid, filename, args=None, content_type=None):
+def _split_url(url):
+	http = RsHttp('localhost')
+	host, port, ssl, uri = http.parse_url(url)
+	result = {'host':host, 'port':port, 'ssl':ssl, 'uri':uri}
+	aa = uri.split('#')
+	if len(aa) > 1:
+		result['anchor'] = aa[1]
+	else:
+		aa = uri.split('/')
+		if aa[-1] != "" and '.' in aa[-1]:
+			result['filename'] = aa[-1]
+	return result
+
+def _mirror_file(url_components, user, tid, args=None, content_type=None):
 	if not os.path.isdir('users/%s' % user):
 		os.makedirs('users/%s' % user)
 
-	## dummy RsHttp call
-	http = RsHttp('localhost', follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
-
-	host, port, ssl, url = http.parse_url(i)
-	http = RsHttp(host, ssl=ssl, port=port, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
+	http = RsHttp(url_components['host'], ssl=url_components['ssl'], port=url_components['port'], keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
 
 	## do nothing if we cannot connect
 	if not http.connect(): return None
 
-	uri = '/'.join(i.split('/')[3:])
-	ext = filename.split('.')[-1]
+	ext = url_components['filename'].split('.')[-1]
 
 	if content_type:
 
 		if args.ext: filtre = str(args.ext).split(',')
 		else: filtre = []
 
-		hdr = http.head('/%s' % uri)
+		hdr = http.head(url_components['uri'])
 
 		# extract second part of the Content-Type: line
 		value = [ str(i.split(':')[1]).strip() for i in hdr.split('\n') if i.lower().startswith('content-type:') ]
@@ -50,19 +58,24 @@ def _mirror_file(i, user, tid, filename, args=None, content_type=None):
 		if 'html' in value: return
 
 		## previous http object cannot be re-used
-		http = RsHttp(host, ssl=ssl, port=port, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
+		http = RsHttp(url_components['host'], ssl=url_components['ssl'], port=url_components['port'], keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
 
 		## do nothing if we cannot connect
 		if not http.connect(): return
 
-	hdr, res = http.get('/%s' % uri)
+	hdr, res = http.get(url_components['uri'])
+	if res == '' and hdr != "":
+		# print http error code when things go wrong
+		print "%s%s : %s" % (url_components['host'], url_components['uri'], hdr.split('\n')[0])
+		return
+
 	filehash = hashlib.md5(res).hexdigest()
-	if not os.path.exists('data/%s.%s' % (filehash,ext)):
+	if not os.path.exists('data/%s.%s' % (filehash, ext)):
 		with open('data/%s.%s' % (filehash, ext), 'w') as h:
 			h.write(res)
 
-	if not os.path.exists('users/%s/%s-%s' % (user,tid,filename)):
-		os.symlink('../../data/%s.%s' % (filehash, ext), 'users/%s/%s-%s' % (user, tid, filename))
+	if not os.path.exists('users/%s/%s-%s' % (user,tid,url_components['filename'])):
+		os.symlink('../../data/%s.%s' % (filehash, ext), 'users/%s/%s-%s' % (user, tid, url_components['filename']))
 
 def mirrored_twat(twat, args=None):
 	# XXX needs to fix this
@@ -120,11 +133,13 @@ def mirror_twat(twat, args=None):
 			if 'data-expanded-url' in a.attrs:
 				shrt = a['href']
 				deu = a.attrs['data-expanded-url']
-				ext = deu.split('.')[-1]
+				url_components = _split_url(deu)
+				if not 'filename' in url_components: continue
 
-				filename = deu.split('/')[-1]
-				if not os.path.exists('users/%s/%s-%s' % (user, twat["id"], filename)):
-					_mirror_file(deu, user, twat['id'], filename, args, content_type=True)
+				ext = url_components['filename'].split('.')[-1]
+
+				if not os.path.exists('users/%s/%s-%s' % (user, twat["id"], url_components['filename'])):
+					_mirror_file(url_components, user, twat['id'], args, content_type=True)
 
 	## mirror posted pictures
 	if 'images' in twat and 'i' in args.mirror:
@@ -137,10 +152,11 @@ def mirror_twat(twat, args=None):
 				fmt = i.split('=')[1]
 				i = '%s.%s' % (i.split('?')[0], fmt)
 
-			filename = i.split('/')[-1]
-			ext = i.split('.')[-1]
-			if not os.path.exists('users/%s/%s-%s' % (user, twat['id'], filename)):
-				_mirror_file(i, user, twat['id'], filename, args)
+			url_components = _split_url(i)
+			if not 'filename' in url_components: continue
+			ext = url_components['filename'].split('.')[-1]
+			if not os.path.exists('users/%s/%s-%s' % (user, twat['id'], url_components['filename'])):
+				_mirror_file(url_components, user, twat['id'], args)
 
 	## deal with emojis
 	if 'e' in args.mirror:
