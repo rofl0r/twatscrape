@@ -272,6 +272,7 @@ def extract_twats(soup, twats, timestamp):
 			card_url = None
 			images = None
 			quote_tweet = None
+			pinned = ('user-pinned' in div.attrs["class"])
 
 			tweet_id = div.attrs["data-tweet-id"]
 			tweet_user = div.attrs["data-screen-name"]
@@ -327,6 +328,18 @@ def extract_twats(soup, twats, timestamp):
 				if card_url: vals['curl'] = card_url
 				if images: vals['images'] = images
 				if quote_tweet: vals['quote'] = quote_tweet
+				if pinned: vals['pinned'] = 1
+				# save order of timeline by storing id of next twat
+				# next is equivalent to the next-newer twat.
+				if len(twats) and not 'pinned' in twats[len(twats)-1]:
+					next_twat = twats[len(twats)-1]
+					vals['next'] = next_twat['id']
+					if retweet_id:
+						if 'rid' in next_twat:
+							pr_time = next_twat['rid_time'] - 1
+						else:
+							pr_time = next_twat['time'] - 1
+						vals['rid_time'] = pr_time
 
 				twats.append(vals)
 #				add_tweet(tweet_id, tweet_user, tweet_time, tweet_text)

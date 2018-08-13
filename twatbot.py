@@ -161,6 +161,11 @@ def htmlize_twat(twat):
 def markdownize_twat(twat):
 	return True
 
+def retweet_time(twat):
+	if 'rid_time' in twat: return twat['rid_time']
+	if 'fetched' in twat: return twat['fetched']
+	return twat['time']
+
 def render_site():
 	html = []
 
@@ -169,7 +174,7 @@ def render_site():
 	for user in watchlist:
 		all_tweets.extend(add_owner_to_list(user, tweets[user]))
 
-	all_tweets = sorted(all_tweets, key = lambda x : (x['fetched'] if 'rid' in x and 'fetched' in x else x["time"], x['time']), reverse=True)
+	all_tweets = sorted(all_tweets, key = lambda x : (retweet_time(x) if 'rid' in x else x["time"], x['time']), reverse=True)
 	all_tweets = remove_doubles(all_tweets)
 
 	if args.tpp > 0:
