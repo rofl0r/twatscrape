@@ -296,14 +296,14 @@ def scrape(search = False):
 
 def resume_retry_mirroring(watchlist):
 	start_time = time.time()
-	print('resumt_retry_mirroring: thread started')
+	print('resume_retry_mirroring: thread started')
 	for user in watchlist:
 		if not running: break
 		for t in tweets[user]:
 			if not running: break
 			mirror_twat(t, args=args)
 	elapsed_time = time.time() - start_time
-	print('resumt_retry_mirroring: end of thread, duration: %s' % time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
+	print('resume_retry_mirroring: end of thread, duration: %s' % time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
