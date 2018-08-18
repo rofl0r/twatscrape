@@ -88,17 +88,14 @@ def mirrored_twat(twat, args=None):
 	if 'f' in args.mirror:
 		for a in soup.body.find_all('a'):
 			if 'data-expanded-url' in a.attrs:
-				shrt = a['href']
-				deu = a.attrs['data-expanded-url']
-				ext = deu.split('.')[-1]
-				filename = deu.split('/')[-1]
+				filename = a.attrs['data-expanded-url'].split('/')[-1]
 				## file was mirrored
 				if os.path.exists('users/%s/%s-%s' % (user, twat['id'], filename)):
-					twat['text'] = twat['text'].replace(shrt, 'users/%s/%s-%s' % (user, twat['id'], filename))
+					twat['text'] = twat['text'].replace(a['href'], 'users/%s/%s-%s' % (user, twat['id'], filename))
 
 				## still replace shorten urls with expanded ones
 				else:
-					twat['text'] = twat['text'].replace(shrt, deu)
+					twat['text'] = twat['text'].replace(a['href'], a.attrs['data-expanded-url'])
 
 	# emojis
 	if 'e' in args.mirror:
