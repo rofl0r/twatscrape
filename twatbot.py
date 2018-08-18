@@ -1,4 +1,4 @@
-from twat import get_twats, get_twat_timestamp, mirror_twat, mirrored_twat
+from twat import get_twats, get_twat_timestamp, mirror_twat
 from rocksock import RocksockProxyFromURL
 import time
 import json
@@ -10,11 +10,41 @@ import sys
 from HTMLParser import HTMLParser
 from http2 import RsHttp
 from threading import Thread
+from soup_parser import soupify
 
 title="twatscrape"
 tweets = dict()
 memory = {}
 running = True
+
+def sanitized_twat(twat, args=None):
+
+	user = twat['user'].lower()
+
+	soup = soupify(twat["text"])
+
+	# linked files
+	if 'f' in args.mirror:
+		for a in soup.body.find_all('a'):
+			if 'data-expanded-url' in a.attrs:
+				filename = a.attrs['data-expanded-url'].split('/')[-1]
+				## file was mirrored
+				if os.path.exists('users/%s/%s-%s' % (user, twat['id'], filename)):
+					twat['text'] = twat['text'].replace(a['href'], 'users/%s/%s-%s' % (user, twat['id'], filename))
+
+				## still replace shorten urls with expanded ones
+				else:
+					twat['text'] = twat['text'].replace(a['href'], a.attrs['data-expanded-url'])
+
+	# emojis
+	if 'e' in args.mirror:
+		for img in soup.body.find_all('img'):
+			if 'class' in img.attrs and 'Emoji' in img.attrs['class']:
+				src = img.attrs['src'].encode('utf-8', 'replace')
+				split = src.split('/')
+				twat['text'] = twat['text'].replace(src, '/%s' % '/'.join(split[3:]))
+
+	return twat['text']
 
 
 def build_socialbar(twat):
@@ -114,7 +144,7 @@ def htmlize_twat(twat):
 
 	tw += '\n</div>\n'
 	## link to mirrored filed, emojis and such
-	if args.mirror: twat['text'] = mirrored_twat(twat, args=args)
+	if args.mirror: twat['text'] = sanitized_twat(twat, args=args)
 	## strip html ?
 	if args.nohtml: twat['text']= strip_tags(twat['text'])
 		

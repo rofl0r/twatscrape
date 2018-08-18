@@ -77,37 +77,6 @@ def _mirror_file(url_components, user, tid, args=None, content_type=None):
 	if not os.path.exists('users/%s/%s-%s' % (user,tid,url_components['filename'])):
 		os.symlink('../../data/%s.%s' % (filehash, ext), 'users/%s/%s-%s' % (user, tid, url_components['filename']))
 
-def mirrored_twat(twat, args=None):
-	# XXX needs to fix this
-
-	user = twat['user'].lower()
-
-	soup = soupify(twat["text"])
-
-	# linked files
-	if 'f' in args.mirror:
-		for a in soup.body.find_all('a'):
-			if 'data-expanded-url' in a.attrs:
-				filename = a.attrs['data-expanded-url'].split('/')[-1]
-				## file was mirrored
-				if os.path.exists('users/%s/%s-%s' % (user, twat['id'], filename)):
-					twat['text'] = twat['text'].replace(a['href'], 'users/%s/%s-%s' % (user, twat['id'], filename))
-
-				## still replace shorten urls with expanded ones
-				else:
-					twat['text'] = twat['text'].replace(a['href'], a.attrs['data-expanded-url'])
-
-	# emojis
-	if 'e' in args.mirror:
-		for img in soup.body.find_all('img'):
-			if 'class' in img.attrs and 'Emoji' in img.attrs['class']:
-				src = img.attrs['src'].encode('utf-8', 'replace')
-				split = src.split('/')
-				twat['text'] = twat['text'].replace(src, '/%s' % '/'.join(split[3:]))
-
-	return twat['text']
-				
-
 def mirror_twat(twat, args=None):
 
 	if 'owner' in twat:
