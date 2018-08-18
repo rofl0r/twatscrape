@@ -272,6 +272,8 @@ def extract_twats(soup, twats, timestamp):
 			card_url = None
 			images = None
 			quote_tweet = None
+			video = False
+
 			pinned = ('user-pinned' in div.attrs["class"])
 
 			tweet_id = div.attrs["data-tweet-id"]
@@ -309,6 +311,7 @@ def extract_twats(soup, twats, timestamp):
 				for dv in card_div.find_all('div', attrs={'class':'AdaptiveMedia-photoContainer'}):
 					images.append(dv.attrs["data-image-url"])
 				for dv in card_div.find_all('div', attrs={'class':'PlayableMedia-player'}):
+					video = True
 					bg = get_style_tag('background-image', dv.attrs["style"])
 					if bg.startswith("url('"):
 						bg = bg[5:-2]
@@ -329,6 +332,7 @@ def extract_twats(soup, twats, timestamp):
 				if images: vals['images'] = images
 				if quote_tweet: vals['quote'] = quote_tweet
 				if pinned: vals['pinned'] = 1
+				if video: vals['video'] = 1
 				# save order of timeline by storing id of next twat
 				# next is equivalent to the next-newer twat.
 				if len(twats) and not 'pinned' in twats[len(twats)-1]:
