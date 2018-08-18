@@ -134,13 +134,22 @@ def htmlize_twat(twat):
 			else:
 				img_path = "users/%s/%s-%s" % (twat['user'].lower(), twat['id'], i.split('/')[-1])
 				if not file_exists(img_path): img_path = i
+				span_or_div = "span"
+				img_class = "img"
+				div_class = ""
 				if args.upstream_img:
 					href = i
 					title = "view remote image"
+				elif 'video' in twat or 'ext_tw_video_thumb' in i:
+					href = "https://twitter.com/i/status/" + twat['id']
+					title = "view remote video"
+					img_class = ""
+					div_class = "video-thumbnail"
+					span_or_div = "div"
 				else:
 					href = img_path
 					title = "view local image"
-				tw += '<a href="%s" title="%s"><img src="%s" width="%d%%"></a>' % (href, title, img_path, wdth)
+				tw += '<a href="%s" title="%s"><%s class="%s"><img class="%s" src="%s" width="%d%%"></%s></a>' % (href, title, span_or_div, div_class, img_class, img_path, wdth, span_or_div)
 
 		tw += '</p>\n'
 
