@@ -23,9 +23,9 @@ def build_socialbar(twat):
 	## twitter
 	bar += '<a target="_blank" href="https://api.twitter.com/1.1/statuses/retweets/%d.json" title="retweet">%s</a>' % (int(twat['id']), '&#128038;')
 	## wayback machine
-	bar += '<a target="_blank" href="https://web.archive.org/save/https://twitter.com/%s/status/%s" title="wayback">%s</a>' % (twat['user'], twat['id'], '&#9852;')
+	bar += '&nbsp;<a target="_blank" href="https://web.archive.org/save/https://twitter.com/%s/status/%s" title="wayback">%s</a>' % (twat['user'], twat['id'], '&#9852;')
 	## json file
-	bar += '<a target="_blank" href="%s">%s</a>' % (user_filename(twat['owner']), '&#128190;')
+	bar += '&nbsp;<a target="_blank" href="%s">%s</a>' % (user_filename(twat['owner']), '&#128190;')
 
 	bar += '</div>\n'
 	return bar
