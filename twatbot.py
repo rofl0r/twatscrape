@@ -269,13 +269,18 @@ def scrape(search = False):
 			#print('new user: %s (%s), every: %s' % (user, mem, every))
 			## add dummy value
 			memory[mem][user] = ticks - 86400
+			count = args.count
+		else:
+			count = 0
 
 		if (ticks - memory[mem][user]) > every:
 			sys.stdout.write('scraping %s (%s) ...' % (user, mem))
 			sys.stdout.flush()
 			insert_pos = 0
 
-			twats = get_twats(user, search, proxies=args.proxy, count=args.count, http=twitter_rshttp)
+			#print('count for user "%s" is: %d' % (user, count))
+
+			twats = get_twats(user, search, proxies=args.proxy, count=count, http=twitter_rshttp)
 
 			for t in twats:
 				#if t["time"] == "0m" or t["time"] == "1m":
@@ -293,9 +298,6 @@ def scrape(search = False):
 			print " done"
 		if result: render_site()
 
-	## avoid fetching the whole timeline everytime
-	## XXX: easyfix
-	if args.count == -1: args.count = 0
 
 def resume_retry_mirroring(watchlist):
 	start_time = time.time()
