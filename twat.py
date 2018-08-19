@@ -97,14 +97,9 @@ def mirror_twat(twat, args=None):
 	if 'f' in args.mirror:
 		for a in soup.body.find_all('a'):
 			if 'data-expanded-url' in a.attrs:
-				shrt = a['href']
-				deu = a.attrs['data-expanded-url']
-				url_components = _split_url(deu)
-				if not 'filename' in url_components: continue
+				url_components = _split_url(a.attrs['data-expanded-url'])
 
-				ext = url_components['filename'].split('.')[-1]
-
-				if not os.path.exists('users/%s/%s-%s' % (user, twat["id"], url_components['filename'])):
+				if 'filename' in url_components and not os.path.exists('users/%s/%s-%s' % (user, twat["id"], url_components['filename'])):
 					_mirror_file(url_components, user, twat['id'], args, content_type=True)
 
 	## mirror posted pictures
@@ -119,9 +114,7 @@ def mirror_twat(twat, args=None):
 				i = '%s.%s' % (i.split('?')[0], fmt)
 
 			url_components = _split_url(i)
-			if not 'filename' in url_components: continue
-			ext = url_components['filename'].split('.')[-1]
-			if not os.path.exists('users/%s/%s-%s' % (user, twat['id'], url_components['filename'])):
+			if 'filename' in url_components and not os.path.exists('users/%s/%s-%s' % (user, twat['id'], url_components['filename'])):
 				_mirror_file(url_components, user, twat['id'], args)
 
 	## deal with emojis
