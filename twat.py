@@ -341,7 +341,7 @@ def get_twats(user, search = False, proxies=None, count=0, http=None):
 	while True:
 		soup = soupify (res)
 		twats = extract_twats(soup, twats, timestamp)
-		if count == 0 or break_loop or (count != -1 and len(twats) >= count):
+		if count == 0 or len(twats) == 0 or break_loop or (count != -1 and len(twats) >= count):
 			break
 
 		# fetch additional tweets that are not in the initial set of 20:
@@ -356,7 +356,6 @@ def get_twats(user, search = False, proxies=None, count=0, http=None):
 		res = resp["items_html"]
 
 	return twats
-
 
 #	auth_tok = None
 #	dst = None
