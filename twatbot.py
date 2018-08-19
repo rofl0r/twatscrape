@@ -335,6 +335,15 @@ def resume_retry_mirroring(watchlist):
 	elapsed_time = time.time() - start_time
 	print('resume_retry_mirroring: end of thread, duration: %s' % time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
 
+def json_loads():
+	for user in watchlist:
+		if not user in tweets:
+			try:
+				tweets[user] = json.loads(open(user_filename(user), 'r').read())
+			except:
+				tweets[user] = []
+
+
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--dir', help="where to save twats (default: current directory)", type=str, default=None, required=False)
@@ -378,11 +387,8 @@ if __name__ == '__main__':
 	watchlist = [x.rstrip('\n') for x in open(args.watchlist, 'r').readlines() if not x.startswith(';')]
 	if args.reload > 0: watchlist_ticks = time.time()
 
-	for user in watchlist:
-		try:
-			tweets[user] = json.loads(open(user_filename(user), 'r').read())
-		except:
-			tweets[user] = []
+	## load known twats or create empty list
+	json_loads()
 
 	## resume/retry mirroring process
 	if args.resume and args.mirror:
@@ -396,6 +402,8 @@ if __name__ == '__main__':
 			if args.reload > 0 and (time.time() - watchlist_ticks) > args.reload:
 				watchlist = [x.rstrip('\n') for x in open(args.watchlist, 'r').readlines() if not x.startswith(';')]
 				watchlist_ticks = time.time()
+				## load known twats or create empty list
+				json_loads()
 	
 			## scrape profile
 			scrape()
