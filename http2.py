@@ -166,15 +166,16 @@ class RsHttp():
 
 	def parse_url(self, url):
 		host = ''
-		if url.startswith('https://'):
+		url_l = url.lower()
+		if url_l.startswith('https://'):
 			ssl = True
 			url = url[8:]
 			port = 443
-		elif url.startswith('http://'):
+		elif url_l.startswith('http://'):
 			ssl = False
 			url = url[7:]
 			port = 80
-		elif url.startswith('/'):
+		elif url_l.startswith('/'):
 			# can happen with a redirect
 			url = url[1:]
 			port = 0
