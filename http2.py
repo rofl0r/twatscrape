@@ -295,7 +295,8 @@ class RsHttp():
 			c = c[len('Set-Cookie: '):]
 		i = c.index('=')
 		s =  c[i+1:]
-		j = s.index(';')
+		j = s.find(';')
+		if j == -1: j = len(s)
 		self.cookies[c[:i]] = s[:j]
 
 
