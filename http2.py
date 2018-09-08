@@ -43,7 +43,10 @@ class RsHttp():
 		for c in self.cookies:
 			if cs != '':
 				cs += '; '
-			cs += c + '=' + self.cookies[c]
+			if self.cookies[c] != '':
+				cs += c + '=' + self.cookies[c]
+			else:
+				cs += c
 		if cs != '':
 			s += 'Cookie: ' + cs + '\r\n'
 		postdata = ''
@@ -293,7 +296,14 @@ class RsHttp():
 	def set_cookie(self, c):
 		if c.lower().startswith('set-cookie: '):
 			c = c[len('Set-Cookie: '):]
-		i = c.index('=')
+		if ';' in c:
+			a = c.split(';')
+			if len(a) > 0:
+				for x in a:
+					if len(x) > 0: self.set_cookie(x)
+				return
+		i = c.find('=')
+		if i == -1: i = len(c)
 		s =  c[i+1:]
 		j = s.find(';')
 		if j == -1: j = len(s)
