@@ -28,9 +28,10 @@ def sanitized_twat(twat, args=None):
 		for a in soup.body.find_all('a'):
 			if 'data-expanded-url' in a.attrs:
 				filename = a.attrs['data-expanded-url'].split('/')[-1]
+				tw_fn = 'users/%s/%s-%s' % (user, twat['id'], filename)
 				## file was mirrored
-				if os.path.exists('users/%s/%s-%s' % (user, twat['id'], filename)):
-					twat['text'] = twat['text'].replace(a['href'], 'users/%s/%s-%s' % (user, twat['id'], filename))
+				if os.path.exists(tw_fn):
+					twat['text'] = twat['text'].replace(a['href'], tw_fn)
 
 				## still replace shorten urls with expanded ones
 				else:
