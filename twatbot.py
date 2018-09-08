@@ -130,6 +130,9 @@ def htmlize_twat(twat):
 		(twat["user"], twat["id"], twat["user"])
 
 	else:
+		# retweet
+		# remove retweets of users we have in our watchlist
+		if twat['user'] in watchlist: return ''
 		user_str = "<a target='_blank' href='https://twitter.com/%s'>%s</a> (RT <a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a>)" % \
 		(twat['owner'], twat['owner'], twat['user'], twat['id'], twat['user'])
 		#user_str = "<a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a> (RT <a target='_blank' href='https://twitter.com/%s'>%s</a>)" % \
