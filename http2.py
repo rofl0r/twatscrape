@@ -6,6 +6,22 @@ import urllib, zlib
 import ssl, socket
 import time
 
+def _parse_errorcode(line):
+	r = line.find(' ')
+	if r == -1:
+		return line, -1, ''
+	ver = line[:r]
+	rest = line[r+1:]
+	r = rest.find(' ')
+	if r == -1:
+		msg = ''
+		err = int(rest)
+	else:
+		msg = rest[r+1:]
+		err = int(rest[:r])
+	return ver, err, msg
+
+
 class RsHttp():
 	def __init__(self, host, port=80, ssl=False, follow_redirects=False, auto_set_cookies=False, keep_alive=False, timeout=60, user_agent=None, proxies=None, max_tries=10, **kwargs):
 		self.host = host
@@ -91,7 +107,7 @@ class RsHttp():
 		#'HTTP/1.1 302 Found\r\n'
 		l = self.conn.recvline().strip()
 		s = l + '\n'
-		foo, code, msg = l.split(' ', 2)
+		foo, code, msg = _parse_errorcode(l)
 		while True:
 			l = self.conn.recvline().strip()
 			s += l + '\n'
@@ -267,7 +283,7 @@ class RsHttp():
 		#'HTTP/1.1 302 Found\r\n'
 		l = self.conn.recvline().strip()
 		s = l + '\n'
-		foo, code, msg = l.split(' ', 2)
+		foo, code, msg = _parse_errorcode(l)
 		while True:
 			l = self.conn.recvline().strip()
 			s += l + '\n'
