@@ -220,11 +220,7 @@ def render_site(page):
 	all_tweets = sorted(all_tweets, key = lambda x : (retweet_time(x) if 'rid' in x else x["time"], x['time']), reverse=True)
 	all_tweets = remove_doubles(all_tweets)
 
-	if args.tpp > 0:
-		#pages = int( len(all_tweets) / args.tpp )
-		#inc = 0
-		#print('pages: %d, inc: %d' % (pages,inc))
-		pagetotal = int( len(all_tweets) / args.tpp )
+	pagetotal = int( len(all_tweets) / args.tpp )
 
 	for i in xrange(page*args.tpp, (page+1)*args.tpp):
 		if i < len(all_tweets):
@@ -234,9 +230,8 @@ def render_site(page):
 	if len(html):
 		pg = None
 		pgTot = None
-		if args.tpp > 0:
-			pg=page
-			pgTot=pagetotal
+		pg=page
+		pgTot=pagetotal
 		return write_html(html=html, page=pg, pages=pgTot)
 	return ""
 
@@ -384,7 +379,7 @@ if __name__ == '__main__':
 	parser.add_argument('--profile', help="check profile every X second(s) (default: 60)", default=60, type=int, required=False)
 	parser.add_argument('--images', help="show image (default: 1)", default=1, type=int, required=False)
 	parser.add_argument('--reload', help="reload watchlist every X secondes (default: 600)", default=600, type=int, required=False)
-	parser.add_argument('--tpp', help="twats per page - 0: unlimited (default: 0)", default=0, type=int, required=False)
+	parser.add_argument('--tpp', help="twats per page (default: very high number)", default=99999999999, type=int, required=False)
 	parser.add_argument('--proxy', help="use a proxy (syntax: socks5://ip:port)", default=None, type=str, required=False)
 	parser.add_argument('--social', help="show 'social' bar (default: 0)", default=0, type=int, required=False)
 	parser.add_argument('--nohtml', help="strip html from tweets (default: 0)", default=0, type=int, required=False)
