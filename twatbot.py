@@ -209,7 +209,7 @@ def retweet_time(twat):
 	if 'fetched' in twat: return twat['fetched']
 	return twat['time']
 
-def render_site():
+def render_site(page):
 	html = []
 
 	all_tweets = []
@@ -225,25 +225,20 @@ def render_site():
 		#inc = 0
 		#print('pages: %d, inc: %d' % (pages,inc))
 		pagetotal = int( len(all_tweets) / args.tpp )
-		page = pagetotal
 
-
-	for twat in all_tweets:
-		if args.md: html.append(markdownize_twat(twat))
-		else: html.append(htmlize_twat(twat))
-		#print(tw)
-
-		# when doing multipages
-		if args.tpp > 0 and len(html) >= args.tpp:
-			write_html(html=html,page=page, pages=pagetotal)
-			page -= 1
-			html = []
+	for i in xrange(page*args.tpp, (page+1)*args.tpp):
+		if i < len(all_tweets):
+			twat = all_tweets[i]
+			html.append(htmlize_twat(twat))
 
 	if len(html):
+		pg = None
+		pgTot = None
 		if args.tpp > 0:
-			write_html(html=html, page=0, pages=pagetotal)
-		else:
-			write_html(html=html, page=None, pages=None)
+			pg=page
+			pgTot=pagetotal
+		return write_html(html=html, page=pg, pages=pgTot)
+	return ""
 
 
 def write_html(html, page=None, pages=None):
@@ -251,16 +246,13 @@ def write_html(html, page=None, pages=None):
 	if page is not None and pages is not None:
 		div = []
 		realpage = int(pages - page)
-		if realpage > 0: filename = "index%s.html" % str(realpage)
-		else: filename = "index.html"
 
 		for j in range(0, pages + 1):
-			if j == realpage:
-				div.append(str(realpage))
+			if j == page:
+				div.append(str(page))
 
 			else:
-				if j > 0: indx = "index%d.html" % j
-				else: indx = "index.html"
+				indx="index.html?page=%d"%j
 				div.append('<a class="menu" href="%s">%d</a>' % (indx,j))
 
 		if len(div):
@@ -273,8 +265,7 @@ def write_html(html, page=None, pages=None):
 
 	ht.append("\n</body></html>")
 
-	with codecs.open(filename, 'w', 'utf-8') as h:
-		h.write("\n".join(ht))
+	return "\n".join(ht).encode('utf-8')
 
 def get_refresh_time(mem):
 	if mem == 'search': return args.search
@@ -325,7 +316,6 @@ def scrape(search = False):
 			ticks = time.time()
 			memory[mem][user] = ticks
 			print " done"
-		if result: render_site()
 
 
 def resume_retry_mirroring(watchlist):
@@ -346,6 +336,41 @@ def json_loads():
 				tweets[user] = json.loads(open(user_filename(user), 'r').read())
 			except:
 				tweets[user] = []
+
+def serve_loop(ip, port, done):
+	from httpsrv import HttpSrv
+	hs = HttpSrv(ip, port)
+	hs.setup()
+	while not done.is_set():
+		c = hs.wait_client()
+		req = c.read_request()
+		if req is None: continue
+		if req['url'] == '/':
+			c.redirect('/index.html')
+		elif req['url'].startswith('/index.html'):
+			page=0
+			if '?' in req['url']:
+				a,b= req['url'].split('?')
+				l = b.split('&')
+				for d in l:
+					if d.startswith("page="):
+						page = int(d[5:])
+						break
+			r = render_site(page)
+			c.send(200, "OK", r)
+		elif not '..' in req['url'] and file_exists(os.getcwd() + req['url']):
+			c.serve_file(os.getcwd() + req['url'])
+		else:
+			c.send(404, "not exist", "the reqested file not exist!!!1")
+		c.disconnect()
+
+def start_server(ip, port):
+	import threading
+	done = threading.Event()
+	t = threading.Thread(target=serve_loop, args=(ip, port, done))
+	t.daemon = True
+	t.start()
+	return t, done
 
 
 if __name__ == '__main__':
@@ -370,6 +395,9 @@ if __name__ == '__main__':
 	parser.add_argument('--upstream-img', help="make image point to the defaut url (default: 0)", default=0, type=int, required=False)
 	parser.add_argument('--linkimg', help="embed image withing <a> - default: 1", default=1, type=int, required=False)
 	parser.add_argument('--resume', help="resume/retry mirroring at startup - default: 0", default=None, type=int, required=False)
+	parser.add_argument('--port', help="port of the integrated webserver - default: 1999", default=1999, type=int, required=False)
+	parser.add_argument('--listenip', help="listenip of the integrated webserver - default: localhost", default="localhost", type=str, required=False)
+
 
 	args = parser.parse_args()
 
@@ -399,7 +427,7 @@ if __name__ == '__main__':
 		thread_resume_mirroring = Thread(target=resume_retry_mirroring, args=(watchlist,))
 		thread_resume_mirroring.start()
 
-	render_site()
+	start_server(args.listenip, args.port)
 
 	while True:
 		try:
