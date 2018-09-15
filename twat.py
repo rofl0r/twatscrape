@@ -176,7 +176,7 @@ def get_twat_timestamp(twat_id):
 					return int(span.attrs['data-time'])
 	return 0
 
-def get_twats_mobile(user, search = False, proxies=None):
+def get_twats_mobile(user, proxies=None):
 	host = 'mobile.twitter.com'
 	http = RsHttp(host=host, port=443, timeout=15, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
 #	http.debugreq = True
@@ -329,7 +329,7 @@ def extract_twats(soup, twats, timestamp):
 # if 0 is specified, only the most recent page (containing typically 20 tweets)
 # is harvested. if -1 is specified, the entire timeline will be harvested back
 # to the very first tweet.
-def get_twats(user, search = False, proxies=None, count=0, http=None):
+def get_twats(user, proxies=None, count=0, http=None):
 	host = 'twitter.com'
 	if not http:
 		http = RsHttp(host=host, port=443, timeout=15, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
