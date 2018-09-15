@@ -290,10 +290,6 @@ def scrape(search = False):
 	every = get_refresh_time(mem)
 	for user in watchlist:
 		result = False
-		try:
-			tweets[user] = json.loads(open(user_filename(user), 'r').read())
-		except:
-			tweets[user] = []
 
 		## if user hasn't been checked yet
 		if not user in memory[mem]:
@@ -307,6 +303,9 @@ def scrape(search = False):
 		if (ticks - memory[mem][user]) > every:
 			sys.stdout.write('scraping %s (%s) ...' % (user, mem))
 			sys.stdout.flush()
+
+			load_user_json(user)
+
 			insert_pos = 0
 
 			#print('count for user "%s" is: %d' % (user, count))
@@ -340,13 +339,16 @@ def resume_retry_mirroring(watchlist):
 	elapsed_time = time.time() - start_time
 	print('resume_retry_mirroring: end of thread, duration: %s' % time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
 
+def load_user_json(user):
+	try:
+		tweets[user] = json.loads(open(user_filename(user), 'r').read())
+	except:
+		tweets[user] = []
+
 def json_loads():
 	for user in watchlist:
 		if not user in tweets:
-			try:
-				tweets[user] = json.loads(open(user_filename(user), 'r').read())
-			except:
-				tweets[user] = []
+			load_user_json(user)
 
 def serve_loop(ip, port, done):
 	from httpsrv import HttpSrv
