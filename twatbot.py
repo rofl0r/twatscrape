@@ -47,11 +47,15 @@ def sanitized_twat(twat, args=None):
 	return twat['text']
 
 
-def build_socialbar(twat):
+def build_socialbar(twat, vars):
 	bar = '\n<div class="iconbar">'
 
 	## anchor
-	bar += '<a href="index.html?find=%s" name="%s">%s</a>'%(twat['id'], twat['id'],'&#9875;')
+	il = make_index_link(vars)
+	if not '?' in il: il += '?'
+	else: il += '&'
+	il += 'find=' + twat['id']
+	bar += '<a href="%s" name="%s">%s</a>'%(il, twat['id'],'&#9875;')
 	## twitter
 	bar += '&nbsp;<a target="_blank" href="https://api.twitter.com/1.1/statuses/retweets/%d.json" title="retweet">%s</a>' % (int(twat['id']), '&#128038;')
 	## wayback machine
@@ -122,8 +126,8 @@ def html_header():
 	header += """<link rel='stylesheet' type='text/css' href='css/%s.css'></head><body>""" % args.theme
 
 	return header
-	
-def htmlize_twat(twat):
+
+def htmlize_twat(twat, vars):
 	tw = '<div class="twat-container">'
 
 	if twat["user"].lower() == twat["owner"].lower():
@@ -142,7 +146,7 @@ def htmlize_twat(twat):
 	tw += '\n<div class="twat-title">'
 
 	## add social bar
-	if args.social: tw += build_socialbar(twat)
+	if args.social: tw += build_socialbar(twat, vars)
 
 	time_str = 'unknown' if twat["time"] == 0 else format_time(twat["time"])
 	tw += '%s&nbsp;-&nbsp;%s' % (user_str, time_str)
@@ -200,7 +204,7 @@ def htmlize_twat(twat):
 			'text' : twat['quote']['text'],
 			'time' : 0
 		}
-		tw += htmlize_twat(pseudo_twat)
+		tw += htmlize_twat(pseudo_twat, vars)
 
 	tw += '</div>\n'
 
@@ -223,28 +227,38 @@ def get_all_tweets():
 	all_tweets = remove_doubles(all_tweets)
 	return all_tweets
 
-def find_tweet_page(twid):
-	all_tweets = get_all_tweets()
+def find_tweet_page(all_tweets, twid):
 	for i in xrange(0, len(all_tweets)):
 		if all_tweets[i]['id'] == twid:
 			return int(i / args.tpp)
 	return 0
 
-def find_tweets(text):
+def find_tweets(twats, text):
 	search = text.lower()
-	all_tweets = get_all_tweets()
+	all_tweets = twats
 	match_tweets = []
 	for i in xrange(0, len(all_tweets)):
 		if search in all_tweets[i]['text'].lower(): match_tweets.append(all_tweets[i])
 
 	return match_tweets
 
-def render_site(page = None, twats = None):
+# return tuple of html, redirect_url
+# only one of both is set to something other than ""
+def render_site(vars = {}):
 	html = []
+
+	page = 0 if not 'page' in vars else int(vars['page'])
+	search = "" if not 'search' in vars else vars['search']
+	find = "" if not 'find' in vars else vars['find']
 
 	random.shuffle(watchlist)
 
-	all_tweets = twats if twats else get_all_tweets()
+	all_tweets = get_all_tweets()
+	if search != '': all_tweets = find_tweets(all_tweets, search)
+	if find != '':
+		vars['page'] = find_tweet_page(all_tweets, find)
+		vars.pop('find', None)
+		return "", make_index_link(vars) + '#%s'%find
 
 	pagetotal = int( len(all_tweets) / args.tpp )
 
@@ -253,36 +267,40 @@ def render_site(page = None, twats = None):
 
 	for i in xrange(page*args.tpp, max):
 		twat = all_tweets[i]
-		html.append(htmlize_twat(twat))
+		html.append(htmlize_twat(twat, vars))
 
 	if len(html):
-		pg = None
-		pgTot = None
-		pg=page
-		pgTot=pagetotal
-		return write_html(html=html, page=pg, pages=pgTot)
-	return ""
+		return write_html(html=html, vars=vars, pages=pagetotal), ""
 
+	return "", ""
 
-def write_html(html, page=None, pages=None):
+def make_index_link(vars):
+	s = '/index.html'
+	t = ''
+	for x in vars:
+		if len(t): t += '&'
+		t += '%s=%s'%(x, str(vars[x]))
+	if len(t): s += '?' + t
+	return s
+
+def write_html(html, vars=None, pages=0):
 	ht = [ html_header() ]
-	if page is not None and pages is not None:
-		div = []
-		realpage = int(pages - page)
+	page = int(vars['page']) if 'page' in vars else 0
 
-		for j in range(0, pages + 1):
-			if j == page:
-				div.append(str(page))
+	div = []
 
-			else:
-				indx="index.html?page=%d"%j
-				div.append('<a class="menu" href="%s">%d</a>' % (indx,j))
+	for j in range(0, pages + 1):
+		if j == page:
+			div.append(str(page))
+		else:
+			vars['page'] = j
+			indx = make_index_link(vars)
+			div.append('<a class="menu" href="%s">%d</a>' % (indx,j))
 
-		if len(div):
-			ht.append('\n<div class="menu">%s</div>\n' % '&nbsp;'.join(div))
+	vars['page'] = page
 
-	else:
-		filename = "index.html"
+	if len(div):
+		ht.append('\n<div class="menu">%s</div>\n' % '&nbsp;'.join(div))
 
 	[ ht.append(i) for i in html ]
 
@@ -361,29 +379,27 @@ def serve_loop(ip, port, done):
 	hs = HttpSrv(ip, port)
 	hs.setup()
 	while not done.is_set():
-		twats = None
-		page = None
 		c = hs.wait_client()
 		req = c.read_request()
 		if req is None: continue
 		if req['url'] == '/':
 			c.redirect('/index.html')
 		elif req['url'].startswith('/index.html'):
-			page=0
+			vars={}
+			vars['page'] = 0
 			if '?' in req['url']:
 				a,b= req['url'].split('?')
 				l = b.split('&')
 				for d in l:
-					if d.startswith("find="):
-						twid = d[5:]
-						page = find_tweet_page(twid)
-						c.redirect('/index.html?page=%d#%s'%(page, twid))
-					elif d.startswith('search='):
-						twats = find_tweets(d[7:])
-					if d.startswith("page="):
-						page = int(d[5:])
-			r = render_site(page=page, twats=twats)
-			c.send(200, "OK", r)
+					if not '=' in d: continue
+					e,f=d.split('=')
+					vars[e.lower()] = f
+
+			r, redir = render_site(vars)
+			if redir is not "":
+				c.redirect(redir)
+			else:
+				c.send(200, "OK", r)
 		elif not '..' in req['url'] and file_exists(os.getcwd() + req['url']):
 			c.serve_file(os.getcwd() + req['url'])
 		else:
