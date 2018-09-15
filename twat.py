@@ -112,7 +112,7 @@ def mirror_twat(twat, args=None):
 			if 'data-expanded-url' in a.attrs:
 				url_components = _split_url(a.attrs['data-expanded-url'])
 
-				if 'filename' in url_components and not os.path.exists('users/%s/%s-%s' % (user, twat["id"], url_components['filename'])):
+				if 'filename' in url_components:
 					_mirror_file(url_components, user, twat['id'], args, content_type=True)
 
 	## mirror posted pictures
@@ -127,7 +127,7 @@ def mirror_twat(twat, args=None):
 				i = '%s.%s' % (i.split('?')[0], fmt)
 
 			url_components = _split_url(i)
-			if 'filename' in url_components and not os.path.exists('users/%s/%s-%s' % (user, twat['id'], url_components['filename'])):
+			if 'filename' in url_components:
 				_mirror_file(url_components, user, twat['id'], args)
 
 	## deal with emojis
