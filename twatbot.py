@@ -234,7 +234,7 @@ def find_tweet_text(text):
 	all_tweets = get_all_tweets()
 	match_tweets = []
 	for i in xrange(0, len(all_tweets)):
-		if text in all_tweets[i]['text']: match_tweets.append(all_tweets[i])
+		if text.lower() in all_tweets[i]['text'].lower(): match_tweets.append(all_tweets[i])
 
 	return match_tweets
 
