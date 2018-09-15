@@ -157,7 +157,11 @@ def htmlize_twat(twat):
 	tw += '<p class="twat-text">%s</p>\n' % (twat["text"].replace('\n', '<br>')) 
 
 	if 'curl' in twat and args.iframe > 0:
-		tw += '<span class="twat-iframe"><iframe src="https://twitter.com%s?cardname=summary_large_image"></iframe></span>\n'%twat['curl']
+		user = twat['user'].lower()
+		ifu = 'users/%s/%s-%s' % (user, twat['id'], "card.html")
+		if (not 'c' in args.mirror) or (not file_exists(ifu)):
+			ifu = "https://twitter.com%s?cardname=summary_large_image"%twat['curl']
+		tw += '<span class="twat-iframe"><iframe src="%s"></iframe></span>\n'%ifu
 
 	if 'images' in twat:
 		tw += '<p class="twat-image">'
@@ -406,7 +410,7 @@ if __name__ == '__main__':
 	parser.add_argument('--social', help="show 'social' bar (default: 0)", default=0, type=int, required=False)
 	parser.add_argument('--nohtml', help="strip html from tweets (default: 0)", default=0, type=int, required=False)
 	parser.add_argument('--md', help="output markdown content (default: 0) -- NOT WORKING", default=0, type=int, required=False)
-	parser.add_argument('--mirror', help="mirror [i]mages, [f]iles and/or [e]mojis (default: None)", default='', type=str, required=False)
+	parser.add_argument('--mirror', help="mirror [i]mages, [f]iles, [e]mojis, [c]ards (default: None)", default='', type=str, required=False)
 	parser.add_argument('--ext', help="space-delimited extension to tech when mirroring files (default: None)", default=None, type=str, required=False)
 	parser.add_argument('--count', help="Fetch $count latests tweets (default: 20). Use -1 to fetch the whole timeline", default=0, type=int, required=False)
 	parser.add_argument('--upstream-img', help="make image point to the defaut url (default: 0)", default=0, type=int, required=False)

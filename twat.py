@@ -63,7 +63,11 @@ def _mirror_file(url_components, user, tid, args=None, content_type=None):
 		## do nothing if we cannot connect
 		if not http.connect(): return
 
-	hdr, res = http.get(url_components['uri'])
+	extras = []
+	if url_components['filename'] == 'card.html' and 'twitter.com' in url_components['host']:
+		extras.append("Referer: https://twitter.com/")
+
+	hdr, res = http.get(url_components['uri'], extras=extras)
 	if res == '' and hdr != "":
 		# print http error code when things go wrong
 		print "%s%s : %s" % (url_components['host'], url_components['uri'], hdr.split('\n')[0])
@@ -93,6 +97,12 @@ def mirror_twat(twat, args=None):
 
 	## try to automatically mirror links posted by the user,
 	## if it matches the extension list.
+
+	if 'c' in args.mirror and 'curl' in twat:
+		url = "https://twitter.com%s?cardname=summary_large_image"%twat['curl']
+		url_components = _split_url(url)
+		url_components['filename'] = 'card.html' #% twat['id']
+		_mirror_file(url_components, user, twat['id'], args)
 
 	if 'f' in args.mirror:
 		for a in soup.body.find_all('a'):
