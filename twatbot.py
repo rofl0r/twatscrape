@@ -222,10 +222,12 @@ def render_site(page):
 
 	pagetotal = int( len(all_tweets) / args.tpp )
 
-	for i in xrange(page*args.tpp, (page+1)*args.tpp):
-		if i < len(all_tweets):
-			twat = all_tweets[i]
-			html.append(htmlize_twat(twat))
+	max = (page+1)*args.tpp
+	if max > len(all_tweets): max = len(all_tweets)
+
+	for i in xrange(page*args.tpp, max):
+		twat = all_tweets[i]
+		html.append(htmlize_twat(twat))
 
 	if len(html):
 		pg = None
