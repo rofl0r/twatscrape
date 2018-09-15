@@ -9,7 +9,7 @@ import random
 import sys
 from HTMLParser import HTMLParser
 from http2 import RsHttp
-from threading import Thread
+import threading
 from soup_parser import soupify
 
 title="twatscrape"
@@ -332,16 +332,16 @@ def scrape(search = False):
 			print " done"
 
 
-def resume_retry_mirroring(watchlist):
+def resume_retry_mirroring(done):
 	start_time = time.time()
 	print('resume_retry_mirroring: thread started')
 	for user in watchlist:
-		if not running: break
 		for t in tweets[user]:
-			if not running: break
+			if done.is_set(): break
 			mirror_twat(t, args=args)
 	elapsed_time = time.time() - start_time
 	print('resume_retry_mirroring: end of thread, duration: %s' % time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
+	done.set()
 
 def load_user_json(user):
 	try:
@@ -386,7 +386,6 @@ def serve_loop(ip, port, done):
 		c.disconnect()
 
 def start_server(ip, port):
-	import threading
 	done = threading.Event()
 	t = threading.Thread(target=serve_loop, args=(ip, port, done))
 	t.daemon = True
@@ -444,9 +443,11 @@ if __name__ == '__main__':
 	json_loads()
 
 	## resume/retry mirroring process
+	mirroring_done = threading.Event()
 	if args.resume and args.mirror:
-		thread_resume_mirroring = Thread(target=resume_retry_mirroring, args=(watchlist,))
+		thread_resume_mirroring = threading.Thread(target=resume_retry_mirroring, args=(mirroring_done,))
 		thread_resume_mirroring.start()
+	else: mirroring_done.set()
 
 	start_server(args.listenip, args.port)
 
@@ -467,7 +468,10 @@ if __name__ == '__main__':
 
 	running = False
 	try:
-		thread_resume_mirroring.terminate()
+		if not mirroring_done.is_set():
+			mirroring_done.set()
+			time.sleep(1)
+			thread_resume_mirroring.terminate()
 		thread_resume_mirroring.join()
 
 	except:
