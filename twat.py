@@ -18,9 +18,13 @@ def _split_url(url):
 			result['filename'] = aa[-1]
 	return result
 
-def _mirror_file(url_components, user, tid, args=None, content_type=None):
+def _mirror_file(url_components, user, tid, args=None, content_type=None, force=False):
 	if not os.path.isdir('users/%s' % user):
 		os.makedirs('users/%s' % user)
+
+	outname = 'users/%s/%s-%s' % (user,tid,url_components['filename'])
+	if not force and os.path.exists(outname):
+		return
 
 	http = RsHttp(url_components['host'], ssl=url_components['ssl'], port=url_components['port'], keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
 
@@ -78,8 +82,7 @@ def _mirror_file(url_components, user, tid, args=None, content_type=None):
 		with open('data/%s.%s' % (filehash, ext), 'w') as h:
 			h.write(res)
 
-	if not os.path.exists('users/%s/%s-%s' % (user,tid,url_components['filename'])):
-		os.symlink('../../data/%s.%s' % (filehash, ext), 'users/%s/%s-%s' % (user, tid, url_components['filename']))
+	os.symlink('../../data/%s.%s' % (filehash, ext), outname)
 
 def mirror_twat(twat, args=None):
 
