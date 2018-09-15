@@ -15,7 +15,6 @@ from soup_parser import soupify
 title="twatscrape"
 tweets = dict()
 memory = {}
-running = True
 
 def sanitized_twat(twat, args=None):
 
@@ -460,7 +459,6 @@ if __name__ == '__main__':
 		except KeyboardInterrupt:
 			break
 
-	running = False
 	try:
 		if not mirroring_done.is_set():
 			mirroring_done.set()
