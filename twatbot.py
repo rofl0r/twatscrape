@@ -230,12 +230,21 @@ def find_tweet_page(twid):
 			return int(i / args.tpp)
 	return 0
 
-def render_site(page):
+def find_tweets(text):
+	search = text.lower()
+	all_tweets = get_all_tweets()
+	match_tweets = []
+	for i in xrange(0, len(all_tweets)):
+		if search in all_tweets[i]['text'].lower(): match_tweets.append(all_tweets[i])
+
+	return match_tweets
+
+def render_site(page = None, twats = None):
 	html = []
 
 	random.shuffle(watchlist)
 
-	all_tweets = get_all_tweets()
+	all_tweets = twats if twats else get_all_tweets()
 
 	pagetotal = int( len(all_tweets) / args.tpp )
 
@@ -352,6 +361,8 @@ def serve_loop(ip, port, done):
 	hs = HttpSrv(ip, port)
 	hs.setup()
 	while not done.is_set():
+		twats = None
+		page = None
 		c = hs.wait_client()
 		req = c.read_request()
 		if req is None: continue
@@ -367,10 +378,11 @@ def serve_loop(ip, port, done):
 						twid = d[5:]
 						page = find_tweet_page(twid)
 						c.redirect('/index.html?page=%d#%s'%(page, twid))
+					elif d.startswith('search='):
+						twats = find_tweets(d[7:])
 					if d.startswith("page="):
 						page = int(d[5:])
-						break
-			r = render_site(page)
+			r = render_site(page=page, twats=twats)
 			c.send(200, "OK", r)
 		elif not '..' in req['url'] and file_exists(os.getcwd() + req['url']):
 			c.serve_file(os.getcwd() + req['url'])
