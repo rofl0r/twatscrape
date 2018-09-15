@@ -1,8 +1,7 @@
-from twat import get_twats, get_twat_timestamp, mirror_twat
+from twat import get_twats, mirror_twat
 from rocksock import RocksockProxyFromURL
 import time
 import json
-import codecs
 import argparse
 import os.path
 import random
