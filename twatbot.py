@@ -308,8 +308,6 @@ def scrape(search = False):
 			sys.stdout.write('scraping %s (%s) ...' % (user, mem))
 			sys.stdout.flush()
 
-			load_user_json(user)
-
 			insert_pos = 0
 
 			#print('count for user "%s" is: %d' % (user, count))
