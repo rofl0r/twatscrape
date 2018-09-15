@@ -243,12 +243,7 @@ def render_site(page = None, tweets = None):
 
 	random.shuffle(watchlist)
 
-	if tweets:
-		for twat in tweets:
-			html.append(htmlize_twat(twat))
-		return write_html(html=html)
-	
-	all_tweets = get_all_tweets()
+	all_tweets = tweets if tweets else get_all_tweets()
 
 	pagetotal = int( len(all_tweets) / args.tpp )
 
@@ -384,11 +379,9 @@ def serve_loop(ip, port, done):
 
 					elif d.startswith('search='):
 						tweets = find_tweet_text(str(d[7:]).lower())
-						break
 						
 					if d.startswith("page="):
 						page = int(d[5:])
-						break
 
 			r = render_site(page=page, tweets=tweets)
 			c.send(200, "OK", r)
