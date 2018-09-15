@@ -51,8 +51,10 @@ def sanitized_twat(twat, args=None):
 def build_socialbar(twat):
 	bar = '\n<div class="iconbar">'
 
+	## anchor
+	bar += '<a href="index.html?find=%s" name="%s">%s</a>'%(twat['id'], twat['id'],'&#9875;')
 	## twitter
-	bar += '<a target="_blank" href="https://api.twitter.com/1.1/statuses/retweets/%d.json" title="retweet">%s</a>' % (int(twat['id']), '&#128038;')
+	bar += '&nbsp;<a target="_blank" href="https://api.twitter.com/1.1/statuses/retweets/%d.json" title="retweet">%s</a>' % (int(twat['id']), '&#128038;')
 	## wayback machine
 	bar += '&nbsp;<a target="_blank" href="https://web.archive.org/save/https://twitter.com/%s/status/%s" title="wayback">%s</a>' % (twat['user'], twat['id'], '&#9852;')
 	## json file
@@ -209,16 +211,28 @@ def retweet_time(twat):
 	if 'fetched' in twat: return twat['fetched']
 	return twat['time']
 
-def render_site(page):
-	html = []
-
+def get_all_tweets():
 	all_tweets = []
-	random.shuffle(watchlist)
 	for user in watchlist:
 		all_tweets.extend(add_owner_to_list(user, tweets[user]))
 
 	all_tweets = sorted(all_tweets, key = lambda x : (retweet_time(x) if 'rid' in x else x["time"], x['time']), reverse=True)
 	all_tweets = remove_doubles(all_tweets)
+	return all_tweets
+
+def find_tweet_page(twid):
+	all_tweets = get_all_tweets()
+	for i in xrange(0, len(all_tweets)):
+		if all_tweets[i]['id'] == twid:
+			return int(i / args.tpp)
+	return 0
+
+def render_site(page):
+	html = []
+
+	random.shuffle(watchlist)
+
+	all_tweets = get_all_tweets()
 
 	pagetotal = int( len(all_tweets) / args.tpp )
 
@@ -350,6 +364,10 @@ def serve_loop(ip, port, done):
 				a,b= req['url'].split('?')
 				l = b.split('&')
 				for d in l:
+					if d.startswith("find="):
+						twid = d[5:]
+						page = find_tweet_page(twid)
+						c.redirect('/index.html?page=%d#%s'%(page, twid))
 					if d.startswith("page="):
 						page = int(d[5:])
 						break
