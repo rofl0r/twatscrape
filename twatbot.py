@@ -53,8 +53,9 @@ def build_socialbar(twat, vars):
 	il = make_index_link(vars)
 	if not '?' in il: il += '?'
 	else: il += '&'
-	il += 'find=' + twat['id']
-	bar += '<a href="%s" name="%s">%s</a>'%(il, twat['id'],'&#9875;')
+	id = twat['rid'] if 'rid' in twat else twat['id']
+	il += 'find=%s'%id
+	bar += '<a href="%s" name="%s">%s</a>'%(il, id,'&#9875;')
 	## twitter
 	bar += '&nbsp;<a target="_blank" href="https://api.twitter.com/1.1/statuses/retweets/%d.json" title="retweet">%s</a>' % (int(twat['id']), '&#128038;')
 	## wayback machine
@@ -228,7 +229,8 @@ def get_all_tweets():
 
 def find_tweet_page(all_tweets, twid):
 	for i in xrange(0, len(all_tweets)):
-		if all_tweets[i]['id'] == twid:
+		if ('rid' in all_tweets[i] and all_tweets[i]['rid'] == twid) or \
+		    ((not 'rid' in all_tweets[i]) and all_tweets[i]['id'] == twid):
 			return int(i / args.tpp)
 	return 0
 
