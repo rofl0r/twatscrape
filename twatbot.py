@@ -234,7 +234,7 @@ def find_tweet_text(text):
 	all_tweets = get_all_tweets()
 	match_tweets = []
 	for i in xrange(0, len(all_tweets)):
-		if text.lower() in all_tweets[i]['text'].lower(): match_tweets.append(all_tweets[i])
+		if text in all_tweets[i]['text'].lower(): match_tweets.append(all_tweets[i])
 
 	return match_tweets
 
@@ -383,8 +383,7 @@ def serve_loop(ip, port, done):
 						c.redirect('/index.html?page=%d#%s'%(page, twid))
 
 					elif d.startswith('search='):
-						text = d[7:]
-						tweets = find_tweet_text(text)
+						tweets = find_tweet_text(str(d[7:]).lower())
 						break
 						
 					if d.startswith("page="):
