@@ -283,32 +283,29 @@ def get_refresh_time(mem):
 	elif mem == 'profile': return args.profile
 
 
-def scrape(search = False):
-	mem = 'search' if search else 'profile'
+def scrape():
 	ticks = time.time()
-	if not mem in memory: memory[mem] = {}
-	every = get_refresh_time(mem)
 	for user in watchlist:
 		result = False
 
 		## if user hasn't been checked yet
-		if not user in memory[mem]:
+		if not user in memory:
 			#print('new user: %s (%s), every: %s' % (user, mem, every))
 			## add dummy value
-			memory[mem][user] = ticks - 86400
+			memory[user] = ticks - 86400
 			count = args.count
 		else:
 			count = 0
 
-		if (ticks - memory[mem][user]) > every:
-			sys.stdout.write('scraping %s (%s) ...' % (user, mem))
+		if (ticks - memory[user]) > args.profile:
+			sys.stdout.write('scraping %s ...' % user)
 			sys.stdout.flush()
 
 			insert_pos = 0
 
 			#print('count for user "%s" is: %d' % (user, count))
 
-			twats = get_twats(user, search, proxies=args.proxy, count=count, http=twitter_rshttp)
+			twats = get_twats(user, proxies=args.proxy, count=count, http=twitter_rshttp)
 
 			for t in twats:
 				#if t["time"] == "0m" or t["time"] == "1m":
@@ -321,8 +318,7 @@ def scrape(search = False):
 					print repr(t)
 					#render_site()
 				#else: print('already known: %s, %s' % (user, str(t)))
-			ticks = time.time()
-			memory[mem][user] = ticks
+			memory[user] = time.time()
 			print " done"
 
 
