@@ -28,8 +28,11 @@ class HttpClient():
 				r += "%s: %s\r\n"%(h, headers[h])
 		r += "Content-Length: %d\r\n" % len(response)
 		r += "\r\n"
-		self.conn.send(r)
-		self.conn.send(response)
+		try:
+			self.conn.send(r)
+			self.conn.send(response)
+		except:
+			self.disconnect()
 
 	def serve_file(self, filename):
 		self.send(200, "OK", open(filename, 'r').read())
