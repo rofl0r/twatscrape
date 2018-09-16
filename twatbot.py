@@ -6,6 +6,7 @@ import argparse
 import os.path
 import random
 import sys
+import urllib
 from HTMLParser import HTMLParser
 from http2 import RsHttp
 import threading
@@ -233,7 +234,7 @@ def find_tweets(twats, search = None, user = None):
 	all_tweets = twats
 	match_tweets = []
 	for i in xrange(0, len(all_tweets)):
-		if search and search in all_tweets[i]['text'].lower():
+		if search and urllib.unquote(search) in all_tweets[i]['text'].lower():
 			match_tweets.append(all_tweets[i])
 		elif user and str(all_tweets[i]['user']).lower() in user:
 			match_tweets.append(all_tweets[i])
