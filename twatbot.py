@@ -314,7 +314,6 @@ def get_refresh_time(mem):
 def scrape():
 	ticks = time.time()
 	for user in watchlist:
-		result = False
 
 		## if user hasn't been checked yet
 		if not user in memory:
@@ -338,7 +337,6 @@ def scrape():
 			for t in twats:
 				#if t["time"] == "0m" or t["time"] == "1m":
 				if not in_twatlist(user, t):
-					result = True
 					#t["time"] = get_twat_timestamp(t["id"])
 					add_twatlist(user, t, insert_pos)
 					insert_pos += 1
