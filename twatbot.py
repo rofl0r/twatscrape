@@ -152,8 +152,8 @@ def htmlize_twat(twat, vars):
 	if args.mirror: twat['text'] = sanitized_twat(twat, args=args)
 	## strip html ?
 	if args.nohtml: twat['text']= strip_tags(twat['text'])
-		
-	tw += '<p class="twat-text">%s</p>\n' % (twat["text"].replace('\n', '<br>')) 
+
+	tw += '<p class="twat-text">%s</p>\n' % (twat["text"].replace('\n', '<br>'))
 
 	if 'curl' in twat and args.iframe > 0:
 		user = twat['user'].lower()
@@ -468,7 +468,7 @@ if __name__ == '__main__':
 				watchlist_ticks = time.time()
 				## load known twats or create empty list
 				json_loads()
-	
+
 			## scrape profile
 			scrape()
 			time.sleep(1)
