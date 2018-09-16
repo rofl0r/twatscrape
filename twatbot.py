@@ -1,4 +1,4 @@
-from twat import get_twats, mirror_twat
+from twat import get_twats, mirror_twat, get_effective_twat_id
 from rocksock import RocksockProxyFromURL
 import time
 import json
@@ -54,7 +54,7 @@ def build_socialbar(twat, vars):
 	il = make_index_link(vars)
 	if not '?' in il: il += '?'
 	else: il += '&'
-	id = twat['rid'] if 'rid' in twat else twat['id']
+	id = get_effective_twat_id(twat)
 	il += 'find=%s'%id
 	bar += '<a href="%s" name="%s">%s</a>'%(il, id,'&#9875;')
 	## twitter
@@ -225,8 +225,7 @@ def get_all_tweets():
 
 def find_tweet_page(all_tweets, twid):
 	for i in xrange(0, len(all_tweets)):
-		if ('rid' in all_tweets[i] and all_tweets[i]['rid'] == twid) or \
-		    ((not 'rid' in all_tweets[i]) and all_tweets[i]['id'] == twid):
+		if get_effective_twat_id(all_tweets[i]) == twid:
 			return int(i / args.tpp)
 	return 0
 

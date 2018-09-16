@@ -5,6 +5,11 @@ import json
 import os.path
 import hashlib
 
+# the effective id of a twat is the retweet id, if it's a retweet
+def get_effective_twat_id(twat):
+	if 'rid' in twat: return twat['rid']
+	return twat['id']
+
 def _split_url(url):
 	http = RsHttp('localhost')
 	host, port, ssl, uri = http.parse_url(url)
@@ -335,7 +340,7 @@ def get_twats(user, proxies=None, count=0, http=None):
 			break
 
 		# fetch additional tweets that are not in the initial set of 20:
-		last_id = twats[len(twats)-1]["rid"] if "rid" in twats[len(twats)-1] else twats[len(twats)-1]["id"]
+		last_id = get_effective_twat_id(twats[len(twats)-1])
 		# rshttp objects cannot be re-used
 		http = RsHttp(host=host, port=443, timeout=15, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
 		if not http.connect(): return
