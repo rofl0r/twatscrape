@@ -260,7 +260,9 @@ def render_site(vars = {}):
 		vars.pop('find', None)
 		return "", make_index_link(vars) + '#%s'%find
 
-	pagetotal = int( len(all_tweets) / args.tpp )
+	pagetotalf = len(all_tweets) / float(args.tpp)
+	pagetotal = int(pagetotalf)
+	if pagetotalf > pagetotal: pagetotal += 1
 
 	max = (page+1)*args.tpp
 	if max > len(all_tweets): max = len(all_tweets)
