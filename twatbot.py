@@ -230,15 +230,16 @@ def find_tweet_page(all_tweets, twid):
 			return int(i / args.tpp)
 	return 0
 
-def find_tweets(twats, search = None, user = None):
-	all_tweets = twats
+def find_tweets(all_tweets, search=None, users=None):
+	if search: search = urllib.unquote(search).lower()
 	match_tweets = []
 	for i in xrange(0, len(all_tweets)):
-		if search and urllib.unquote(search) in all_tweets[i]['text'].lower():
-			match_tweets.append(all_tweets[i])
-		elif user and str(all_tweets[i]['user']).lower() in user:
-			match_tweets.append(all_tweets[i])
-
+		match = True
+		if search and not search in all_tweets[i]['text'].lower():
+			match = False
+		if match and users and not all_tweets[i]['user'].lower() in users:
+			match = False
+		if match: match_tweets.append(all_tweets[i])
 	return match_tweets
 
 # return tuple of html, redirect_url
@@ -247,15 +248,14 @@ def render_site(vars = {}):
 	html = []
 
 	page = 0 if not 'page' in vars else int(vars['page'])
-	search = "" if not 'search' in vars else str(vars['search']).lower()
 	find = "" if not 'find' in vars else vars['find']
-	user = "" if not 'user' in vars else str(vars['user']).lower().split(',')
+	search = None if not 'search' in vars else vars['search']
+	users = None if not 'user' in vars else vars['user'].lower().split(',')
 
 	random.shuffle(watchlist)
 
 	all_tweets = get_all_tweets()
-	if user != '': all_tweets = find_tweets(all_tweets, user=user)
-	if search != '': all_tweets = find_tweets(all_tweets, search=search)
+	if users or search: all_tweets = find_tweets(all_tweets, search=search, users=users)
 	if find != '':
 		vars['page'] = find_tweet_page(all_tweets, find)
 		vars.pop('find', None)
