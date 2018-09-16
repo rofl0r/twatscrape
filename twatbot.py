@@ -236,7 +236,7 @@ def find_tweets(all_tweets, search=None, users=None):
 		match = True
 		if search and not search in all_tweets[i]['text'].lower():
 			match = False
-		if match and users and not all_tweets[i]['user'].lower() in users:
+		if match and users and not all_tweets[i]['owner'].lower() in users:
 			match = False
 		if match: match_tweets.append(all_tweets[i])
 	return match_tweets
