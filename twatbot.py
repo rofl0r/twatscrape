@@ -325,10 +325,10 @@ def scrape():
 			count = 0
 
 		if (ticks - memory[user]) > args.profile:
-			sys.stdout.write('scraping %s ...' % user)
+			insert_pos = 0
+			sys.stdout.write('\rscraping %s... ' % user)
 			sys.stdout.flush()
 
-			insert_pos = 0
 
 			#print('count for user "%s" is: %d' % (user, count))
 
@@ -341,11 +341,13 @@ def scrape():
 					add_twatlist(user, t, insert_pos)
 					insert_pos += 1
 					if args.mirror: mirror_twat(t, args=args)
-					print repr(t)
+					sys.stdout.write('\rscraping %s... +%d ' % (user, insert_pos))
+					sys.stdout.flush()
 					#render_site()
 				#else: print('already known: %s, %s' % (user, str(t)))
 			memory[user] = time.time()
-			print " done"
+			sys.stdout.write('done\n')
+			sys.stdout.flush()
 
 
 def resume_retry_mirroring(done):

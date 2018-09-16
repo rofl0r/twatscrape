@@ -152,7 +152,6 @@ def mirror_twat(twat, args=None):
 					hdr, res = http.get('/%s' % uri)
 					with open('%s/%s' % (emodir, filename), 'w') as h:
 						h.write(res)
-					print('saved emojis "%s"' % filename)
 
 
 def add_tweet(id, user, time, text):
