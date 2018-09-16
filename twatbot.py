@@ -308,11 +308,6 @@ def write_html(html, vars=None, pages=0):
 
 	return "\n".join(ht).encode('utf-8')
 
-def get_refresh_time(mem):
-	if mem == 'search': return args.search
-	elif mem == 'profile': return args.profile
-
-
 def scrape():
 	ticks = time.time()
 	for user in watchlist:
