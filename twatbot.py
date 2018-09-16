@@ -6,6 +6,7 @@ import argparse
 import os.path
 import random
 import sys
+import urllib
 from HTMLParser import HTMLParser
 from http2 import RsHttp
 import threading
@@ -137,8 +138,6 @@ def htmlize_twat(twat, vars):
 	else:
 		user_str = "<a target='_blank' href='https://twitter.com/%s'>%s</a> (RT <a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a>)" % \
 		(twat['owner'], twat['owner'], twat['user'], twat['id'], twat['user'])
-		#user_str = "<a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a> (RT <a target='_blank' href='https://twitter.com/%s'>%s</a>)" % \
-		#(twat["user"], twat["id"], twat["user"], twat["owner"], twat["owner"])
 
 	tw += '\n<div class="twat-title">'
 
@@ -231,12 +230,14 @@ def find_tweet_page(all_tweets, twid):
 			return int(i / args.tpp)
 	return 0
 
-def find_tweets(twats, text):
-	search = text.lower()
+def find_tweets(twats, search = None, user = None):
 	all_tweets = twats
 	match_tweets = []
 	for i in xrange(0, len(all_tweets)):
-		if search in all_tweets[i]['text'].lower(): match_tweets.append(all_tweets[i])
+		if search and urllib.unquote(search) in all_tweets[i]['text'].lower():
+			match_tweets.append(all_tweets[i])
+		elif user and str(all_tweets[i]['user']).lower() in user:
+			match_tweets.append(all_tweets[i])
 
 	return match_tweets
 
@@ -246,13 +247,15 @@ def render_site(vars = {}):
 	html = []
 
 	page = 0 if not 'page' in vars else int(vars['page'])
-	search = "" if not 'search' in vars else vars['search']
+	search = "" if not 'search' in vars else str(vars['search']).lower()
 	find = "" if not 'find' in vars else vars['find']
+	user = "" if not 'user' in vars else str(vars['user']).lower().split(',')
 
 	random.shuffle(watchlist)
 
 	all_tweets = get_all_tweets()
-	if search != '': all_tweets = find_tweets(all_tweets, search)
+	if user != '': all_tweets = find_tweets(all_tweets, user=user)
+	if search != '': all_tweets = find_tweets(all_tweets, search=search)
 	if find != '':
 		vars['page'] = find_tweet_page(all_tweets, find)
 		vars.pop('find', None)
@@ -306,48 +309,37 @@ def write_html(html, vars=None, pages=0):
 
 	return "\n".join(ht).encode('utf-8')
 
-def get_refresh_time(mem):
-	if mem == 'search': return args.search
-	elif mem == 'profile': return args.profile
-
-
 def scrape():
 	ticks = time.time()
 	for user in watchlist:
-		result = False
 
-		## if user hasn't been checked yet
+		## add dummy value if user hasn't been checked yet
 		if not user in memory:
-			#print('new user: %s (%s), every: %s' % (user, mem, every))
-			## add dummy value
 			memory[user] = ticks - 86400
 			count = args.count
 		else:
 			count = 0
 
 		if (ticks - memory[user]) > args.profile:
-			sys.stdout.write('scraping %s ...' % user)
+			insert_pos = 0
+			sys.stdout.write('\rscraping %s... ' % user)
 			sys.stdout.flush()
 
-			insert_pos = 0
-
-			#print('count for user "%s" is: %d' % (user, count))
 
 			twats = get_twats(user, proxies=args.proxy, count=count, http=twitter_rshttp)
 
 			for t in twats:
-				#if t["time"] == "0m" or t["time"] == "1m":
+
 				if not in_twatlist(user, t):
-					result = True
-					#t["time"] = get_twat_timestamp(t["id"])
 					add_twatlist(user, t, insert_pos)
 					insert_pos += 1
 					if args.mirror: mirror_twat(t, args=args)
-					print repr(t)
-					#render_site()
-				#else: print('already known: %s, %s' % (user, str(t)))
+					sys.stdout.write('\rscraping %s... +%d ' % (user, insert_pos))
+					sys.stdout.flush()
+
 			memory[user] = time.time()
-			print " done"
+			sys.stdout.write('done\n')
+			sys.stdout.flush()
 
 
 def resume_retry_mirroring(done):

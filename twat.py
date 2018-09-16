@@ -93,8 +93,6 @@ def mirror_twat(twat, args=None):
 
 	if not os.path.isdir('data'): os.makedirs( 'data')
 
-	#proxies = args.proxy if args.proxy else None
-
 	## soupify user's text
 	soup = soupify(twat["text"])
 
@@ -152,7 +150,6 @@ def mirror_twat(twat, args=None):
 					hdr, res = http.get('/%s' % uri)
 					with open('%s/%s' % (emodir, filename), 'w') as h:
 						h.write(res)
-					print('saved emojis "%s"' % filename)
 
 
 def add_tweet(id, user, time, text):
@@ -187,9 +184,6 @@ def get_twats_mobile(user, proxies=None):
 
 	twats = []
 
-#	print hdr
-#	print res
-
 	soup = soupify (res)
 	tweet_id = 0
 	tweet_user = None
@@ -197,10 +191,6 @@ def get_twats_mobile(user, proxies=None):
 	tweet_text = None
 
 	for tbl in soup.body.find_all('table'): # , attrs={'class':'tweet  '}):
-#		if "class" in tbl.attrs:
-#			print "got tbal." + repr(tbl.attrs["class"]) + "."
-#		else:
-#			print "tbl"
 		if not "class" in tbl.attrs: continue
 		if not "tweet" in repr(tbl.attrs["class"]): continue
 		for td in tbl.find_all('td'):
@@ -216,7 +206,6 @@ def get_twats_mobile(user, proxies=None):
 				tweet_text = td.find('div', attrs={'class':'tweet-text'}).text.strip()
 		if tweet_user != None and tweet_id:
 			twats.append({'id':tweet_id, 'user':tweet_user, 'time':tweet_time, 'text':tweet_text})
-#			add_tweet(tweet_id, tweet_user, tweet_time, tweet_text)
 
 	return twats
 
@@ -256,15 +245,7 @@ def extract_twats(soup, twats, timestamp):
 				retweet_user = div.attrs['data-retweeter']
 			tdiv = div.find('div', attrs={'class' : 'js-tweet-text-container'})
 			tweet_text = tdiv.find('p').decode_contents()
-#			if tweet_text is None:
-#				tweet_text = ''
-#			else:
 			tweet_text = tweet_text.replace('href="/', 'href="https://twitter.com/')
-#				print "YAY"
-#				print tweet_text
-#				print type(tweet_text)
-#				print repr(tdiv.find('p').contents)
-#			tweet_text = tweet_text.replace('href', 'href')
 
 			small = div.find('small', attrs={'class':'time'})
 			for span in small.find_all('span'):
@@ -321,7 +302,6 @@ def extract_twats(soup, twats, timestamp):
 						if pr_time != 0: vals['rid_time'] = pr_time
 
 				twats.append(vals)
-#				add_tweet(tweet_id, tweet_user, tweet_time, tweet_text)
 	return twats
 
 # count: specify the number of twats that shall be fetched.
@@ -333,7 +313,6 @@ def get_twats(user, proxies=None, count=0, http=None):
 	host = 'twitter.com'
 	if not http:
 		http = RsHttp(host=host, port=443, timeout=15, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
-#	http.debugreq = True
 
 	# make sure all tweets fetched in a single invocation get the same timestamp,
 	# otherwise ordering might become messed up, once we sort them
@@ -345,9 +324,6 @@ def get_twats(user, proxies=None, count=0, http=None):
 	hdr, res = http.get("/%s" % user)
 
 	twats = []
-
-#	print hdr
-#	print res
 
 	break_loop = False
 
@@ -370,24 +346,5 @@ def get_twats(user, proxies=None, count=0, http=None):
 
 	return twats
 
-#	auth_tok = None
-#	dst = None
-#	for ns in soup.body.find_all('noscript'):
-#		form = ns.find('form', attrs={'class':'NoScriptForm'})
-#		if form is None: continue
-#		inp  = form.find('input', attrs={'type':'hidden', 'name':"authenticity_token"})
-#			#print repr(inp)
-#			#print inp.attrs["name"]
-#		auth_tok = inp.attrs["value"]
-#		dst = form.attrs["action"].replace('%2F', '/')
-#		break
-#	if dst is not None and auth_tok is not None:
-#		hdr, res = http.post(dst, {'authenticity_token':auth_tok})
-#		print hdr
-#		print res
-
-
 if __name__ == '__main__':
 	print repr ( get_twats('realdonaldtrump') )
-#	print repr ( get_twats('FLOTUS') )
-#	get_twat_timestamp('/2runtherace/status/1015320873044234240')
