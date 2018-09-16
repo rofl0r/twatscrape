@@ -229,12 +229,14 @@ def find_tweet_page(all_tweets, twid):
 			return int(i / args.tpp)
 	return 0
 
-def find_tweets(twats, text):
-	search = text.lower()
+def find_tweets(twats, search = None, user = None):
 	all_tweets = twats
 	match_tweets = []
 	for i in xrange(0, len(all_tweets)):
-		if search in all_tweets[i]['text'].lower(): match_tweets.append(all_tweets[i])
+		if search and search in all_tweets[i]['text'].lower():
+			match_tweets.append(all_tweets[i])
+		elif user and str(all_tweets[i]['user']).lower() in user:
+			match_tweets.append(all_tweets[i])
 
 	return match_tweets
 
@@ -244,13 +246,15 @@ def render_site(vars = {}):
 	html = []
 
 	page = 0 if not 'page' in vars else int(vars['page'])
-	search = "" if not 'search' in vars else vars['search']
+	search = "" if not 'search' in vars else str(vars['search']).lower()
 	find = "" if not 'find' in vars else vars['find']
+	user = "" if not 'user' in vars else str(vars['user']).lower().split(',')
 
 	random.shuffle(watchlist)
 
 	all_tweets = get_all_tweets()
-	if search != '': all_tweets = find_tweets(all_tweets, search)
+	if user != '': all_tweets = find_tweets(all_tweets, user=user)
+	if search != '': all_tweets = find_tweets(all_tweets, search=search)
 	if find != '':
 		vars['page'] = find_tweet_page(all_tweets, find)
 		vars.pop('find', None)
