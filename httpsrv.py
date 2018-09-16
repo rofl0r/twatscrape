@@ -49,9 +49,11 @@ class HttpClient():
 			self.active = False
 			self.conn.close()
 			return None
-		if not s.find('\r\n'): err = True
+		n = s.find('\r\n')
+		if n == -1: err = True
 		else:
-			line, a = s.split('\r\n', 1)
+			line = s[:n]
+			a = s[n+2:]
 			meth, url, ver = _parse_req(line)
 			if not (ver == "HTTP/1.0" or ver == "HTTP/1.1"):
 				err = True
