@@ -229,11 +229,14 @@ def find_tweet_page(all_tweets, twid):
 			return int(i / args.tpp)
 	return 0
 
-def find_tweets(all_tweets, search=None, users=None):
+def find_tweets(all_tweets, search=None, users=None, exclude=None):
 	if search: search = urllib.unquote(search).lower()
+	if exclude: exclude = urllib.unquote(exclude).lower()
 	match_tweets = []
 	for i in xrange(0, len(all_tweets)):
 		match = True
+		if exclude and exclude in all_tweets[i]['text'].lower():
+			match = False
 		if search and not search in all_tweets[i]['text'].lower():
 			match = False
 		if match and users and not all_tweets[i]['owner'].lower() in users:
@@ -249,12 +252,13 @@ def render_site(vars = {}):
 	page = 0 if not 'page' in vars else int(vars['page'])
 	find = "" if not 'find' in vars else vars['find']
 	search = None if not 'search' in vars else vars['search']
+	exclude = None if not 'exclude' in vars else vars['exclude']
 	users = None if not 'user' in vars else vars['user'].lower().split(',')
 
 	random.shuffle(watchlist)
 
 	all_tweets = get_all_tweets()
-	if users or search: all_tweets = find_tweets(all_tweets, search=search, users=users)
+	if users or search or exclude: all_tweets = find_tweets(all_tweets, search=search, users=users, exclude=exclude)
 	if find != '':
 		vars['page'] = find_tweet_page(all_tweets, find)
 		vars.pop('find', None)
