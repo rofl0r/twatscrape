@@ -137,8 +137,6 @@ def htmlize_twat(twat, vars):
 	else:
 		user_str = "<a target='_blank' href='https://twitter.com/%s'>%s</a> (RT <a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a>)" % \
 		(twat['owner'], twat['owner'], twat['user'], twat['id'], twat['user'])
-		#user_str = "<a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a> (RT <a target='_blank' href='https://twitter.com/%s'>%s</a>)" % \
-		#(twat["user"], twat["id"], twat["user"], twat["owner"], twat["owner"])
 
 	tw += '\n<div class="twat-title">'
 
@@ -315,10 +313,8 @@ def scrape():
 	ticks = time.time()
 	for user in watchlist:
 
-		## if user hasn't been checked yet
+		## add dummy value if user hasn't been checked yet
 		if not user in memory:
-			#print('new user: %s (%s), every: %s' % (user, mem, every))
-			## add dummy value
 			memory[user] = ticks - 86400
 			count = args.count
 		else:
@@ -330,21 +326,17 @@ def scrape():
 			sys.stdout.flush()
 
 
-			#print('count for user "%s" is: %d' % (user, count))
-
 			twats = get_twats(user, proxies=args.proxy, count=count, http=twitter_rshttp)
 
 			for t in twats:
-				#if t["time"] == "0m" or t["time"] == "1m":
+
 				if not in_twatlist(user, t):
-					#t["time"] = get_twat_timestamp(t["id"])
 					add_twatlist(user, t, insert_pos)
 					insert_pos += 1
 					if args.mirror: mirror_twat(t, args=args)
 					sys.stdout.write('\rscraping %s... +%d ' % (user, insert_pos))
 					sys.stdout.flush()
-					#render_site()
-				#else: print('already known: %s, %s' % (user, str(t)))
+
 			memory[user] = time.time()
 			sys.stdout.write('done\n')
 			sys.stdout.flush()
