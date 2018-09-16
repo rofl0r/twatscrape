@@ -285,26 +285,49 @@ def make_index_link(vars):
 	if len(t): s += '?' + t
 	return s
 
+def page_selection(curr, total, margin=5):
+	set = []
+	for i in xrange(0, margin):
+		set.append(i)
+	for i in xrange(curr - margin, curr):
+		if not i in set: set.append(i)
+	for i in xrange(curr, curr+margin+1):
+		if not i in set: set.append(i)
+	for i in xrange(total-margin, total):
+		if not i in set: set.append(i)
+	i = 0
+	while i < len(set):
+		if set[i] >= total or set[i] < 0: set.pop(i)
+		else: i = i + 1
+	return set
+
+def page_selection_html(vars, page, pages):
+	div = []
+	sel = page_selection(page, pages)
+	for i in xrange(len(sel)):
+		if i > 0 and sel[i] - sel[i-1] != 1:
+			div.append('...')
+		if sel[i] == page:
+			div.append(str(page))
+		else:
+			vars['page'] = sel[i]
+			indx = make_index_link(vars)
+			div.append('<a class="menu" href="%s">%d</a>' % (indx,sel[i]))
+	vars['page'] = page
+	return div
+
 def write_html(html, vars=None, pages=0):
 	ht = [ html_header() ]
 	page = int(vars['page']) if 'page' in vars else 0
 
-	div = []
-
-	for j in range(0, pages + 1):
-		if j == page:
-			div.append(str(page))
-		else:
-			vars['page'] = j
-			indx = make_index_link(vars)
-			div.append('<a class="menu" href="%s">%d</a>' % (indx,j))
-
-	vars['page'] = page
-
+	div = page_selection_html(vars, page, pages)
 	if len(div):
 		ht.append('\n<div class="menu">%s</div>\n' % '&nbsp;'.join(div))
 
 	[ ht.append(i) for i in html ]
+
+	if len(div):
+		ht.append('\n<div class="menu">%s</div>\n' % '&nbsp;'.join(div))
 
 	ht.append("\n</body></html>")
 
