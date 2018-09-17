@@ -11,6 +11,8 @@ from HTMLParser import HTMLParser
 from http2 import RsHttp
 import threading
 from soup_parser import soupify
+import base64
+import hashlib
 
 title="twatscrape"
 tweets = dict()
@@ -439,10 +441,31 @@ def serve_loop(ip, port, done):
 
 		client_threads.append((cthread, evt_done))
 
+def is_user_password(data):
+	data = data.split(' ')
+	if data[0] != 'Basic': return False
+	creds = base64.b64decode(data[1]).split(':')
+	creds[1] = hashlib.md5(creds[1]).hexdigest()
+	if ':'.join(creds) in admins: return True
+	return False
+
+# TODO: proper config page
+def render_configpage():
+	return 'here comes the config page'
 
 def httpsrv_client_thread(c, evt_done):
 	req = c.read_request()
 	if req is None: pass
+	# config page (needs auth)
+	elif req['url'] == '/config.html':
+		if not 'Authorization' in req:
+			c.send(401, "Unauthorized", "Please provide user/password")
+		elif is_user_password(req['Authorization']):
+			c.send(200, "OK", render_configpage())
+		# TODO: check for brute force attempts
+		else:
+			c.send(403, "Authentication failed", "failed")
+
 	elif req['url'] == '/':
 		c.redirect('/index.html')
 	elif req['url'].startswith('/index.html'):
@@ -510,6 +533,11 @@ if __name__ == '__main__':
 		if not os.path.exists(args.dir + '/css'):
 			os.symlink(os.getcwd() + '/css', args.dir + '/css')
 		os.chdir(args.dir)
+
+	admins = []
+	if os.path.exists('admins.txt'):
+		with open('admins.txt', 'r') as f:
+			for line in f.read().split('\n'): admins.append(line.strip())
 
 	args.proxy = [RocksockProxyFromURL(args.proxy)] if args.proxy else None
 
