@@ -392,33 +392,54 @@ def serve_loop(ip, port, done):
 	from httpsrv import HttpSrv
 	hs = HttpSrv(ip, port)
 	hs.setup()
+	client_threads = []
 	while not done.is_set():
 		c = hs.wait_client()
-		req = c.read_request()
-		if req is None: continue
-		if req['url'] == '/':
-			c.redirect('/index.html')
-		elif req['url'].startswith('/index.html'):
-			vars={}
-			vars['page'] = 0
-			if '?' in req['url']:
-				a,b= req['url'].split('?')
-				l = b.split('&')
-				for d in l:
-					if not '=' in d: continue
-					e,f=d.split('=')
-					vars[e.lower()] = f
 
-			r, redir = render_site(vars)
-			if redir is not "":
-				c.redirect(redir)
-			else:
-				c.send(200, "OK", r)
-		elif not '..' in req['url'] and file_exists(os.getcwd() + req['url']):
-			c.serve_file(os.getcwd() + req['url'])
+		evt_done = threading.Event()
+		cthread = threading.Thread(target=httpsrv_client_thread, args=(c,evt_done))
+		cthread.daemon = True
+		cthread.start()
+
+		ctrm = []
+		for ct, ct_done in client_threads:
+			if ct_done.is_set():
+				ctrm.append((ct,ct_done))
+				ct.join()
+
+		if len(ctrm):
+			client_threads = [ x for x in client_threads if not x in ctrm ]
+
+		client_threads.append((cthread, evt_done))
+
+
+def httpsrv_client_thread(c, evt_done):
+	req = c.read_request()
+	if req is None: pass
+	elif req['url'] == '/':
+		c.redirect('/index.html')
+	elif req['url'].startswith('/index.html'):
+		vars={}
+		vars['page'] = 0
+		if '?' in req['url']:
+			a,b= req['url'].split('?')
+			l = b.split('&')
+			for d in l:
+				if not '=' in d: continue
+				e,f=d.split('=')
+				vars[e.lower()] = f
+
+		r, redir = render_site(vars)
+		if redir is not "":
+			c.redirect(redir)
 		else:
-			c.send(404, "not exist", "the reqested file not exist!!!1")
-		c.disconnect()
+			c.send(200, "OK", r)
+	elif not '..' in req['url'] and file_exists(os.getcwd() + req['url']):
+		c.serve_file(os.getcwd() + req['url'])
+	else:
+		c.send(404, "not exist", "the reqested file not exist!!!1")
+	c.disconnect()
+	evt_done.set()
 
 def start_server(ip, port):
 	done = threading.Event()
