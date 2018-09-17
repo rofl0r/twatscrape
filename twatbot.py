@@ -392,33 +392,59 @@ def serve_loop(ip, port, done):
 	from httpsrv import HttpSrv
 	hs = HttpSrv(ip, port)
 	hs.setup()
+	client_threads = []
 	while not done.is_set():
-		c = hs.wait_client()
-		req = c.read_request()
-		if req is None: continue
-		if req['url'] == '/':
-			c.redirect('/index.html')
-		elif req['url'].startswith('/index.html'):
-			vars={}
-			vars['page'] = 0
-			if '?' in req['url']:
-				a,b= req['url'].split('?')
-				l = b.split('&')
-				for d in l:
-					if not '=' in d: continue
-					e,f=d.split('=')
-					vars[e.lower()] = f
+		#print('threads: %s' % str(client_threads))
+		ctrm = []
+		for ct, ct_event in client_threads:
+			if ct_event.is_set():
+				ctrm.append((ct,ct_event))
+				ct.join()
+		client_threads = [ x for x in client_threads if not x in ctrm ]
+		#print('alive: %s' % str(client_threads))
 
-			r, redir = render_site(vars)
-			if redir is not "":
-				c.redirect(redir)
-			else:
-				c.send(200, "OK", r)
-		elif not '..' in req['url'] and file_exists(os.getcwd() + req['url']):
-			c.serve_file(os.getcwd() + req['url'])
-		else:
-			c.send(404, "not exist", "the reqested file not exist!!!1")
+		c = hs.wait_client()
+
+		evt = threading.Event()
+		cthread = threading.Thread(target=client_thread, args=(c,evt))
+		cthread.daemon = True
+		client_threads.append((cthread, evt))
+		cthread.start()
+
+
+def client_thread(c, evt):
+	req = c.read_request()
+	if req is None:
 		c.disconnect()
+		evt.set()
+		return None
+	if req['url'] == '/':
+		c.redirect('/index.html')
+	elif req['url'].startswith('/index.html'):
+		vars={}
+		vars['page'] = 0
+		if '?' in req['url']:
+			a,b= req['url'].split('?')
+			l = b.split('&')
+			for d in l:
+				if not '=' in d:
+					c.disconnect()
+					evt.set()
+					return None
+				e,f=d.split('=')
+				vars[e.lower()] = f
+
+		r, redir = render_site(vars)
+		if redir is not "":
+			c.redirect(redir)
+		else:
+			c.send(200, "OK", r)
+	elif not '..' in req['url'] and file_exists(os.getcwd() + req['url']):
+		c.serve_file(os.getcwd() + req['url'])
+	else:
+		c.send(404, "not exist", "the reqested file not exist!!!1")
+	c.disconnect()
+	evt.set()
 
 def start_server(ip, port):
 	done = threading.Event()
