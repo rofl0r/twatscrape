@@ -405,14 +405,14 @@ def serve_loop(ip, port, done):
 		if len(ctrm):
 			client_threads = [ x for x in client_threads if not x in ctrm ]
 
-		evt = threading.Event()
-		cthread = threading.Thread(target=httpsrv_client_thread, args=(c,evt))
+		evt_done = threading.Event()
+		cthread = threading.Thread(target=httpsrv_client_thread, args=(c,evt_done))
 		cthread.daemon = True
-		client_threads.append((cthread, evt))
+		client_threads.append((cthread, evt_done))
 		cthread.start()
 
 
-def httpsrv_client_thread(c, evt):
+def httpsrv_client_thread(c, evt_done):
 	req = c.read_request()
 	if req is None: pass
 	elif req['url'] == '/':
@@ -438,7 +438,7 @@ def httpsrv_client_thread(c, evt):
 	else:
 		c.send(404, "not exist", "the reqested file not exist!!!1")
 	c.disconnect()
-	evt.set()
+	evt_done.set()
 
 def start_server(ip, port):
 	done = threading.Event()
