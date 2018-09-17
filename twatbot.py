@@ -394,31 +394,28 @@ def serve_loop(ip, port, done):
 	hs.setup()
 	client_threads = []
 	while not done.is_set():
-		#print('threads: %s' % str(client_threads))
 		ctrm = []
-		for ct, ct_event in client_threads:
-			if ct_event.is_set():
-				ctrm.append((ct,ct_event))
-				ct.join()
-		client_threads = [ x for x in client_threads if not x in ctrm ]
-		#print('alive: %s' % str(client_threads))
-
 		c = hs.wait_client()
 
+		for ct, ct_done in client_threads:
+			if ct_done.is_set():
+				ctrm.append((ct,ct_done))
+				ct.join()
+
+		if len(ctrm):
+			client_threads = [ x for x in client_threads if not x in ctrm ]
+
 		evt = threading.Event()
-		cthread = threading.Thread(target=client_thread, args=(c,evt))
+		cthread = threading.Thread(target=httpsrv_client_thread, args=(c,evt))
 		cthread.daemon = True
 		client_threads.append((cthread, evt))
 		cthread.start()
 
 
-def client_thread(c, evt):
+def httpsrv_client_thread(c, evt):
 	req = c.read_request()
-	if req is None:
-		c.disconnect()
-		evt.set()
-		return None
-	if req['url'] == '/':
+	if req is None: pass
+	elif req['url'] == '/':
 		c.redirect('/index.html')
 	elif req['url'].startswith('/index.html'):
 		vars={}
@@ -427,10 +424,7 @@ def client_thread(c, evt):
 			a,b= req['url'].split('?')
 			l = b.split('&')
 			for d in l:
-				if not '=' in d:
-					c.disconnect()
-					evt.set()
-					return None
+				if not '=' in d: continue
 				e,f=d.split('=')
 				vars[e.lower()] = f
 
