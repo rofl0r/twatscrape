@@ -394,9 +394,15 @@ def serve_loop(ip, port, done):
 	hs.setup()
 	client_threads = []
 	while not done.is_set():
-		ctrm = []
 		c = hs.wait_client()
 
+		evt_done = threading.Event()
+		cthread = threading.Thread(target=httpsrv_client_thread, args=(c,evt_done))
+		cthread.daemon = True
+		client_threads.append((cthread, evt_done))
+		cthread.start()
+
+		ctrm = []
 		for ct, ct_done in client_threads:
 			if ct_done.is_set():
 				ctrm.append((ct,ct_done))
@@ -404,12 +410,6 @@ def serve_loop(ip, port, done):
 
 		if len(ctrm):
 			client_threads = [ x for x in client_threads if not x in ctrm ]
-
-		evt_done = threading.Event()
-		cthread = threading.Thread(target=httpsrv_client_thread, args=(c,evt_done))
-		cthread.daemon = True
-		client_threads.append((cthread, evt_done))
-		cthread.start()
 
 
 def httpsrv_client_thread(c, evt_done):
