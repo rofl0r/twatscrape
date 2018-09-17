@@ -206,9 +206,6 @@ def htmlize_twat(twat, vars):
 
 	return tw
 
-def markdownize_twat(twat):
-	return True
-
 def retweet_time(twat):
 	if 'rid_time' in twat: return twat['rid_time']
 	if 'fetched' in twat: return twat['fetched']
@@ -462,7 +459,6 @@ if __name__ == '__main__':
 	parser.add_argument('--proxy', help="use a proxy (syntax: socks5://ip:port)", default=None, type=str, required=False)
 	parser.add_argument('--social', help="show 'social' bar (default: 0)", default=0, type=int, required=False)
 	parser.add_argument('--nohtml', help="strip html from tweets (default: 0)", default=0, type=int, required=False)
-	parser.add_argument('--md', help="output markdown content (default: 0) -- NOT WORKING", default=0, type=int, required=False)
 	parser.add_argument('--mirror', help="mirror [i]mages, [f]iles, [e]mojis, [c]ards (default: None)", default='', type=str, required=False)
 	parser.add_argument('--ext', help="space-delimited extension to tech when mirroring files (default: None)", default=None, type=str, required=False)
 	parser.add_argument('--count', help="Fetch $count latests tweets (default: 20). Use -1 to fetch the whole timeline", default=0, type=int, required=False)
@@ -483,9 +479,6 @@ if __name__ == '__main__':
 		os.chdir(args.dir)
 
 	args.proxy = [RocksockProxyFromURL(args.proxy)] if args.proxy else None
-
-	## markdown is not working, yet. Force to html.
-	args.md = 0
 
 	## global rshttp object used with get_twats()
 	twitter_rshttp = RsHttp('twitter.com', ssl=True, port=443, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
