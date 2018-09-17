@@ -399,7 +399,6 @@ def serve_loop(ip, port, done):
 		evt_done = threading.Event()
 		cthread = threading.Thread(target=httpsrv_client_thread, args=(c,evt_done))
 		cthread.daemon = True
-		client_threads.append((cthread, evt_done))
 		cthread.start()
 
 		ctrm = []
@@ -410,6 +409,8 @@ def serve_loop(ip, port, done):
 
 		if len(ctrm):
 			client_threads = [ x for x in client_threads if not x in ctrm ]
+
+		client_threads.append((cthread, evt_done))
 
 
 def httpsrv_client_thread(c, evt_done):
