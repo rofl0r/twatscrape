@@ -97,7 +97,10 @@ class RocksockException(Exception):
 		}
 		if self.errortype == RS_ET_SYS:
 			import errno
-			msg = "ERRNO: " + errno.errorcode[self.error]
+			if self.error in errno.errorcode:
+				msg = "ERRNO: " + errno.errorcode[self.error]
+			else:
+				msg = "ERRNO: invalid errno: " + str(self.error)
 		elif self.errortype == RS_ET_GAI:
 			msg = "GAI: " + self.failedproxy
 		elif self.errortype == RS_ET_SSL:
