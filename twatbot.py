@@ -229,13 +229,40 @@ def find_tweet_page(all_tweets, twid):
 			return int(i / args.tpp)
 	return 0
 
+def parse_search(search):
+	ret = { 'match': [], 'exclude': [] }
+
+	if '"' in search: parts = search.split('"')
+	else: parts = search.split(' ')
+
+	for part in parts:
+		if len(part):
+			part = part.strip()
+
+			if part[0] == '-': ret['exclude'].append(part[1:])
+			else: ret['match'].append(part)
+
+	return ret
+
 def find_tweets(all_tweets, search=None, users=None):
-	if search: search = urllib.unquote(search).lower()
+	if search: search = parse_search(urllib.unquote(search).lower())
 	match_tweets = []
 	for i in xrange(0, len(all_tweets)):
 		match = True
-		if search and not search in all_tweets[i]['text'].lower():
-			match = False
+		tweet_text = all_tweets[i]['text'].lower()
+
+		if search['match']:
+			for s in search['match']:
+				if not s in tweet_text:
+					match = False
+					break
+
+		if match and search['exclude']:
+			for s in search['exclude']:
+				if s in tweet_text:
+					match = False
+					break
+
 		if match and users and not all_tweets[i]['owner'].lower() in users:
 			match = False
 		if match: match_tweets.append(all_tweets[i])
