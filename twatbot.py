@@ -355,9 +355,17 @@ def write_html(html, vars=None, pages=0):
 	if len(div):
 		ht.append('\n<div class="menu">%s</div>\n' % '&nbsp;'.join(div))
 
+	ht.append(toolbox())
 	ht.append("\n</body></html>")
 
 	return "\n".join(ht).encode('utf-8')
+
+def toolbox():
+	return """<div class="toolbox">
+	<form name="search" method="GET" action="index.html"><input class="search" type="text" name="search" placeholder='foo "bar baz" -quux'></form>
+
+	</div>
+	"""
 
 def scrape():
 	ticks = time.time()
