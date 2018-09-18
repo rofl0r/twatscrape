@@ -277,8 +277,6 @@ def render_site(vars = {}):
 	search = None if not 'search' in vars else vars['search']
 	users = None if not 'user' in vars else vars['user'].lower().split(',')
 
-	random.shuffle(watchlist)
-
 	all_tweets = get_all_tweets()
 	if users or search: all_tweets = find_tweets(all_tweets, search=search, users=users)
 	if find != '':
@@ -550,6 +548,7 @@ if __name__ == '__main__':
 
 	watchlist = [x.rstrip('\n') for x in open(args.watchlist, 'r').readlines() if not x.startswith(';')]
 	if args.reload > 0: watchlist_ticks = time.time()
+	random.shuffle(watchlist)
 
 	## load known twats or create empty list
 	json_loads()
@@ -567,6 +566,7 @@ if __name__ == '__main__':
 		try:
 			if args.reload > 0 and (time.time() - watchlist_ticks) > args.reload:
 				watchlist = [x.rstrip('\n') for x in open(args.watchlist, 'r').readlines() if not x.startswith(';')]
+				random.shuffle(watchlist)
 				watchlist_ticks = time.time()
 				## load known twats or create empty list
 				json_loads()
