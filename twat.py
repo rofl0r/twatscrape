@@ -82,7 +82,19 @@ def _mirror_file(url_components, user, tid, args=None, content_type=None, force=
 		print "%s%s : %s" % (url_components['host'], url_components['uri'], hdr.split('\n')[0])
 		return
 
-	filehash = hashlib.md5(res).hexdigest()
+	try:
+		filehash = hashlib.md5(res).hexdigest()
+
+	except:
+		# force res to be re-encoded in the specified charset
+		if 'charset=' in hdr:
+			for i in hdr.split('\n'):
+				if i.startswith('Content-Type:'):
+					res = res.encode( str( i.split('=')[1]).lower(), 'replace')
+					filehash = hashlib.md5(res).hexdigest()
+					break
+
+
 	if not os.path.exists('data/%s.%s' % (filehash, ext)):
 		with open('data/%s.%s' % (filehash, ext), 'w') as h:
 			h.write(res)
