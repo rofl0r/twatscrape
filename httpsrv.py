@@ -19,6 +19,11 @@ class HttpClient():
 		self.addr = addr
 		self.conn = conn
 		self.active = True
+		self.debugreq = False
+
+	def _send_i(self, data):
+		self.conn.send(data)
+		if self.debugreq and len(data): print ">>>\n", data
 
 	def send(self, code, msg, response, headers=None):
 		r = ''
@@ -29,8 +34,8 @@ class HttpClient():
 		r += "Content-Length: %d\r\n" % len(response)
 		r += "\r\n"
 		try:
-			self.conn.send(r)
-			self.conn.send(response)
+			self._send_i(r)
+			self._send_i(response)
 		except:
 			self.disconnect()
 
@@ -50,6 +55,9 @@ class HttpClient():
 			self.active = False
 			self.conn.close()
 			return None
+
+		if self.debugreq: print "<<<\n", s
+
 		n = s.find('\r\n')
 		if n == -1: err = True
 		else:
