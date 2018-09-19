@@ -85,10 +85,11 @@ def _mirror_file(url_components, user, tid, args=None, content_type=None, force=
 		print "%s%s : %s" % (url_components['host'], url_components['uri'], hdr.split('\n')[0])
 		return
 
-	filehash = _hash(res)
+	res_bytes = res.encode('utf-8') if isinstance(res, unicode) else res
+	filehash = _hash(res_bytes)
 	if not os.path.exists('data/%s.%s' % (filehash, ext)):
 		with open('data/%s.%s' % (filehash, ext), 'w') as h:
-			h.write(res)
+			h.write(res_bytes)
 
 	os.symlink('../../data/%s.%s' % (filehash, ext), outname)
 
