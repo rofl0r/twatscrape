@@ -37,9 +37,10 @@ class HttpClient():
 	def serve_file(self, filename):
 		self.send(200, "OK", open(filename, 'r').read())
 
-	def redirect(self, url):
-		headers = {'Location':url}
-		self.send(301, "Moved Permanently", "", headers=headers)
+	def redirect(self, url, headers=None):
+		h = dict() if not headers else headers.copy()
+		h['Location'] = url
+		self.send(301, "Moved Permanently", "", headers=h)
 
 	def read_request(self):
 		s = self.conn.recv(1024)
