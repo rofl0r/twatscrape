@@ -329,14 +329,15 @@ class RsHttp():
 
 
 if __name__ == '__main__':
-	host = 'www.cnn.com'
-	http = RsHttp(host=host, port=443, timeout=15, ssl=True, follow_redirects=True, auto_set_cookies=True)
+	url = 'https://www.openssl.org/news/secadv/20170126.txt'
+	host, port, use_ssl, uri = _parse_url(url)
+	http = RsHttp(host=host, port=port, timeout=15, ssl=use_ssl, follow_redirects=True, auto_set_cookies=True)
 	http.debugreq = True
 	if not http.connect():
 		print "sorry, couldn't connect"
 	else:
-		hdr  = http.head("/")
+		hdr  = http.head(uri)
 		print hdr
-		hdr, res = http.get("/")
+		hdr, res = http.get(uri)
 		print hdr
 		print res
