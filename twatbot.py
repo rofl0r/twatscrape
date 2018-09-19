@@ -132,12 +132,14 @@ def htmlize_twat(twat, vars):
 	tw = '<div class="twat-container">'
 
 	if twat["user"].lower() == twat["owner"].lower():
-		user_str = "<a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a>" % \
-		(twat["user"], twat["id"], twat["user"])
-
+		retweet_str = ""
 	else:
-		user_str = "<a target='_blank' href='https://twitter.com/%s'>%s</a> (RT <a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a>)" % \
-		(twat['owner'], twat['owner'], twat['user'], twat['id'], twat['user'])
+		retweet_str = " (RT <a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a>)" % \
+		(twat['user'], twat['id'], twat['user'])
+
+	user_str = "<a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a>%s" % \
+	(twat["owner"], get_effective_twat_id(twat), twat["owner"], retweet_str)
+
 
 	tw += '\n<div class="twat-title">'
 
