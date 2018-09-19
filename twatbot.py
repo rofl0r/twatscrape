@@ -255,7 +255,7 @@ def wsplit(str):
 	return terms
 
 def find_tweets(all_tweets, search=None, users=None):
-	if search: search = wsplit(urllib.unquote(search).lower())
+	if search: search = wsplit(urllib.unquote_plus(search).lower())
 	match_tweets = []
 	for i in xrange(0, len(all_tweets)):
 		match = True
