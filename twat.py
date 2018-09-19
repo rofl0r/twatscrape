@@ -22,6 +22,10 @@ def _split_url(url):
 			result['filename'] = aa[-1]
 	return result
 
+def _hash(str):
+	value = str.encode('utf-8') if isinstance(str, unicode) else str
+	return hashlib.md5(value).hexdigest()
+
 def _mirror_file(url_components, user, tid, args=None, content_type=None, force=False):
 	if not os.path.isdir('users/%s' % user):
 		os.makedirs('users/%s' % user)
@@ -81,7 +85,7 @@ def _mirror_file(url_components, user, tid, args=None, content_type=None, force=
 		print "%s%s : %s" % (url_components['host'], url_components['uri'], hdr.split('\n')[0])
 		return
 
-	filehash = hashlib.md5(res).hexdigest()
+	filehash = _hash(res)
 	if not os.path.exists('data/%s.%s' % (filehash, ext)):
 		with open('data/%s.%s' % (filehash, ext), 'w') as h:
 			h.write(res)
