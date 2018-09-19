@@ -228,7 +228,13 @@ def find_tweet_page(all_tweets, twid):
 			return int(i / args.tpp)
 	return 0
 
-def wsplit(str):
+def parse_search(str):
+	class SearchTerm():
+		def __init__(self, str):
+			self.exclude = (str[0] == '-')
+			self.term= str if not self.exclude else str[1:]
+		def match(self, text):
+			return (self.exclude and not self.term in text) or (not self.exclude and self.term in text)
 	terms = []
 	s = ''
 	in_quotes = False
@@ -237,12 +243,12 @@ def wsplit(str):
 		if str[i] in ' "':
 			if str[i] == ' ':
 				if not in_quotes:
-					if len(s): terms.append(s)
+					if len(s): terms.append(SearchTerm(s))
 					s = ''
 					handled = True
 			if str[i] == '"':
 				if in_quotes:
-					if len(s): terms.append(s)
+					if len(s): terms.append(SearchTerm(s))
 					s = ''
 					handled = True
 					in_quotes = False
@@ -251,19 +257,18 @@ def wsplit(str):
 					handled = True
 		if not handled:
 			s += str[i]
-	if len(s): terms.append(s)
+	if len(s): terms.append(SearchTerm(s))
 	return terms
 
 def find_tweets(all_tweets, search=None, users=None):
-	if search: search = wsplit(urllib.unquote_plus(search).lower())
+	terms = parse_search(urllib.unquote_plus(search).lower()) if search else []
 	match_tweets = []
 	for i in xrange(0, len(all_tweets)):
 		match = True
-		for s in search:
-			if (s[0] == '-' and s[1:] in all_tweets[i]['text'].lower()) or (s[0] != '-' and not s in all_tweets[i]['text'].lower()):
+		for t in terms:
+			if not t.match(all_tweets[i]['text'].lower()):
 				match = False
 				break
-				
 		if match and users and not all_tweets[i]['owner'].lower() in users:
 			match = False
 		if match: match_tweets.append(all_tweets[i])
