@@ -21,6 +21,43 @@ def _parse_errorcode(line):
 		err = int(rest[:r])
 	return ver, err, msg
 
+def _parse_url(url):
+	host = ''
+	url_l = url.lower()
+	if url_l.startswith('https://'):
+		ssl = True
+		url = url[8:]
+		port = 443
+	elif url_l.startswith('http://'):
+		ssl = False
+		url = url[7:]
+		port = 80
+	elif url_l.startswith('/'):
+		# can happen with a redirect
+		url = url[1:]
+		port = 0
+	else:
+		raise
+
+	if not '/' in url: url = url + '/'
+
+	if port == 0:
+		return "", 0, False, url
+
+	port_index = -1
+	for i in range(len(url)):
+		if url[i] == ':':
+			host = url[:i]
+			port_index = i+1
+		elif url[i] == '/':
+			if port_index >= 0:
+				port = int(url[port_index:i])
+			else:
+				host = url[:i]
+			url = url[i:]
+			break
+	return host, port, ssl, url
+
 
 class RsHttp():
 	def __init__(self, host, port=80, ssl=False, follow_redirects=False, auto_set_cookies=False, keep_alive=False, timeout=60, user_agent=None, proxies=None, max_tries=10, **kwargs):
@@ -186,44 +223,6 @@ class RsHttp():
 				continue
 		return False
 
-	def parse_url(self, url):
-		host = ''
-		url_l = url.lower()
-		if url_l.startswith('https://'):
-			ssl = True
-			url = url[8:]
-			port = 443
-		elif url_l.startswith('http://'):
-			ssl = False
-			url = url[7:]
-			port = 80
-		elif url_l.startswith('/'):
-			# can happen with a redirect
-			url = url[1:]
-			port = 0
-		else:
-			raise
-
-		if not '/' in url: url = url + '/'
-
-		if port == 0:
-			return "", 0, False, url
-
-		port_index = -1
-		for i in range(len(url)):
-			if url[i] == ':':
-				host = url[:i]
-				port_index = i+1
-			elif url[i] == '/':
-				if port_index >= 0:
-					port = int(url[port_index:i])
-				else:
-					host = url[:i]
-				url = url[i:]
-				break
-		return host, port, ssl, url
-
-
 	def _send_and_recv_i(self, req):
 		if self._send_raw(req):
 			return self._get_response()
@@ -267,7 +266,7 @@ class RsHttp():
 		hdr, res, redirect = self._send_and_recv(req)
 
 		if redirect != '' and self.follow_redirects:
-			host, port, use_ssl, url = self.parse_url(redirect)
+			host, port, use_ssl, url = _parse_url(redirect)
 			if port != 0:
 				self.host = host
 				self.port = port

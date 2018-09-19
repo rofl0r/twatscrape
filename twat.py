@@ -1,4 +1,4 @@
-from http2 import RsHttp
+from http2 import RsHttp, _parse_url
 from soup_parser import soupify
 import time
 import json
@@ -11,8 +11,7 @@ def get_effective_twat_id(twat):
 	return twat['id']
 
 def _split_url(url):
-	http = RsHttp('localhost')
-	host, port, ssl, uri = http.parse_url(url)
+	host, port, ssl, uri = _parse_url(url)
 	result = {'host':host, 'port':port, 'ssl':ssl, 'uri':uri}
 	aa = uri.split('#')
 	if len(aa) > 1:
