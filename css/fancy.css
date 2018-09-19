@@ -2,6 +2,13 @@ html { font-size: 14px; background: #eee; Font-Family: Monospace; color: white;}
 div.iconbar { position: relative; float: right; margin-right: 1%; font-size: 14px;}
 /*img.icon { height: 18px; width: 18px;}*/
 
+div.toolbox {
+	position: fixed; top: 0; right: 0;
+	width: 1%; height: 10%; opacity: 0; overflow: hidden;
+	transition: all 0.5s ease-out;
+}
+div.toolbox:hover { height: 100%; width: 100%; opacity: .9; transition: all 0.5s ease-out; background: black; text-align:center;}
+.search { height: 18px;}
 
 a { text-decoration: underline; color: white; }
 /*a:hover { text-decoration: underline; }*/

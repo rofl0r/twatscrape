@@ -82,7 +82,19 @@ def _mirror_file(url_components, user, tid, args=None, content_type=None, force=
 		print "%s%s : %s" % (url_components['host'], url_components['uri'], hdr.split('\n')[0])
 		return
 
-	filehash = hashlib.md5(res).hexdigest()
+	try:
+		filehash = hashlib.md5(res).hexdigest()
+
+	except:
+		# force res to be re-encoded in the specified charset
+		if 'charset=' in hdr:
+			for i in hdr.split('\n'):
+				if i.startswith('Content-Type:'):
+					res = res.encode( str( i.split('=')[1]).lower(), 'replace')
+					filehash = hashlib.md5(res).hexdigest()
+					break
+
+
 	if not os.path.exists('data/%s.%s' % (filehash, ext)):
 		with open('data/%s.%s' % (filehash, ext), 'w') as h:
 			h.write(res)
@@ -122,7 +134,7 @@ def mirror_twat(twat, args=None):
 	if 'images' in twat and 'i' in args.mirror:
 
 		for x in xrange(0, len(twat['images'])):
-			i = twat['images'][x].encode('utf-8', 'replace')
+			i = twat['images'][x]
 
 			if '?format=' in i:
 				i = i.split('&')[0]
@@ -137,7 +149,7 @@ def mirror_twat(twat, args=None):
 	if 'e' in args.mirror:
 		for img in soup.body.find_all('img'):
 			if 'class' in img.attrs and 'Emoji' in img.attrs['class']:
-				src = img.attrs['src'].encode('utf-8', 'replace')
+				src = img.attrs['src']
 				split = src.split('/')
 				host = split[2]
 				emodir = '/'.join(split[3: len(split) - 1])

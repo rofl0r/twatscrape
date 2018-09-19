@@ -11,6 +11,8 @@ from HTMLParser import HTMLParser
 from http2 import RsHttp
 import threading
 from soup_parser import soupify
+import base64
+import hashlib
 
 title="twatscrape"
 tweets = dict()
@@ -206,9 +208,6 @@ def htmlize_twat(twat, vars):
 
 	return tw
 
-def markdownize_twat(twat):
-	return True
-
 def retweet_time(twat):
 	if 'rid_time' in twat: return twat['rid_time']
 	if 'fetched' in twat: return twat['fetched']
@@ -229,13 +228,40 @@ def find_tweet_page(all_tweets, twid):
 			return int(i / args.tpp)
 	return 0
 
+def parse_search(search):
+	ret = { 'match': [], 'exclude': [] }
+
+	if '"' in search: parts = search.split('"')
+	else: parts = search.split(' ')
+
+	for part in parts:
+		if len(part):
+			part = part.strip()
+
+			if part[0] == '-': ret['exclude'].append(part[1:])
+			else: ret['match'].append(part)
+
+	return ret
+
 def find_tweets(all_tweets, search=None, users=None):
-	if search: search = urllib.unquote(search).lower()
+	if search: search = parse_search(urllib.unquote(search).lower())
 	match_tweets = []
 	for i in xrange(0, len(all_tweets)):
 		match = True
-		if search and not search in all_tweets[i]['text'].lower():
-			match = False
+		tweet_text = all_tweets[i]['text'].lower()
+
+		if search['match']:
+			for s in search['match']:
+				if not s in tweet_text:
+					match = False
+					break
+
+		if match and search['exclude']:
+			for s in search['exclude']:
+				if s in tweet_text:
+					match = False
+					break
+
 		if match and users and not all_tweets[i]['owner'].lower() in users:
 			match = False
 		if match: match_tweets.append(all_tweets[i])
@@ -250,8 +276,6 @@ def render_site(vars = {}):
 	find = "" if not 'find' in vars else vars['find']
 	search = None if not 'search' in vars else vars['search']
 	users = None if not 'user' in vars else vars['user'].lower().split(',')
-
-	random.shuffle(watchlist)
 
 	all_tweets = get_all_tweets()
 	if users or search: all_tweets = find_tweets(all_tweets, search=search, users=users)
@@ -329,9 +353,17 @@ def write_html(html, vars=None, pages=0):
 	if len(div):
 		ht.append('\n<div class="menu">%s</div>\n' % '&nbsp;'.join(div))
 
+	ht.append(toolbox())
 	ht.append("\n</body></html>")
 
 	return "\n".join(ht).encode('utf-8')
+
+def toolbox():
+	return """<div class="toolbox">
+	<form name="search" method="GET" action="index.html"><input class="search" type="text" name="search" placeholder='foo "bar baz" -quux'></form>
+
+	</div>
+	"""
 
 def scrape():
 	ticks = time.time()
@@ -412,10 +444,31 @@ def serve_loop(ip, port, done):
 
 		client_threads.append((cthread, evt_done))
 
+def is_user_password(data):
+	data = data.split(' ')
+	if data[0] != 'Basic': return False
+	creds = base64.b64decode(data[1]).split(':')
+	creds[1] = hashlib.md5(creds[1]).hexdigest()
+	if ':'.join(creds) in admins: return True
+	return False
+
+# TODO: proper config page
+def render_configpage():
+	return 'here comes the config page'
 
 def httpsrv_client_thread(c, evt_done):
 	req = c.read_request()
 	if req is None: pass
+	# config page (needs auth)
+	elif req['url'] == '/config.html':
+		if not 'Authorization' in req:
+			c.send(401, "Unauthorized", "Please provide user/password")
+		elif is_user_password(req['Authorization']):
+			c.send(200, "OK", render_configpage())
+		# TODO: check for brute force attempts
+		else:
+			c.send(403, "Authentication failed", "failed")
+
 	elif req['url'] == '/':
 		c.redirect('/index.html')
 	elif req['url'].startswith('/index.html'):
@@ -464,7 +517,6 @@ if __name__ == '__main__':
 	parser.add_argument('--proxy', help="use a proxy (syntax: socks5://ip:port)", default=None, type=str, required=False)
 	parser.add_argument('--social', help="show 'social' bar (default: 0)", default=0, type=int, required=False)
 	parser.add_argument('--nohtml', help="strip html from tweets (default: 0)", default=0, type=int, required=False)
-	parser.add_argument('--md', help="output markdown content (default: 0) -- NOT WORKING", default=0, type=int, required=False)
 	parser.add_argument('--mirror', help="mirror [i]mages, [f]iles, [e]mojis, [c]ards (default: None)", default='', type=str, required=False)
 	parser.add_argument('--ext', help="space-delimited extension to tech when mirroring files (default: None)", default=None, type=str, required=False)
 	parser.add_argument('--count', help="Fetch $count latests tweets (default: 20). Use -1 to fetch the whole timeline", default=0, type=int, required=False)
@@ -484,16 +536,19 @@ if __name__ == '__main__':
 			os.symlink(os.getcwd() + '/css', args.dir + '/css')
 		os.chdir(args.dir)
 
-	args.proxy = [RocksockProxyFromURL(args.proxy)] if args.proxy else None
+	admins = []
+	if os.path.exists('admins.txt'):
+		with open('admins.txt', 'r') as f:
+			for line in f.read().split('\n'): admins.append(line.strip())
 
-	## markdown is not working, yet. Force to html.
-	args.md = 0
+	args.proxy = [RocksockProxyFromURL(args.proxy)] if args.proxy else None
 
 	## global rshttp object used with get_twats()
 	twitter_rshttp = RsHttp('twitter.com', ssl=True, port=443, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
 
 	watchlist = [x.rstrip('\n') for x in open(args.watchlist, 'r').readlines() if not x.startswith(';')]
 	if args.reload > 0: watchlist_ticks = time.time()
+	random.shuffle(watchlist)
 
 	## load known twats or create empty list
 	json_loads()
@@ -511,6 +566,7 @@ if __name__ == '__main__':
 		try:
 			if args.reload > 0 and (time.time() - watchlist_ticks) > args.reload:
 				watchlist = [x.rstrip('\n') for x in open(args.watchlist, 'r').readlines() if not x.startswith(';')]
+				random.shuffle(watchlist)
 				watchlist_ticks = time.time()
 				## load known twats or create empty list
 				json_loads()
