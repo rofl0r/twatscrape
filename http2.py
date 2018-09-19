@@ -112,7 +112,7 @@ class RsHttp():
 		if postdata != '':
 			s += postdata
 		if self.debugreq:
-			print s
+			print ">>>\n", s
 		return s
 
 	def _make_head_request(self, url, extras=[]):
@@ -180,19 +180,20 @@ class RsHttp():
 				assert(crlf == '\r\n')
 				if q == 0: break
 
-		if len(res) == 0:
-			return (s, res, redirect)
+		if len(res) != 0:
+			if unzip == 'gzip':
+				res = zlib.decompress(res, 16+zlib.MAX_WBITS)
+			elif unzip == 'deflate':
+				try:
+					res = zlib.decompress(res)
+				except zlib.error:
+					res = zlib.decompress(res, -zlib.MAX_WBITS)
 
-		if unzip == 'gzip':
-			res = zlib.decompress(res, 16+zlib.MAX_WBITS)
-		elif unzip == 'deflate':
-			try:
-				res = zlib.decompress(res)
-			except zlib.error:
-				res = zlib.decompress(res, -zlib.MAX_WBITS)
+			if charset != '':
+				res = res.decode(charset)
 
-		if charset != '':
-			res = res.decode(charset)
+		if self.debugreq:
+			print "<<<\n", s, res
 
 		return (s, res, redirect)
 
@@ -290,6 +291,7 @@ class RsHttp():
 			l = self.conn.recvline().strip()
 			s += l + '\n'
 			if l == '': break
+		if self.debugreq: print "<<<\n", s
 		return s
 
 	def head(self, url, extras=[]):
@@ -337,7 +339,4 @@ if __name__ == '__main__':
 		print "sorry, couldn't connect"
 	else:
 		hdr  = http.head(uri)
-		print hdr
 		hdr, res = http.get(uri)
-		print hdr
-		print res
