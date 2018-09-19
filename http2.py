@@ -143,6 +143,9 @@ class RsHttp():
 				assert(crlf == '\r\n')
 				if q == 0: break
 
+		if len(res) == 0:
+			return (s, res, redirect)
+
 		if unzip == 'gzip':
 			res = zlib.decompress(res, 16+zlib.MAX_WBITS)
 		elif unzip == 'deflate':
