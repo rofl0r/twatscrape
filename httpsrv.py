@@ -134,9 +134,15 @@ if __name__ == "__main__":
 	hs.setup()
 	while True:
 		c = hs.wait_client()
+		c.debugreq = True
 		req = c.read_request()
 		if req is not None:
-			print req
-			if req['url'] == '/':
+			url = req['url']
+			testdomain = 'foobar.corps'
+			if url == '/':
 				c.send(200, "OK", "<html><body>hello world</body></html>")
+			elif url.endswith("/redir") or url.endswith("/redir/"):
+				c.redirect("http://www.%s:%d/"%(testdomain, hs.port), headers={'Set-Cookie':'foo=bar; Path=/; HttpOnly; Domain=%s;'%testdomain})
+			else:
+				c.send(404, "Not Found", "404: The requested resource was not found")
 		c.disconnect()
