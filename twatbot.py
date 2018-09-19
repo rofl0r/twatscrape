@@ -213,13 +213,13 @@ def retweet_time(twat):
 	if 'fetched' in twat: return twat['fetched']
 	return twat['time']
 
-def get_all_tweets():
+def get_all_tweets(remove_dupes=False):
 	all_tweets = []
 	for user in watchlist:
 		all_tweets.extend(add_owner_to_list(user, tweets[user]))
 
 	all_tweets = sorted(all_tweets, key = lambda x : (retweet_time(x) if 'rid' in x else x["time"], x['time']), reverse=True)
-	all_tweets = remove_doubles(all_tweets)
+	if remove_dupes: all_tweets = remove_doubles(all_tweets)
 	return all_tweets
 
 def find_tweet_page(all_tweets, twid):
@@ -284,7 +284,10 @@ def render_site(vars = {}):
 	search = None if not 'search' in vars else vars['search']
 	users = None if not 'user' in vars else vars['user'].lower().split(',')
 
-	all_tweets = get_all_tweets()
+	# don't remove duplicates if users is specified: this could remove retweets
+	remove_dupes = True if not users else False
+
+	all_tweets = get_all_tweets(remove_dupes)
 	if users or search: all_tweets = find_tweets(all_tweets, search=search, users=users)
 	if find != '':
 		vars['page'] = find_tweet_page(all_tweets, find)
