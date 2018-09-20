@@ -2,6 +2,15 @@ html { font-size: 14px; background: #eee; Font-Family: Monospace; color: white;}
 div.iconbar { position: relative; float: right; margin-right: 1%; font-size: 14px;}
 /*img.icon { height: 18px; width: 18px;}*/
 
+div.searchbox .search { opacity: 0; }
+div.searchbox:hover .search {opacity: 1;}
+div.searchbox {
+	position: fixed; left: 30%; right: 30%; top: 0;	height: 1%;
+	background: #90b4d2; overflow: hidden; text-align: center;
+	border-left: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid black;
+	transition: all 0.5s ease-out;
+}
+div.searchbox:hover { height: 5%; opacity: .9;}
 
 a { text-decoration: underline; color: white; }
 /*a:hover { text-decoration: underline; }*/

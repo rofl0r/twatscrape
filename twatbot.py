@@ -46,6 +46,11 @@ def sanitized_twat(twat, args=None):
 
 	return twat['text']
 
+def build_searchbox():
+	return """<div class="searchbox">
+<form name="search" method="get" action="index.html"><input class="search" size="100%" name="search" type="text" placeholder='foo "bar baz" -quux'/></form>
+</div>
+"""
 
 def build_socialbar(twat, vars):
 	bar = '\n<div class="iconbar">'
@@ -363,6 +368,7 @@ def write_html(html, vars=None, pages=0):
 	if len(div):
 		ht.append('\n<div class="menu">%s</div>\n' % '&nbsp;'.join(div))
 
+	ht.append(build_searchbox())
 	ht.append("\n</body></html>")
 
 	return "\n".join(ht).encode('utf-8')
