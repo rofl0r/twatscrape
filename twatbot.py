@@ -46,11 +46,19 @@ def sanitized_twat(twat, args=None):
 
 	return twat['text']
 
-def build_searchbox():
-	return """<div class="searchbox">
-<form name="search" method="get" action="index.html"><input class="search" size="100%" name="search" type="text" placeholder='foo "bar baz" -quux'/></form>
-</div>
-"""
+def build_searchbox(vars):
+	link = make_index_link(vars, exclude=['search', 'find'])
+	fill = vars['search'] if 'search' in vars else 'foo "bar baz" -quux'
+	u_html = ''
+	if 'user' in vars:
+		u_html = '<input type="hidden" name="user" value="%s"/>\n'%vars['user']
+	return (
+		'<div class="searchbox">\n'
+		' <form name="search" method="get" action= \'%s\'>\n'
+		'  <input class="search" size="100%%" name="search" type="text" placeholder=\'%s\'/>\n'
+		' %s'
+		' </form>\n'
+		'</div>\n') % (link, fill, u_html)
 
 def build_socialbar(twat, vars):
 	bar = '\n<div class="iconbar">'
@@ -287,7 +295,7 @@ def render_site(vars = {}):
 	page = 0 if not 'page' in vars else int(vars['page'])
 	find = "" if not 'find' in vars else vars['find']
 	search = None if not 'search' in vars else vars['search']
-	users = None if not 'user' in vars else vars['user'].lower().split(',')
+	users = None if not 'user' in vars else urllib.unquote_plus(vars['user']).lower().split(',')
 
 	# don't remove duplicates if users is specified: this could remove retweets
 	remove_dupes = True if not users else False
@@ -315,10 +323,11 @@ def render_site(vars = {}):
 
 	return "", ""
 
-def make_index_link(vars):
+def make_index_link(vars, exclude=[]):
 	s = '/index.html'
 	t = ''
 	for x in vars:
+		if x in exclude: continue
 		if len(t): t += '&'
 		t += '%s=%s'%(x, str(vars[x]))
 	if len(t): s += '?' + t
@@ -368,7 +377,7 @@ def write_html(html, vars=None, pages=0):
 	if len(div):
 		ht.append('\n<div class="menu">%s</div>\n' % '&nbsp;'.join(div))
 
-	ht.append(build_searchbox())
+	ht.append(build_searchbox(vars))
 	ht.append("\n</body></html>")
 
 	return "\n".join(ht).encode('utf-8')
