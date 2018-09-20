@@ -11,7 +11,7 @@ div.searchbox {
 	border-left: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid black;
 	transition: all 0.5s ease-out;
 }
-div.searchbox:hover { height: 5%; opacity: .9;}
+div.searchbox:hover { height: 5%; opacity: .9; box-shadow: 1px 1px 10px black;}
 
 a { text-decoration: underline; color: white; }
 /*a:hover { text-decoration: underline; }*/
