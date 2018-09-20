@@ -1,8 +1,7 @@
 html { font-size: 14px; background: #eee; Font-Family: Monospace; color: white;}
 div.iconbar { position: relative; float: right; margin-right: 1%; font-size: 14px;}
-div.iconbar a { text-decoration: none; }
-div.iconbar a:hover { font-size: 110%; }
 /*img.icon { height: 18px; width: 18px;}*/
+
 div.searchbox .search { opacity: 0; }
 div.searchbox:hover .search {opacity: 1;}
 div.searchbox {
