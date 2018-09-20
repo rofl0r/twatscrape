@@ -316,12 +316,13 @@ class RsHttp():
 	def set_cookie(self, c):
 		if c.lower().startswith('set-cookie: '):
 			c = c[len('Set-Cookie: '):]
+		j = c.find(';')
+		if j == -1: j = len(c)
+		c = c[:j]
 		i = c.find('=')
 		if i == -1: i = len(c)
 		s =  c[i+1:]
-		j = s.find(';')
-		if j == -1: j = len(s)
-		self.cookies[c[:i]] = s[:j]
+		self.cookies[c[:i]] = s
 
 
 if __name__ == '__main__':
