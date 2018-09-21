@@ -194,8 +194,8 @@ def htmlize_twat(twat, vars):
 
 	if 'images' in twat:
 		tw += '<p class="twat-image">'
-		if len(twat['images']) > 1: wdth = (100/len(twat['images'])) - 1
-		else: wdth = 100
+		if len(twat['images']) > 1: wdth = ' width="%d%%"' % ((100/len(twat['images'])) - 1)
+		else: wdth = ''
 
 		for i in twat['images']:
 			if args.images <= 0:
@@ -218,7 +218,7 @@ def htmlize_twat(twat, vars):
 				else:
 					href = img_path
 					title = "view local image"
-				tw += '<a href="%s" title="%s"><%s class="%s"><img class="%s" src="%s" width="%d%%"></%s></a>' % (href, title, span_or_div, div_class, img_class, img_path, wdth, span_or_div)
+				tw += '<a href="%s" title="%s"><%s class="%s"><img class="%s" src="%s"%s></%s></a>' % (href, title, span_or_div, div_class, img_class, img_path, wdth, span_or_div)
 
 		tw += '</p>\n'
 
