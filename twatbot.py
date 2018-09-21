@@ -47,26 +47,33 @@ def sanitized_twat(twat, args=None):
 	return twat['text']
 
 def build_searchbox(vars):
-	link = make_index_link(vars, exclude=['search', 'find'])
+	link = make_index_link(vars, exclude=['search', 'find', 'user'])
 
-	if 'search' in vars:
+	if 'search' in vars and len(vars['search']):
 		fill = vars['search']
-		reset = 'clear'
+		search_value = fill
 	else:
 		fill = 'foo "bar baz" -quux'
-		reset = 'hidden'
+		search_value = ''
 
-	u_html = ''
+	reset_class = 'clear' if len(vars) > 1 else 'hidden'
+
 	if 'user' in vars:
-		u_html = '<input type="hidden" name="user" value="%s"/>\n'%vars['user']
+		options = [ '<option value="%s">%s</option>' % (user,user) for user in watchlist if user != vars['user'] ]
+		options.insert(0, '<option value="%s" selected >%s</option>' % (vars['user'], vars['user']))
+
+	else:
+		options = [ '<option value="%s">%s</option>' % (user,user) for user in watchlist ]
+		options.insert(0, '<option value="" selected disabled hidden>select user</option>')
+
 	return (
 		'<div class="searchbox">\n'
 		' <form name="search" method="get" action= \'%s\'>\n'
-		'  <input class="search" size="63%%" name="search" type="text" placeholder=\'%s\'/>\n'
+		'  <input class="search" name="search" type="text" value="%s" placeholder=\'%s\'/>\n'
 		'  <span class="%s"><a href="%s">X</a></span>'
-		' %s'
+		'  <select name="user" onchange="this.form.submit()">%s</select>'
 		' </form>\n'
-		'</div>\n') % (link, fill, reset, link, u_html)
+		'</div>\n') % (link, search_value, fill, reset_class, link, '\n'.join(options))
 
 def build_socialbar(twat, vars):
 	bar = '\n<div class="iconbar">'
