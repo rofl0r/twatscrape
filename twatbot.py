@@ -48,18 +48,17 @@ def sanitized_twat(twat, args=None):
 
 def build_searchbox(vars):
 	link = make_index_link(vars, exclude=['search', 'find'])
-	fill, reset = (vars['search'], 'clear') if 'search' in vars else ('foo "bar baz" -quux', 'hidden')
+	fill = vars['search'] if 'search' in vars else 'foo "bar baz" -quux'
 	u_html = ''
 	if 'user' in vars:
 		u_html = '<input type="hidden" name="user" value="%s"/>\n'%vars['user']
 	return (
 		'<div class="searchbox">\n'
 		' <form name="search" method="get" action= \'%s\'>\n'
-		'  <input class="search" size="63%%" name="search" type="text" placeholder=\'%s\'/>\n'
-		'  <span class="%s"><a href="%s">X</a></span>'
+		'  <input class="search" size="100%%" name="search" type="text" placeholder=\'%s\'/>\n'
 		' %s'
 		' </form>\n'
-		'</div>\n') % (link, fill, reset, link, u_html)
+		'</div>\n') % (link, fill, u_html)
 
 def build_socialbar(twat, vars):
 	bar = '\n<div class="iconbar">'
