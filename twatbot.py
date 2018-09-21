@@ -50,9 +50,11 @@ def build_searchbox(vars):
 	link = make_index_link(vars, exclude=['search', 'find'])
 
 	if 'search' in vars:
-		fill, reset = (vars['search'], 'clear')
+		fill = vars['search']
+		reset = 'clear'
 	else:
-		fill, reset = ('foo "bar baz" -quux', 'hidden')
+		fill = 'foo "bar baz" -quux'
+		reset = 'hidden'
 
 	u_html = ''
 	if 'user' in vars:
