@@ -49,6 +49,7 @@ a.twitter-timeline-link { padding-left: 5px; }
 .video-thumbnail {
 	position: relative;
 	cursor: pointer;
+	text-align: center;
 }
 .video-thumbnail:before {
 	position: absolute;
