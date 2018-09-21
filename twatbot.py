@@ -59,11 +59,11 @@ def build_searchbox(vars):
 	reset_class = 'clear' if len(vars) > 1 else 'hidden'
 
 	if 'user' in vars:
-		options = [ '<option value="%s">%s</option>' % (user,user) for user in watchlist if user != vars['user'] ]
+		options = [ '<option value="%s">%s</option>' % (user,user) for user in sorted(watchlist, key=str.lower) if user != vars['user'] ]
 		options.insert(0, '<option value="%s" selected >%s</option>' % (vars['user'], vars['user']))
 
 	else:
-		options = [ '<option value="%s">%s</option>' % (user,user) for user in watchlist ]
+		options = [ '<option value="%s">%s</option>' % (user,user) for user in sorted(watchlist, key=str.lower) ]
 		options.insert(0, '<option value="" selected disabled hidden>select user</option>')
 
 	return (
