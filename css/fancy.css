@@ -11,10 +11,10 @@ div.searchbox {
 	border-left: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid black;
 	transition: all 0.5s ease-out;
 }
-div.searchbox input[type=text] {text-align: center;}
-div.searchbox:hover { height: 5%; opacity: .9; box-shadow: 1px 1px 10px black; background: white;}
+div.searchbox select, input[type=text] {width: 100%; text-align: center;}
+div.searchbox:hover { height: 60px; opacity: .9; box-shadow: 1px 1px 10px black; background: white;}
 span.clear a {position: absolute; color: black; right: 1%; z-index; -1; top: 8px; text-decoration: none; cursor: pointer;}
-span.hidden a {visibility: hidden;}
+span.hidden a {position: absolute; visibility: hidden;}
 a { text-decoration: underline; color: white; }
 /*a:hover { text-decoration: underline; }*/
 
