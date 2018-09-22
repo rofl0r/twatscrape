@@ -237,7 +237,9 @@ class Rocksock():
 		data = ''
 		while count:
 			try:
-				chunk = self.sock.recv(count if count != -1 else 4096)
+				n = count if count != -1 else 4096
+				if n >= 1024*1024: n = 1024*1024
+				chunk = self.sock.recv(n)
 			except socket.timeout:
 				raise RocksockException(RS_E_HIT_TIMEOUT)
 			except ssl.SSLError as e:
