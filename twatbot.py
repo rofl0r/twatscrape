@@ -529,6 +529,7 @@ if __name__ == '__main__':
 	parser.add_argument('--social', help="show 'social' bar (default: 0)", default=0, type=int, required=False)
 	parser.add_argument('--nohtml', help="strip html from tweets (default: 0)", default=0, type=int, required=False)
 	parser.add_argument('--mirror', help="mirror [i]mages, [f]iles, [e]mojis, [c]ards (default: None)", default='', type=str, required=False)
+	parser.add_argument('--mirror-size', help="Maximum file size allowed to mirror (in MB) - default: no limit", default=0, type=int, required=False)
 	parser.add_argument('--ext', help="space-delimited extension to tech when mirroring files (default: None)", default=None, type=str, required=False)
 	parser.add_argument('--count', help="Fetch $count latests tweets (default: 20). Use -1 to fetch the whole timeline", default=0, type=int, required=False)
 	parser.add_argument('--upstream-img', help="make image point to the defaut url (default: 0)", default=0, type=int, required=False)
@@ -537,8 +538,10 @@ if __name__ == '__main__':
 	parser.add_argument('--port', help="port of the integrated webserver - default: 1999", default=1999, type=int, required=False)
 	parser.add_argument('--listenip', help="listenip of the integrated webserver - default: localhost", default="localhost", type=str, required=False)
 
-
 	args = parser.parse_args()
+
+	if args.mirror_size > 0:
+		args.mirror_size = args.mirror_size * 1024*1024
 
 	if args.dir:
 		if not os.path.exists(args.dir):
