@@ -536,9 +536,14 @@ if __name__ == '__main__':
 	parser.add_argument('--resume', help="resume/retry mirroring at startup - default: 0", default=None, type=int, required=False)
 	parser.add_argument('--port', help="port of the integrated webserver - default: 1999", default=1999, type=int, required=False)
 	parser.add_argument('--listenip', help="listenip of the integrated webserver - default: localhost", default="localhost", type=str, required=False)
-
+	parser.add_argument('--mirror-size', help="Maximum file size allowed to mirror - default: no limit", default=0, type=int, required=False)
 
 	args = parser.parse_args()
+
+	if args.mirror_size > 0:
+		args.mirror_size = args.mirror_size * 1000000
+	else:
+		args.mirror_size = None
 
 	if args.dir:
 		if not os.path.exists(args.dir):
