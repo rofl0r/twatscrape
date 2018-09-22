@@ -48,6 +48,12 @@ def _mirror_file(url_components, user, tid, args=None, content_type=None, force=
 
 		hdr = http.head(url_components['uri'])
 
+		## max mirror size
+		if args.mirror_size:
+			# extract second part of the Content-Length: line
+			value = [ str(i.split(':')[1]).strip() for i in hdr.split('\n') if i.lower().startswith('content-length:') ]
+			if not len(value) or value[0] > args.mirror_size: return
+
 		# extract second part of the Content-Type: line
 		value = [ str(i.split(':')[1]).strip() for i in hdr.split('\n') if i.lower().startswith('content-type:') ]
 
