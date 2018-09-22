@@ -1,23 +1,27 @@
 html { font-size: 14px; background: #eee; Font-Family: Monospace; color: white;}
 div.iconbar { position: relative; float: right; margin-right: 1%; font-size: 14px;}
 div.iconbar a { text-decoration: none; }
-/*img.icon { height: 18px; width: 18px;}*/
 
-div.searchbox .search, span.clear { opacity: 0; }
-div.searchbox:hover .search, span.clear {opacity: 1;}
+div.userlist {position: absolute; width: 100%; height: 50%; text-align: center; overflow-y: scroll; margin: 1%; display: block;}
+span.userlist_elem {position: relative; width: 33%; }
+div.searchbox input[type=text] {width: 95%; text-align: center;}
+div.searchbox .submit {position: absolute; right: 1%; cursor: pointer; width: 25px; height: 33px; border: 1px solid black;}
+div.searchbox .hide_until_hover {opacity: 0; text-color: #90b4d2;}
+div.searchbox:hover .hide_until_hover {opacity: 1; text-color: white;}
 div.searchbox {
 	position: fixed; left: 30%; right: 30%; top: 0;	height: 1%;
 	background: #90b4d2; overflow: hidden; text-align: center;
 	border-left: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid black;
 	transition: all 0.5s ease-out;
 }
-div.searchbox select, input[type=text] {width: 100%; text-align: center;}
-div.searchbox:hover { height: 60px; opacity: .9; box-shadow: 1px 1px 10px black; background: white;}
-span.clear a {position: absolute; color: black; right: 1%; z-index; -1; top: 8px; text-decoration: none; cursor: pointer;}
-span.hidden a {position: absolute; visibility: hidden;}
-a { text-decoration: underline; color: white; }
-/*a:hover { text-decoration: underline; }*/
+div.searchbox:hover {
+	height: 20%;
+	opacity: 1; box-shadow: 1px 1px 10px black;
+	transition: all 0.5s ease-out;
+}
+div.searchbox span.gotoindex {position: absolute; width: 95%; text-align: center; bottom: 2%; left: 1%; right: 1%;}
 
+a { text-decoration: underline; color: white; }
 div.menu {
 	position: relative; 
 	left: 0%; right: 0%; top: 1%;
