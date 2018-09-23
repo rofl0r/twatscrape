@@ -360,6 +360,10 @@ def render_site(vars = {}):
 		return write_html(html=html, vars=vars, pages=pagetotal), ""
 
 	return "", ""
+def render_empty(vars = {}):
+	html = ['<div class="error_message"><p class="twatter">&#129296;</p><p class="error_text">There is nothing here..<p><p><a href="/">Back to index</a></p></div>']
+	return write_html(html=html, vars=vars)
+
 
 def make_index_link(vars, exclude=[]):
 	s = '/index.html'
@@ -522,6 +526,7 @@ def httpsrv_client_thread(c, evt_done):
 		if redir is not "":
 			c.redirect(redir)
 		else:
+			if r == '': r = render_empty(vars=vars)
 			c.send(200, "OK", r)
 	elif not '..' in req['url'] and file_exists(os.getcwd() + req['url']):
 		c.serve_file(os.getcwd() + req['url'])
