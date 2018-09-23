@@ -15,6 +15,9 @@ from soup_parser import soupify
 title="twatscrape"
 tweets = dict()
 memory = {}
+site_dirs = [
+	"/css",
+]
 
 def sanitized_twat(twat, args=None):
 
@@ -596,8 +599,9 @@ if __name__ == '__main__':
 	if args.dir:
 		if not os.path.exists(args.dir):
 			os.makedirs(args.dir)
-		if not os.path.exists(args.dir + '/css'):
-			os.symlink(os.getcwd() + '/css', args.dir + '/css')
+		for d in site_dirs:
+			if not os.path.exists(args.dir + d):
+				os.symlink(os.getcwd() + d, args.dir + d)
 		os.chdir(args.dir)
 
 	args.proxy = [RocksockProxyFromURL(args.proxy)] if args.proxy else None
