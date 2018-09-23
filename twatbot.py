@@ -508,12 +508,24 @@ def serve_loop(ip, port, done):
 
 		client_threads.append((cthread, evt_done))
 
+def forbidden_page():
+	return (
+		'<!DOCTYPE html>\n'
+		'  <head>\n'
+		'    <style>div.e{position:fixed;top:25%;bottom:25%;left:25%;right:25%;font-size:150px;text-align:center;}</style>\n'
+		'    <title>Forbidden</title>\n'
+		'  </head>\n'
+		'  <body>\n'
+		'    <div class="e">&#128405;</div>\n'
+		'  </body>\n'
+		'</html>')
+
 
 def httpsrv_client_thread(c, evt_done):
 	req = c.read_request()
 	if req is None: pass
 	elif os.path.isdir(req['url'][1:]):
-		c.send(403,'Forbidden', '<html><center>&#128405;</center></html>')
+		c.send(403,'Forbidden', forbidden_page())
 	elif req['url'] == '/':
 		c.redirect('/index.html')
 	elif req['url'].startswith('/index.html'):
