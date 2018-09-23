@@ -56,7 +56,7 @@ def build_searchbox(vars):
 		fill = 'foo "bar baz" -quux'
 		search_value = ''
 
-	user_sel = ['<table><tr>']
+	user_sel = ['<center><table><tr>']
 	i = 0
 	for user in sorted(watchlist, key=str.lower):
 		selected = '' if (not 'user' in vars or not user in vars['user']) else ' checked'
@@ -65,7 +65,7 @@ def build_searchbox(vars):
 		if i >= 3:
 			user_sel.append('</tr><tr>')
 			i = 0
-	user_sel.append('</tr></table>')
+	user_sel.append('</tr></table></center>')
 
 	return (
 		'<div class="searchbox">\n'

@@ -2,7 +2,7 @@ html { font-size: 14px; background: #eee; Font-Family: Monospace; color: white;}
 div.iconbar { position: relative; float: right; margin-right: 1%; font-size: 14px;}
 div.iconbar a { text-decoration: none; }
 
-div.userlist {position: absolute; width: 100%; height: 80%; top: 30px; text-align: left; overflow-y: scroll; margin: 1%; display: block;}
+div.userlist {position: absolute; width: 100%; height: 80%; top: 35px; text-align: left; overflow-y: scroll; display: block;}
 span.userlist_elem {position: relative; width: 33%; }
 div.searchbox input[type=text] {left:0; width: 100%; text-align: center; height: 33px;}
 div.searchbox .submit {position: absolute; top: 1px; height: 33px; width: 40px; right: 0; border: 0; background: transparent; padding:0; margin: 0;}
