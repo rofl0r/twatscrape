@@ -67,15 +67,20 @@ def build_searchbox(vars):
 			i = 0
 	user_sel.append('</tr></table></center>')
 
-	return (
-		'<div class="searchbox">\n'
-		' <form name="search" id="searchbox" onsubmit="searchbar_check()" method="get" action= \'%s\'>\n'
-		'  <input class="searchbar hide_until_hover" name="search" type="text" value="%s" placeholder=\'%s\'/>\n'
-		'  <input class="submit hide_until_hover" type="submit" value="&#8629">'
-		'  <div class="userlist">%s</div>\n'
-		'  <input name="user" id="user" type="hidden" value="">'
-		' </form><br />\n'
-		'</div>\n') % (link, search_value, fill, '\n'.join(user_sel))
+	ret = [
+		'<div class="searchbox">',
+		' <form name="search" id="searchbox" onsubmit="searchbar_check()" method="get" action= \'%s\'>' % link,
+		'  <input class="searchbar hide_until_hover" name="search" type="text" value="%s" placeholder=\'%s\'/>' % (search_value, fill),
+		'  <input class="submit hide_until_hover" type="submit" value="&#8629">',
+		'  <div class="userlist">%s</div>' % '\n'.join(user_sel),
+		'  <input name="user" id="user" type="hidden" value="">',
+		' </form><br />',
+		'</div>'
+	]
+	if len(search_value) or 'user' in vars:
+		ret.insert(7, '<span class="gotoindex hide_until_hover"><a href="%s">%s</a></span>' % (link,link))
+
+	return '\n'.join(ret)
 
 def build_socialbar(twat, vars):
 	bar = '\n<div class="iconbar">'

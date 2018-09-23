@@ -22,7 +22,7 @@ div.searchbox:hover {
 
 div.searchbox .searchbar {position: absolute; left: 1%; right: 1%;}
 
-div.searchbox span.gotoindex {position: absolute; width: 95%; text-align: center; bottom: 2%; left: 1%; right: 1%;}
+div.searchbox span.gotoindex {position: absolute; text-align: right; bottom: 0; right: 0;}
 
 a { text-decoration: underline; color: white; }
 div.menu {
