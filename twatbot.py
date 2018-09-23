@@ -56,24 +56,26 @@ def build_searchbox(vars):
 		fill = 'foo "bar baz" -quux'
 		search_value = ''
 
-	reset_class = 'clear' if len(vars) > 1 else 'hidden'
-
-	if 'user' in vars:
-		options = [ '<option value="%s">%s</option>' % (user,user) for user in sorted(watchlist, key=str.lower) if user != vars['user'] ]
-		options.insert(0, '<option value="%s" selected >%s</option>' % (vars['user'], vars['user']))
-
-	else:
-		options = [ '<option value="%s">%s</option>' % (user,user) for user in sorted(watchlist, key=str.lower) ]
-		options.insert(0, '<option value="" selected disabled hidden>select user</option>')
+	user_sel = ['<table><tr>']
+	i = 0
+	for user in sorted(watchlist, key=str.lower):
+		selected = '' if (not 'user' in vars or not user in vars['user']) else ' checked'
+		user_sel.append("""<td width="33%%"><label class="hide_until_hover"><input id="u_%s" class="hide_until_hover" type="checkbox" value="%s"%s>%s</label></td>""" % (user, user, selected, user))
+		i = i + 1
+		if i >= 3:
+			user_sel.append('</tr><tr>')
+			i = 0
+	user_sel.append('</tr></table>')
 
 	return (
 		'<div class="searchbox">\n'
-		' <form name="search" method="get" action= \'%s\'>\n'
-		'  <input class="search" name="search" type="text" value="%s" placeholder=\'%s\'/>\n'
-		'  <span class="%s"><a href="%s">X</a></span>'
-		'  <select name="user" onchange="this.form.submit()">%s</select>'
-		' </form>\n'
-		'</div>\n') % (link, search_value, fill, reset_class, link, '\n'.join(options))
+		' <form name="search" id="searchbox" onsubmit="searchbar_check()" method="get" action= \'%s\'>\n'
+		'  <input class="searchbar hide_until_hover" name="search" type="text" value="%s" placeholder=\'%s\'/>\n'
+		'  <input class="submit hide_until_hover" type="submit" value="&#8629">'
+		'  <div class="userlist">%s</div>\n'
+		'  <input name="user" id="user" type="hidden" value="">'
+		' </form><br />\n'
+		'</div>\n') % (link, search_value, fill, '\n'.join(user_sel))
 
 def build_socialbar(twat, vars):
 	bar = '\n<div class="iconbar">'
@@ -147,9 +149,30 @@ def add_owner_to_list(user, lst):
 		nl.append(y)
 	return nl
 
+def js_searchbox():
+	return ("<script>"
+	"function searchbar_check() {"
+	"	f = document.getElementById('searchbox');"
+	"	a = f.elements;"
+	"	var l = a.length;"
+	"	var s = '';"
+	"	for(var i = 0; i < l; i++) {"
+	"		if(a[i].id.substring(0,2) === 'u_') {"
+	"			if(a[i].checked) s += ',' + a[i].value;"
+	"		}"
+	"	}"
+	"	var u  = document.getElementById('user');"
+	"	u.value = s.substring(1);"
+	"}"
+	"</script>")
+
 def html_header():
 	header = """<!DOCTYPE html><html><head>
 <title>%s</title><meta charset="utf-8"/>""" % args.title
+
+	## check user box
+	header += js_searchbox()
+
 	## autorefresh the page ?
 	if args.refresh: header += """<meta http-equiv="refresh" content="%d" >""" % args.refresh
 	header += """<link rel='stylesheet' type='text/css' href='css/%s.css'></head><body>""" % args.theme
@@ -491,7 +514,7 @@ def httpsrv_client_thread(c, evt_done):
 			for d in l:
 				if not '=' in d: continue
 				e,f=d.split('=')
-				vars[e.lower()] = f
+				if len(f): vars[e.lower()] = f
 
 		r, redir = render_site(vars)
 		if redir is not "":
