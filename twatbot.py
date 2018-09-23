@@ -503,6 +503,8 @@ def serve_loop(ip, port, done):
 def httpsrv_client_thread(c, evt_done):
 	req = c.read_request()
 	if req is None: pass
+	elif os.path.isdir(req['url'][1:]):
+		c.send(403,'Forbidden', '<html><center>&#128405;</center></html>')
 	elif req['url'] == '/':
 		c.redirect('/index.html')
 	elif req['url'].startswith('/index.html'):
