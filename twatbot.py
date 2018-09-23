@@ -520,7 +520,7 @@ def httpsrv_client_thread(c, evt_done):
 			for d in l:
 				if not '=' in d: continue
 				e,f=d.split('=')
-				vars[e.lower()] = f
+				if len(f): vars[e.lower()] = f
 
 		r, redir = render_site(vars)
 		if redir is not "":
