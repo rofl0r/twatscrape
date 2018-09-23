@@ -530,6 +530,8 @@ def httpsrv_client_thread(c, evt_done):
 			c.send(200, "OK", r)
 	elif not '..' in req['url'] and file_exists(os.getcwd() + req['url']):
 		c.serve_file(os.getcwd() + req['url'])
+	elif req['url'] == '/robots.txt':
+		c.send(200, "OK", "User-agent: *\nDisallow: /")
 	else:
 		c.send(404, "not exist", "the reqested file not exist!!!1")
 	c.disconnect()
