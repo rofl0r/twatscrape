@@ -6,7 +6,7 @@ install beautifulsoup4 python package.
 
 run python2 twatbot.py
 
-it will create an index.html and update it with new twats.
+it will createn a webservice listening on port 1999 & update it with new twats.
 
 WWG1WGA
 
