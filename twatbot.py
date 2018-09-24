@@ -26,18 +26,24 @@ def sanitized_twat(twat, args=None):
 	soup = soupify(twat["text"])
 
 	# linked files
-	if 'f' in args.mirror:
-		for a in soup.body.find_all('a'):
-			if 'data-expanded-url' in a.attrs:
-				filename = a.attrs['data-expanded-url'].split('/')[-1]
-				tw_fn = 'users/%s/%s-%s' % (user, twat['id'], filename)
-				## file was mirrored
-				if os.path.exists(tw_fn):
-					twat['text'] = twat['text'].replace(a['href'], tw_fn)
+	for a in soup.body.find_all('a'):
+		## @username : replace when local
+		if 'data-mentioned-user-id' in a.attrs:
+			username = a.attrs['href'].split('/')[3]
+			if username.lower() in watchlist:
+				rebuild = '<b><a href="?user=%s">@</a><a href="https://twitter.com/%s">%s</a></b>' % (username, username, username)
+				twat['text'] = twat['text'].replace(str(a), rebuild)
 
-				## still replace shorten urls with expanded ones
-				else:
-					twat['text'] = twat['text'].replace(a['href'], a.attrs['data-expanded-url'])
+		elif 'f' in args.mirror and 'data-expanded-url' in a.attrs:
+			filename = a.attrs['data-expanded-url'].split('/')[-1]
+			tw_fn = 'users/%s/%s-%s' % (user, twat['id'], filename)
+			## file was mirrored
+			if os.path.exists(tw_fn):
+				twat['text'] = twat['text'].replace(a['href'], tw_fn)
+
+			## still replace shorten urls with expanded ones
+			else:
+				twat['text'] = twat['text'].replace(a['href'], a.attrs['data-expanded-url'])
 
 	# emojis
 	if 'e' in args.mirror:
