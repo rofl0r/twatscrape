@@ -61,7 +61,7 @@ def build_searchbox(vars):
 
 	user_sel = ['<center><table><tr>']
 	i = 0
-	for user in sorted(watchlist, key=str.lower):
+	for user in sorted(watchlist):
 		selected = '' if (not 'user' in vars or not user in vars['user']) else ' checked'
 		user_sel.append("""<td width="33%%"><label class="hide_until_hover"><input id="u_%s" class="hide_until_hover" type="checkbox" value="%s"%s>%s</label></td>""" % (user, user, selected, user))
 		i = i + 1
