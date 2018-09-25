@@ -27,9 +27,9 @@ def sanitized_twat(twat, args=None):
 	soup = soupify(twat["text"])
 
 	# linked files
-	if 'f' in args.mirror:
-		for a in soup.body.find_all('a'):
-			if 'data-expanded-url' in a.attrs:
+	for a in soup.body.find_all('a'):
+		if 'data-expanded-url' in a.attrs:
+			if 'f' in args.mirror:
 				filename = a.attrs['data-expanded-url'].split('/')[-1]
 				tw_fn = 'users/%s/%s-%s' % (user, twat['id'], filename)
 				## file was mirrored
@@ -39,6 +39,10 @@ def sanitized_twat(twat, args=None):
 				## still replace shorten urls with expanded ones
 				else:
 					twat['text'] = twat['text'].replace(a['href'], a.attrs['data-expanded-url'])
+
+			## still replace shorten urls with expanded ones
+			else:
+				twat['text'] = twat['text'].replace(a['href'], a.attrs['data-expanded-url'])
 
 	# emojis
 	if 'e' in args.mirror:
