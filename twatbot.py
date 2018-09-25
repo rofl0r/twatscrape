@@ -580,6 +580,10 @@ def start_server(ip, port):
 	t.start()
 	return t, done
 
+def load_watchlist():
+	wl = [x.rstrip('\n') for x in open(args.watchlist, 'r').readlines() if not x.startswith(';')]
+	random.shuffle(wl)
+	return wl
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
@@ -635,9 +639,8 @@ if __name__ == '__main__':
 	## global rshttp object used with get_twats()
 	twitter_rshttp = RsHttp('twitter.com', ssl=True, port=443, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
 
-	watchlist = [x.rstrip('\n') for x in open(args.watchlist, 'r').readlines() if not x.startswith(';')]
+	watchlist = load_watchlist()
 	if args.reload > 0: watchlist_ticks = time.time()
-	random.shuffle(watchlist)
 
 	## load known twats or create empty list
 	json_loads()
@@ -654,8 +657,7 @@ if __name__ == '__main__':
 	while True:
 		try:
 			if args.reload > 0 and (time.time() - watchlist_ticks) > args.reload:
-				watchlist = [x.rstrip('\n') for x in open(args.watchlist, 'r').readlines() if not x.startswith(';')]
-				random.shuffle(watchlist)
+				watchlist = load_watchlist()
 				watchlist_ticks = time.time()
 				## load known twats or create empty list
 				json_loads()
