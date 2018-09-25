@@ -28,7 +28,14 @@ def sanitized_twat(twat, args=None):
 
 	# linked files
 	for a in soup.body.find_all('a'):
-		if 'data-expanded-url' in a.attrs:
+		## @username : replace when local
+		if 'data-mentioned-user-id' in a.attrs:
+			username = a.attrs['href'].split('/')[3]
+			if username.lower() in watchlist:
+				rebuild = '<b><a href="?user=%s">@</a><a href="https://twitter.com/%s">%s</a></b>' % (username, username, username)
+				twat['text'] = twat['text'].replace(str(a), rebuild)
+
+		elif 'data-expanded-url' in a.attrs:
 			if 'f' in args.mirror:
 				filename = a.attrs['data-expanded-url'].split('/')[-1]
 				tw_fn = 'users/%s/%s-%s' % (user, twat['id'], filename)
@@ -628,7 +635,7 @@ if __name__ == '__main__':
 	## global rshttp object used with get_twats()
 	twitter_rshttp = RsHttp('twitter.com', ssl=True, port=443, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
 
-	watchlist = [x.rstrip('\n') for x in open(args.watchlist, 'r').readlines() if not x.startswith(';')]
+	watchlist = [x.rstrip('\n').lower() for x in open(args.watchlist, 'r').readlines() if not x.startswith(';')]
 	if args.reload > 0: watchlist_ticks = time.time()
 	random.shuffle(watchlist)
 
@@ -647,7 +654,7 @@ if __name__ == '__main__':
 	while True:
 		try:
 			if args.reload > 0 and (time.time() - watchlist_ticks) > args.reload:
-				watchlist = [x.rstrip('\n') for x in open(args.watchlist, 'r').readlines() if not x.startswith(';')]
+				watchlist = [x.rstrip('\n').lower() for x in open(args.watchlist, 'r').readlines() if not x.startswith(';')]
 				random.shuffle(watchlist)
 				watchlist_ticks = time.time()
 				## load known twats or create empty list
