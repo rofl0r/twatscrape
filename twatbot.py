@@ -4,6 +4,7 @@ import time
 import json
 import argparse
 import os.path
+import os
 import random
 import sys
 import urllib
@@ -241,8 +242,12 @@ def htmlize_twat(twat, vars):
 					href = i
 					title = "view remote image"
 				elif 'video' in twat or 'ext_tw_video_thumb' in i:
-					href = "https://twitter.com/i/status/" + twat['id']
-					title = "view remote video"
+					if os.path.exists('users/%s/%s.mp4' % (twat['user'].lower(), str(twat['id']))):
+						href = 'users/%s/%s.mp4' % (twat['user'].lower(), str(twat['id']))
+						title = "view local video"
+					else:
+						href = "https://twitter.com/i/status/" + twat['id']
+						title = "view remote video"
 					img_class = ""
 					div_class = "video-thumbnail"
 					span_or_div = "div"
@@ -580,7 +585,7 @@ if __name__ == '__main__':
 	parser.add_argument('--proxy', help="use a proxy (syntax: socks5://ip:port)", default=None, type=str, required=False)
 	parser.add_argument('--social', help="show 'social' bar (default: 0)", default=0, type=int, required=False)
 	parser.add_argument('--nohtml', help="strip html from tweets (default: 0)", default=0, type=int, required=False)
-	parser.add_argument('--mirror', help="mirror [i]mages, [f]iles, [e]mojis, [c]ards (default: None)", default='', type=str, required=False)
+	parser.add_argument('--mirror', help="mirror [i]mages, [f]iles, [e]mojis, [c]ards, [v]ideos (default: None)", default='', type=str, required=False)
 	parser.add_argument('--mirror-size', help="Maximum file size allowed to mirror (in MB) - default: no limit", default=0, type=int, required=False)
 	parser.add_argument('--ext', help="space-delimited extension to tech when mirroring files (default: None)", default=None, type=str, required=False)
 	parser.add_argument('--count', help="Fetch $count latests tweets (default: 20). Use -1 to fetch the whole timeline", default=0, type=int, required=False)
@@ -589,9 +594,19 @@ if __name__ == '__main__':
 	parser.add_argument('--resume', help="resume/retry mirroring at startup - default: 0", default=None, type=int, required=False)
 	parser.add_argument('--port', help="port of the integrated webserver - default: 1999", default=1999, type=int, required=False)
 	parser.add_argument('--listenip', help="listenip of the integrated webserver - default: localhost", default="localhost", type=str, required=False)
+	parser.add_argument('--ytdl', help="Define full path to youtube-dl", default=None, type=str, required=False)
 
 
 	args = parser.parse_args()
+
+	if args.mirror and 'v' in args.mirror:
+		if not args.ytdl: args.ytdl = 'youtube-dl'
+		try:
+			## update on startup
+			os.system('%s -U > /dev/null 2>&1' % args.ytdl)
+		except:
+			print('youtube-dl not found, videos won\'t be downloaded (path: %s)' % args.ytdl)
+			args.mirror = args.mirror.replace('v','')
 
 	if args.mirror_size > 0:
 		args.mirror_size = args.mirror_size * 1024*1024

@@ -129,6 +129,19 @@ def mirror_twat(twat, args=None):
 				if 'filename' in url_components:
 					_mirror_file(url_components, user, twat['id'], args, content_type=True)
 
+	## mirror videos
+	if 'v' in args.mirror and 'video' in twat:
+		if not os.path.isdir('users/%s' % user):
+			os.makedirs('users/%s' % user)
+		tid = str(twat['id'])
+		url = 'https://twitter.com/%s/status/%s' % (twat['user'], tid)
+		outname = 'users/%s/%s.mp4' % (twat['user'].lower(),tid)
+		if not os.path.exists('data/%s.mp4' % tid):
+			os.system('%s -o data/%s.mp4 %s > /dev/null 2>&1' % (args.ytdl, tid, url))
+		if not os.path.exists('%s' % outname) and os.path.exists('data/%s.mp4' % tid):
+			os.symlink('../../data/%s.mp4' % tid, outname)
+		
+
 	## mirror posted pictures
 	if 'images' in twat and 'i' in args.mirror:
 
