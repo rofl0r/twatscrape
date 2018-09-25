@@ -20,7 +20,7 @@ site_dirs = [
 	"/css",
 ]
 
-def sanitized_twat(twat, args=None):
+def replace_url_in_twat(twat, args=None):
 
 	user = twat['user'].lower()
 
@@ -222,7 +222,7 @@ def htmlize_twat(twat, vars):
 
 	tw += '\n</div>\n'
 	## link to mirrored filed, emojis and such
-	if args.mirror: twat['text'] = sanitized_twat(twat, args=args)
+	if args.mirror: twat['text'] = replace_url_in_twat(twat, args=args)
 	## strip html ?
 	if args.nohtml: twat['text']= strip_tags(twat['text'])
 
