@@ -28,7 +28,14 @@ def sanitized_twat(twat, args=None):
 
 	# linked files
 	for a in soup.body.find_all('a'):
-		if 'data-expanded-url' in a.attrs:
+		## @username : replace when local
+		if 'data-mentioned-user-id' in a.attrs:
+			username = a.attrs['href'].split('/')[3]
+			if username in watchlist:
+				rebuild = '<b><a href="?user=%s">@</a><a href="https://twitter.com/%s">%s</a></b>' % (username, username, username)
+				twat['text'] = twat['text'].replace(str(a), rebuild)
+
+		elif 'data-expanded-url' in a.attrs:
 			if 'f' in args.mirror:
 				filename = a.attrs['data-expanded-url'].split('/')[-1]
 				tw_fn = 'users/%s/%s-%s' % (user, twat['id'], filename)
