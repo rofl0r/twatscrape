@@ -11,6 +11,7 @@ def get_effective_twat_id(twat):
 	return twat['id']
 
 def _split_url(url):
+	url = url.encode('utf-8') if isinstance(url, unicode) else url
 	host, port, ssl, uri = _parse_url(url)
 	result = {'host':host, 'port':port, 'ssl':ssl, 'uri':uri}
 	aa = uri.split('#')
