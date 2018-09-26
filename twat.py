@@ -129,6 +129,18 @@ def mirror_twat(twat, args=None):
 				if 'filename' in url_components:
 					_mirror_file(url_components, user, twat['id'], args, content_type=True)
 
+	## mirror videos
+	if 'v' in args.mirror and 'video' in twat:
+		if not os.path.isdir('users/%s' % user):
+			os.makedirs('users/%s' % user)
+		tid = str(twat['id'])
+		url = 'https://twitter.com/%s/status/%s' % (twat['user'], tid)
+		outname = 'users/%s/%s.mp4' % (twat['user'].lower(),tid)
+		if not os.path.exists('data/%s.mp4' % tid):
+			os.system('%s -o data/%s.mp4 %s > /dev/null 2>&1' % (args.ytdl, tid, url))
+		if not os.path.exists('%s' % outname) and os.path.exists('data/%s.mp4' % tid):
+			os.symlink('../../data/%s.mp4' % tid, outname)
+
 	## mirror posted pictures
 	if 'images' in twat and 'i' in args.mirror:
 
@@ -254,11 +266,11 @@ def extract_twats(soup, twats, timestamp):
 			pinned = ('user-pinned' in div.attrs["class"])
 
 			tweet_id = div.attrs["data-tweet-id"]
-			tweet_user = div.attrs["data-screen-name"]
+			tweet_user = div.attrs["data-screen-name"].lower()
 			if 'data-retweet-id' in div.attrs:
 				retweet_id = div.attrs['data-retweet-id']
 			if 'data-retweeter' in div.attrs:
-				retweet_user = div.attrs['data-retweeter']
+				retweet_user = div.attrs['data-retweeter'].lower()
 			tdiv = div.find('div', attrs={'class' : 'js-tweet-text-container'})
 			tweet_text = tdiv.find('p').decode_contents()
 			tweet_text = tweet_text.replace('href="/', 'href="https://twitter.com/')

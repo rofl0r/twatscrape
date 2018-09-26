@@ -4,6 +4,7 @@ import time
 import json
 import argparse
 import os.path
+import os
 import random
 import sys
 import urllib
@@ -19,16 +20,23 @@ site_dirs = [
 	"/css",
 ]
 
-def sanitized_twat(twat, args=None):
+def replace_url_in_twat(twat, args=None):
 
-	user = twat['user'].lower()
+	user = twat['user']
 
 	soup = soupify(twat["text"])
 
 	# linked files
-	if 'f' in args.mirror:
-		for a in soup.body.find_all('a'):
-			if 'data-expanded-url' in a.attrs:
+	for a in soup.body.find_all('a'):
+		## @username : replace when local
+		if 'data-mentioned-user-id' in a.attrs:
+			username = a.attrs['href'].split('/')[3]
+			if username.lower() in watchlist:
+				rebuild = '<b><a href="?user=%s">@</a><a href="https://twitter.com/%s">%s</a></b>' % (username, username, username)
+				twat['text'] = twat['text'].replace(str(a), rebuild)
+
+		elif 'data-expanded-url' in a.attrs:
+			if 'f' in args.mirror:
 				filename = a.attrs['data-expanded-url'].split('/')[-1]
 				tw_fn = 'users/%s/%s-%s' % (user, twat['id'], filename)
 				## file was mirrored
@@ -38,6 +46,10 @@ def sanitized_twat(twat, args=None):
 				## still replace shorten urls with expanded ones
 				else:
 					twat['text'] = twat['text'].replace(a['href'], a.attrs['data-expanded-url'])
+
+			## still replace shorten urls with expanded ones
+			else:
+				twat['text'] = twat['text'].replace(a['href'], a.attrs['data-expanded-url'])
 
 	# emojis
 	if 'e' in args.mirror:
@@ -124,7 +136,7 @@ def file_exists(fn):
 	return os.path.exists(fn)
 
 def user_filename(user):
-	user = user.lower()
+	user = user
 	if not os.path.exists('users/%s' % user): os.makedirs('users/%s' % user)
 	return 'users/%s/twats.json' % (user)
 
@@ -190,7 +202,7 @@ def html_header():
 def htmlize_twat(twat, vars):
 	tw = '<div class="twat-container">'
 
-	if twat["user"].lower() == twat["owner"].lower():
+	if twat["user"] == twat["owner"]:
 		retweet_str = ""
 	else:
 		retweet_str = " (RT <a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a>)" % \
@@ -210,14 +222,14 @@ def htmlize_twat(twat, vars):
 
 	tw += '\n</div>\n'
 	## link to mirrored filed, emojis and such
-	if args.mirror: twat['text'] = sanitized_twat(twat, args=args)
+	if args.mirror: twat['text'] = replace_url_in_twat(twat, args=args)
 	## strip html ?
 	if args.nohtml: twat['text']= strip_tags(twat['text'])
 
 	tw += '<p class="twat-text">%s</p>\n' % (twat["text"].replace('\n', '<br>'))
 
 	if 'curl' in twat and args.iframe > 0:
-		user = twat['user'].lower()
+		user = twat['user']
 		ifu = 'users/%s/%s-%s' % (user, twat['id'], "card.html")
 		if (not 'c' in args.mirror) or (not file_exists(ifu)):
 			ifu = "https://twitter.com%s?cardname=summary_large_image"%twat['curl']
@@ -232,7 +244,7 @@ def htmlize_twat(twat, vars):
 			if args.images <= 0:
 				tw += '<a href="%s">%s</a>'%(i, i)
 			else:
-				img_path = "users/%s/%s-%s" % (twat['user'].lower(), twat['id'], i.split('/')[-1])
+				img_path = "users/%s/%s-%s" % (twat['user'], twat['id'], i.split('/')[-1])
 				if not file_exists(img_path): img_path = i
 				span_or_div = "span"
 				img_class = "img"
@@ -241,8 +253,12 @@ def htmlize_twat(twat, vars):
 					href = i
 					title = "view remote image"
 				elif 'video' in twat or 'ext_tw_video_thumb' in i:
-					href = "https://twitter.com/i/status/" + twat['id']
-					title = "view remote video"
+					if os.path.exists('users/%s/%s.mp4' % (twat['user'], str(twat['id']))):
+						href = 'users/%s/%s.mp4' % (twat['user'], str(twat['id']))
+						title = "view local video"
+					else:
+						href = "https://twitter.com/i/status/" + twat['id']
+						title = "view remote video"
 					img_class = ""
 					div_class = "video-thumbnail"
 					span_or_div = "div"
@@ -328,7 +344,7 @@ def find_tweets(all_tweets, search=None, users=None):
 			if not t.match(all_tweets[i]['text'].lower()):
 				match = False
 				break
-		if match and users and not all_tweets[i]['owner'].lower() in users:
+		if match and users and not all_tweets[i]['owner'] in users:
 			match = False
 		if match: match_tweets.append(all_tweets[i])
 	return match_tweets
@@ -564,6 +580,10 @@ def start_server(ip, port):
 	t.start()
 	return t, done
 
+def load_watchlist():
+	wl = [x.rstrip('\n').lower() for x in open(args.watchlist, 'r').readlines() if not x.startswith(';')]
+	random.shuffle(wl)
+	return wl
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
@@ -580,7 +600,7 @@ if __name__ == '__main__':
 	parser.add_argument('--proxy', help="use a proxy (syntax: socks5://ip:port)", default=None, type=str, required=False)
 	parser.add_argument('--social', help="show 'social' bar (default: 0)", default=0, type=int, required=False)
 	parser.add_argument('--nohtml', help="strip html from tweets (default: 0)", default=0, type=int, required=False)
-	parser.add_argument('--mirror', help="mirror [i]mages, [f]iles, [e]mojis, [c]ards (default: None)", default='', type=str, required=False)
+	parser.add_argument('--mirror', help="mirror [i]mages, [f]iles, [e]mojis, [c]ards, [v]ideos (default: None)", default='', type=str, required=False)
 	parser.add_argument('--mirror-size', help="Maximum file size allowed to mirror (in MB) - default: no limit", default=0, type=int, required=False)
 	parser.add_argument('--ext', help="space-delimited extension to tech when mirroring files (default: None)", default=None, type=str, required=False)
 	parser.add_argument('--count', help="Fetch $count latests tweets (default: 20). Use -1 to fetch the whole timeline", default=0, type=int, required=False)
@@ -589,9 +609,19 @@ if __name__ == '__main__':
 	parser.add_argument('--resume', help="resume/retry mirroring at startup - default: 0", default=None, type=int, required=False)
 	parser.add_argument('--port', help="port of the integrated webserver - default: 1999", default=1999, type=int, required=False)
 	parser.add_argument('--listenip', help="listenip of the integrated webserver - default: localhost", default="localhost", type=str, required=False)
+	parser.add_argument('--ytdl', help="Define full path to youtube-dl", default=None, type=str, required=False)
 
 
 	args = parser.parse_args()
+
+	if args.mirror and 'v' in args.mirror:
+		if not args.ytdl: args.ytdl = 'youtube-dl'
+		try:
+			## update on startup
+			os.system('%s -U > /dev/null 2>&1' % args.ytdl)
+		except:
+			print('youtube-dl not found, videos won\'t be downloaded (path: %s)' % args.ytdl)
+			args.mirror = args.mirror.replace('v','')
 
 	if args.mirror_size > 0:
 		args.mirror_size = args.mirror_size * 1024*1024
@@ -609,9 +639,8 @@ if __name__ == '__main__':
 	## global rshttp object used with get_twats()
 	twitter_rshttp = RsHttp('twitter.com', ssl=True, port=443, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
 
-	watchlist = [x.rstrip('\n') for x in open(args.watchlist, 'r').readlines() if not x.startswith(';')]
+	watchlist = load_watchlist()
 	if args.reload > 0: watchlist_ticks = time.time()
-	random.shuffle(watchlist)
 
 	## load known twats or create empty list
 	json_loads()
@@ -628,8 +657,7 @@ if __name__ == '__main__':
 	while True:
 		try:
 			if args.reload > 0 and (time.time() - watchlist_ticks) > args.reload:
-				watchlist = [x.rstrip('\n') for x in open(args.watchlist, 'r').readlines() if not x.startswith(';')]
-				random.shuffle(watchlist)
+				watchlist = load_watchlist()
 				watchlist_ticks = time.time()
 				## load known twats or create empty list
 				json_loads()
