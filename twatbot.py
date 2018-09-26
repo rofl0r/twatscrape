@@ -26,18 +26,24 @@ def sanitized_twat(twat, args=None):
 	soup = soupify(twat["text"])
 
 	# linked files
-	if 'f' in args.mirror:
-		for a in soup.body.find_all('a'):
-			if 'data-expanded-url' in a.attrs:
-				filename = a.attrs['data-expanded-url'].split('/')[-1]
-				tw_fn = 'users/%s/%s-%s' % (user, twat['id'], filename)
-				## file was mirrored
-				if os.path.exists(tw_fn):
-					twat['text'] = twat['text'].replace(a['href'], tw_fn)
+	for a in soup.body.find_all('a'):
+		## @username : replace when local
+		if 'data-mentioned-user-id' in a.attrs:
+			username = a.attrs['href'].split('/')[3]
+			if username.lower() in watchlist:
+				rebuild = '<b><a href="?user=%s">@</a><a href="https://twitter.com/%s">%s</a></b>' % (username, username, username)
+				twat['text'] = twat['text'].replace(str(a), rebuild)
 
-				## still replace shorten urls with expanded ones
-				else:
-					twat['text'] = twat['text'].replace(a['href'], a.attrs['data-expanded-url'])
+		elif 'f' in args.mirror and 'data-expanded-url' in a.attrs:
+			filename = a.attrs['data-expanded-url'].split('/')[-1]
+			tw_fn = 'users/%s/%s-%s' % (user, twat['id'], filename)
+			## file was mirrored
+			if os.path.exists(tw_fn):
+				twat['text'] = twat['text'].replace(a['href'], tw_fn)
+
+			## still replace shorten urls with expanded ones
+			else:
+				twat['text'] = twat['text'].replace(a['href'], a.attrs['data-expanded-url'])
 
 	# emojis
 	if 'e' in args.mirror:
@@ -61,7 +67,7 @@ def build_searchbox(vars):
 
 	user_sel = ['<center><table><tr>']
 	i = 0
-	for user in sorted(watchlist, key=str.lower):
+	for user in sorted(watchlist):
 		selected = '' if (not 'user' in vars or not user in vars['user']) else ' checked'
 		user_sel.append("""<td width="33%%"><label class="hide_until_hover"><input id="u_%s" class="hide_until_hover" type="checkbox" value="%s"%s>%s</label></td>""" % (user, user, selected, user))
 		i = i + 1
@@ -564,6 +570,8 @@ def start_server(ip, port):
 	t.start()
 	return t, done
 
+def load_watchlist():
+	return [x.rstrip('\n').lower() for x in open(args.watchlist, 'r').readlines() if not x.startswith(';')]
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
@@ -609,7 +617,8 @@ if __name__ == '__main__':
 	## global rshttp object used with get_twats()
 	twitter_rshttp = RsHttp('twitter.com', ssl=True, port=443, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
 
-	watchlist = [x.rstrip('\n') for x in open(args.watchlist, 'r').readlines() if not x.startswith(';')]
+	#watchlist = [x.rstrip('\n') for x in open(args.watchlist, 'r').readlines() if not x.startswith(';')]
+	watchlist = load_watchlist()
 	if args.reload > 0: watchlist_ticks = time.time()
 	random.shuffle(watchlist)
 
@@ -628,7 +637,7 @@ if __name__ == '__main__':
 	while True:
 		try:
 			if args.reload > 0 and (time.time() - watchlist_ticks) > args.reload:
-				watchlist = [x.rstrip('\n') for x in open(args.watchlist, 'r').readlines() if not x.startswith(';')]
+				watchlist = load_watchlist()
 				random.shuffle(watchlist)
 				watchlist_ticks = time.time()
 				## load known twats or create empty list
