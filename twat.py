@@ -140,7 +140,6 @@ def mirror_twat(twat, args=None):
 			os.system('%s -o data/%s.mp4 %s > /dev/null 2>&1' % (args.ytdl, tid, url))
 		if not os.path.exists('%s' % outname) and os.path.exists('data/%s.mp4' % tid):
 			os.symlink('../../data/%s.mp4' % tid, outname)
-		
 
 	## mirror posted pictures
 	if 'images' in twat and 'i' in args.mirror:
