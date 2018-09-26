@@ -22,7 +22,7 @@ site_dirs = [
 
 def replace_url_in_twat(twat, args=None):
 
-	user = twat['user'].lower()
+	user = twat['user']
 
 	soup = soupify(twat["text"])
 
@@ -136,7 +136,7 @@ def file_exists(fn):
 	return os.path.exists(fn)
 
 def user_filename(user):
-	user = user.lower()
+	user = user
 	if not os.path.exists('users/%s' % user): os.makedirs('users/%s' % user)
 	return 'users/%s/twats.json' % (user)
 
@@ -202,7 +202,7 @@ def html_header():
 def htmlize_twat(twat, vars):
 	tw = '<div class="twat-container">'
 
-	if twat["user"].lower() == twat["owner"].lower():
+	if twat["user"] == twat["owner"]:
 		retweet_str = ""
 	else:
 		retweet_str = " (RT <a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a>)" % \
@@ -229,7 +229,7 @@ def htmlize_twat(twat, vars):
 	tw += '<p class="twat-text">%s</p>\n' % (twat["text"].replace('\n', '<br>'))
 
 	if 'curl' in twat and args.iframe > 0:
-		user = twat['user'].lower()
+		user = twat['user']
 		ifu = 'users/%s/%s-%s' % (user, twat['id'], "card.html")
 		if (not 'c' in args.mirror) or (not file_exists(ifu)):
 			ifu = "https://twitter.com%s?cardname=summary_large_image"%twat['curl']
@@ -244,7 +244,7 @@ def htmlize_twat(twat, vars):
 			if args.images <= 0:
 				tw += '<a href="%s">%s</a>'%(i, i)
 			else:
-				img_path = "users/%s/%s-%s" % (twat['user'].lower(), twat['id'], i.split('/')[-1])
+				img_path = "users/%s/%s-%s" % (twat['user'], twat['id'], i.split('/')[-1])
 				if not file_exists(img_path): img_path = i
 				span_or_div = "span"
 				img_class = "img"
@@ -253,8 +253,8 @@ def htmlize_twat(twat, vars):
 					href = i
 					title = "view remote image"
 				elif 'video' in twat or 'ext_tw_video_thumb' in i:
-					if os.path.exists('users/%s/%s.mp4' % (twat['user'].lower(), str(twat['id']))):
-						href = 'users/%s/%s.mp4' % (twat['user'].lower(), str(twat['id']))
+					if os.path.exists('users/%s/%s.mp4' % (twat['user'], str(twat['id']))):
+						href = 'users/%s/%s.mp4' % (twat['user'], str(twat['id']))
 						title = "view local video"
 					else:
 						href = "https://twitter.com/i/status/" + twat['id']
@@ -344,7 +344,7 @@ def find_tweets(all_tweets, search=None, users=None):
 			if not t.match(all_tweets[i]['text'].lower()):
 				match = False
 				break
-		if match and users and not all_tweets[i]['owner'].lower() in users:
+		if match and users and not all_tweets[i]['owner'] in users:
 			match = False
 		if match: match_tweets.append(all_tweets[i])
 	return match_tweets

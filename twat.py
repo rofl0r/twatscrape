@@ -266,11 +266,11 @@ def extract_twats(soup, twats, timestamp):
 			pinned = ('user-pinned' in div.attrs["class"])
 
 			tweet_id = div.attrs["data-tweet-id"]
-			tweet_user = div.attrs["data-screen-name"]
+			tweet_user = div.attrs["data-screen-name"].lower()
 			if 'data-retweet-id' in div.attrs:
 				retweet_id = div.attrs['data-retweet-id']
 			if 'data-retweeter' in div.attrs:
-				retweet_user = div.attrs['data-retweeter']
+				retweet_user = div.attrs['data-retweeter'].lower()
 			tdiv = div.find('div', attrs={'class' : 'js-tweet-text-container'})
 			tweet_text = tdiv.find('p').decode_contents()
 			tweet_text = tweet_text.replace('href="/', 'href="https://twitter.com/')
