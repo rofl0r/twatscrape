@@ -138,7 +138,8 @@ class RsHttp():
 		unzip = ''
 		redirect = ''
 		charset = ''
-		q = 0
+		# some sites don't set content-length, -1 will cause to fetch as much as possible
+		q = -1
 		s = ''
 		res = ''
 		#'HTTP/1.1 302 Found\r\n'
