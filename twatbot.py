@@ -15,6 +15,7 @@ from soup_parser import soupify
 
 title="twatscrape"
 tweets = dict()
+tweet_cache = dict()
 memory = {}
 watchlist = []
 site_dirs = [
@@ -142,12 +143,14 @@ def user_filename(user):
 	return 'users/%s/twats.json' % (user)
 
 def in_twatlist(user, twat):
-	for t in tweets[user]:
-		if get_effective_twat_id(t) == get_effective_twat_id(twat): return True
-	return False
+	eid = get_effective_twat_id(twat)
+	return eid in tweet_cache[user]
 
 def add_twatlist(user, twat, insert_pos):
 	tweets[user].insert(insert_pos, twat)
+	tweet_cache[user][get_effective_twat_id(twat)] = True
+
+def write_user_tweets(user):
 	open(user_filename(user), 'w').write(json.dumps(tweets[user], sort_keys=True, indent=4))
 
 def remove_doubles(lst):
@@ -482,14 +485,17 @@ def scrape():
 
 			twats = get_twats(user, proxies=args.proxy, count=count, http=twitter_rshttp, checkfn=checkfn)
 
+			new = False
 			for t in twats:
-
 				if not in_twatlist(user, t):
+					new = True
 					add_twatlist(user, t, insert_pos)
 					insert_pos += 1
 					if args.mirror: mirror_twat(t, args=args)
 					sys.stdout.write('\rscraping %s... +%d ' % (user, insert_pos))
 					sys.stdout.flush()
+
+			if new: write_user_tweets(user)
 
 			memory[user] = time.time()
 			sys.stdout.write('done\n')
@@ -508,8 +514,11 @@ def resume_retry_mirroring(done):
 	done.set()
 
 def load_user_json(user):
+	tweet_cache[user] = dict()
 	try:
 		tweets[user] = json.loads(open(user_filename(user), 'r').read())
+		for i in xrange(len(tweets[user])):
+			tweet_cache[user][get_effective_twat_id(tweets[user][i])] = True
 	except:
 		tweets[user] = []
 
