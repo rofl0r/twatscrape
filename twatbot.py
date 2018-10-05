@@ -448,14 +448,28 @@ def write_html(html, vars=None, pages=0):
 
 	return "\n".join(ht).encode('utf-8')
 
+def fetch_more_tweets_callback(user, twats):
+	# TODO ignore pinned tweets
+	# iterate over last 20 tweets only as this is called once per page with the full list
+	twats_per_page = 20
+	if len(twats) < twats_per_page: twats_per_page = len(twats)
+	for i in xrange(1, twats_per_page + 1):
+		if in_twatlist(user, twats[i * -1]): return False
+	return True
+
 def scrape():
 	ticks = time.time()
 	for user in watchlist:
+
+		checkfn = None
 
 		## add dummy value if user hasn't been checked yet
 		if not user in memory:
 			memory[user] = ticks - 86400
 			count = args.count
+			if count == -2:
+				checkfn = fetch_more_tweets_callback
+				count = -1
 		else:
 			count = 0
 
@@ -465,7 +479,7 @@ def scrape():
 			sys.stdout.flush()
 
 
-			twats = get_twats(user, proxies=args.proxy, count=count, http=twitter_rshttp)
+			twats = get_twats(user, proxies=args.proxy, count=count, http=twitter_rshttp, checkfn=checkfn)
 
 			for t in twats:
 
@@ -603,7 +617,7 @@ if __name__ == '__main__':
 	parser.add_argument('--mirror', help="mirror [i]mages, [f]iles, [e]mojis, [c]ards, [v]ideos (default: None)", default='', type=str, required=False)
 	parser.add_argument('--mirror-size', help="Maximum file size allowed to mirror (in MB) - default: no limit", default=0, type=int, required=False)
 	parser.add_argument('--ext', help="space-delimited extension to tech when mirroring files (default: None)", default=None, type=str, required=False)
-	parser.add_argument('--count', help="Fetch $count latests tweets (default: 20). Use -1 to fetch the whole timeline", default=0, type=int, required=False)
+	parser.add_argument('--count', help="Fetch $count latests tweets (default: 20). -1: whole timeline, -2: continue where left off", default=0, type=int, required=False)
 	parser.add_argument('--upstream-img', help="make image point to the defaut url (default: 0)", default=0, type=int, required=False)
 	parser.add_argument('--linkimg', help="embed image withing <a> - default: 1", default=1, type=int, required=False)
 	parser.add_argument('--resume', help="resume/retry mirroring at startup - default: 0", default=None, type=int, required=False)

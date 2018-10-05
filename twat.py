@@ -337,7 +337,10 @@ def extract_twats(soup, twats, timestamp):
 # if 0 is specified, only the most recent page (containing typically 20 tweets)
 # is harvested. if -1 is specified, the entire timeline will be harvested back
 # to the very first tweet.
-def get_twats(user, proxies=None, count=0, http=None):
+# if checkfn is passed , it'll be called with the username and current list of
+# received twats, and can decide whether fetching will be continued or not,
+# by returning True (continue) or False.
+def get_twats(user, proxies=None, count=0, http=None, checkfn=None):
 	host = 'twitter.com'
 	if not http:
 		http = RsHttp(host=host, port=443, timeout=15, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
@@ -361,6 +364,7 @@ def get_twats(user, proxies=None, count=0, http=None):
 		twats = extract_twats(soup, twats, timestamp)
 		if count == 0 or len(twats) == 0 or break_loop or (count != -1 and len(twats) >= count):
 			break
+		if checkfn and not checkfn(user, twats): break
 
 		# fetch additional tweets that are not in the initial set of 20:
 		last_id = get_effective_twat_id(twats[len(twats)-1])
