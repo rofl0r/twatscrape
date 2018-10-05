@@ -142,7 +142,7 @@ def user_filename(user):
 
 def in_twatlist(user, twat):
 	for t in tweets[user]:
-		if t["id"] == twat["id"]: return True
+		if get_effective_twat_id(t) == get_effective_twat_id(twat): return True
 	return False
 
 def add_twatlist(user, twat, insert_pos):
