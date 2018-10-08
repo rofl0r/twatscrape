@@ -471,11 +471,12 @@ def scrape():
 		if not user in memory:
 			memory[user] = ticks - 86400
 			count = args.count
-			if count == -2:
-				checkfn = fetch_more_tweets_callback
-				count = -1
 		else:
 			count = 0
+
+		if args.count == -2:
+			checkfn = fetch_more_tweets_callback
+			count = -1
 
 		if (ticks - memory[user]) > args.profile:
 			insert_pos = 0
