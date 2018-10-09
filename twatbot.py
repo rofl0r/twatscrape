@@ -33,9 +33,9 @@ def replace_url_in_twat(twat, args=None):
 		## @username : replace when local
 		if 'data-mentioned-user-id' in a.attrs:
 			username = a.attrs['href'].split('/')[3]
-			if username in watchlist:
-				rebuild = '<b><a href="?user=%s">@</a><a href="https://twitter.com/%s">%s</a></b>' % (username, username, username)
-				twat['text'] = twat['text'].replace(str(a), rebuild)
+			at_link = user_at_link(username)
+			rebuild = '<b>%s<a href="https://twitter.com/%s">%s</a></b>' % (at_link, username, username)
+			twat['text'] = twat['text'].replace(str(a), rebuild)
 
 		elif 'data-expanded-url' in a.attrs:
 			if 'f' in args.mirror:
