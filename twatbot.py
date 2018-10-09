@@ -203,16 +203,22 @@ def html_header():
 
 	return header
 
+def user_at_link(user):
+	if user in watchlist:
+		return '<a href="?user=%s">@</a>' % user
+	return '<a href="https://twitter.com/%s">@</a>' % user
+
 def htmlize_twat(twat, vars):
 	tw = '<div class="twat-container">'
 
 	if twat["user"].lower() == twat["owner"].lower():
 		retweet_str = ""
 	else:
-		retweet_str = " (RT <a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a>)" % \
-		(twat['user'], twat['id'], twat['user'])
+		retweet_str = " (RT %s<a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a>)" % \
+		(user_at_link(twat['user']), twat['user'], twat['id'], twat['user'])
 
-	user_str = "<a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a>%s" % \
+	user_str =  user_at_link(twat["owner"])
+	user_str += "<a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a>%s" % \
 	(twat["owner"], get_effective_twat_id(twat), twat["owner"], retweet_str)
 
 
