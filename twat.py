@@ -98,6 +98,7 @@ def _mirror_file(url_components, user, tid, args=None, content_type=None, force=
 		with open('data/%s.%s' % (filehash, ext), 'w') as h:
 			h.write(res_bytes)
 
+	if os.path.lexists(outname): os.unlink(outname)
 	os.symlink('../../data/%s.%s' % (filehash, ext), outname)
 
 def mirror_twat(twat, args=None):
