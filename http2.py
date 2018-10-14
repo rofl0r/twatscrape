@@ -82,7 +82,10 @@ class RsHttp():
 
 	def _make_request(self, typ, url, extras=[]):
 		s  = typ + ' '+ url +' HTTP/1.1\r\n'
-		s += 'Host: %s:%d\r\n'%(self.host,self.port)
+		if self.port != 80 and self.port != 443:
+			s += 'Host: %s:%d\r\n'%(self.host,self.port)
+		else:
+			s += 'Host: %s\r\n'%(self.host)
 		if self.keep_alive:
 			s += 'Connection: keep-alive\r\n'
 		else:
