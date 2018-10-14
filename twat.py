@@ -4,6 +4,7 @@ import time
 import json
 import os.path
 import hashlib
+import re
 
 # the effective id of a twat is the retweet id, if it's a retweet
 def get_effective_twat_id(twat):
@@ -249,7 +250,33 @@ def get_style_tag(tag, styles):
 		if tg.strip() == tag: return s.strip()
 	return None
 
-def extract_twats(soup, twats, timestamp):
+def extract_twats(html, twats, timestamp):
+	def find_div_end(html):
+		level = 0
+		for i in xrange(len(html)):
+			if html[i] == '<' and html[i+1] == 'd' and  html[i+2] == 'i' and html[i+3] == 'v':
+				level += 1
+			if html[i] == '<' and html[i+1] == '/' and  html[i+2] == 'd' and html[i+3] == 'i' and html[i+4] == 'v':
+				level -= 1
+			if level == 0:
+				return i + len('</div>')
+
+	regex = re.compile(r'<div.*class.*[" ]tweet[" ]')
+	while 1:
+		match = regex.search(html)
+		if not match:
+			return twats
+		html = html[match.start():]
+		slice = html[:find_div_end(html)]
+		cutoff = html[1:]
+		match2 = regex.search(cutoff)
+		if match2:
+			html = cutoff[match2.start():]
+		else:
+			html = ''
+		twats = extract_twat(soupify(slice), twats, timestamp)
+
+def extract_twat(soup, twats, timestamp):
 	for div in soup.body.find_all('div'): # , attrs={'class':'tweet  '}):
 		if 'class' in div.attrs and 'tweet' in div.attrs["class"]:
 
@@ -331,6 +358,7 @@ def extract_twats(soup, twats, timestamp):
 						if pr_time != 0: vals['rid_time'] = pr_time
 
 				twats.append(vals)
+		break
 	return twats
 
 # count: specify the number of twats that shall be fetched.
@@ -361,8 +389,7 @@ def get_twats(user, proxies=None, count=0, http=None, checkfn=None):
 	break_loop = False
 
 	while True:
-		soup = soupify (res)
-		twats = extract_twats(soup, twats, timestamp)
+		twats = extract_twats(res, twats, timestamp)
 		if count == 0 or len(twats) == 0 or break_loop or (count != -1 and len(twats) >= count):
 			break
 		if checkfn and not checkfn(user, twats): break
