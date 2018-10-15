@@ -267,13 +267,9 @@ def extract_twats(html, twats, timestamp):
 		if not match:
 			return twats
 		html = html[match.start():]
-		slice = html[:find_div_end(html)]
-		cutoff = html[1:]
-		match2 = regex.search(cutoff)
-		if match2:
-			html = cutoff[match2.start():]
-		else:
-			html = ''
+		div_end = find_div_end(html)
+		slice = html[:div_end]
+		html = html[div_end:]
 		twats = extract_twat(soupify(slice), twats, timestamp)
 
 def extract_twat(soup, twats, timestamp):
