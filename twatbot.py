@@ -211,7 +211,7 @@ def user_at_link(user):
 def htmlize_twat(twat, vars):
 	tw = '<div class="twat-container">'
 
-	if twat["user"].lower() == twat["owner"].lower():
+	if not 'rid' in twat:
 		retweet_str = ""
 	else:
 		retweet_str = " (RT %s<a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a>)" % \
