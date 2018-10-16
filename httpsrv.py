@@ -51,25 +51,22 @@ class HttpClient():
 
 	def read_request(self):
 		s = ''
+		CHUNKSIZE = 1024
 		while 1:
-			n = s.find('\r\n\r\n')
-			if n == -1:
-				r = self.conn.recv(1024)
-				if len(r) == 0: return None
-				s += r
-				continue
+			rnrn = s.find('\r\n\r\n')
+			if rnrn != -1: break
+			r = self.conn.recv(CHUNKSIZE)
+			if len(r) == 0: return None
+			s += r
 
-			cl = 0
-			for line in s.split('\n'):
-				if line.lower().startswith('content-length:'):
-					cl = int(line.split(':', 1)[1].strip())
-			while len(s) < n + cl:
-				r = self.conn.recv(1024)
-				if len(r) == 0: return None
-				s += r
-			break
-
-		rnrn = n
+		cl = 0
+		for line in s.split('\n'):
+			if line.lower().startswith('content-length:'):
+				cl = int(line.split(':', 1)[1].strip())
+		while len(s) < rnrn + 4 + cl:  # 4 == len('\r\n\r\n')
+			r = self.conn.recv(CHUNKSIZE)
+			if len(r) == 0: return None
+			s += r
 
 		err = False
 		if not s: err = True
