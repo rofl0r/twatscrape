@@ -1,4 +1,4 @@
-import socket
+import socket, urllib
 
 def _parse_req(line):
 	r = line.find(' ')
@@ -47,8 +47,30 @@ class HttpClient():
 		h['Location'] = url
 		self.send(301, "Moved Permanently", "", headers=h)
 
+	def _url_decode(self, s): return urllib.unquote_plus(s)
+
 	def read_request(self):
-		s = self.conn.recv(1024)
+		s = ''
+		while 1:
+			n = s.find('\r\n\r\n')
+			if n == -1:
+				r = self.conn.recv(1024)
+				if len(r) == 0: return None
+				s += r
+				continue
+
+			cl = 0
+			for line in s.split('\n'):
+				if line.lower().startswith('content-length:'):
+					cl = int(line.split(':', 1)[1].strip())
+			while len(s) < n + cl:
+				r = self.conn.recv(1024)
+				if len(r) == 0: return None
+				s += r
+			break
+
+		rnrn = n
+
 		err = False
 		if not s: err = True
 		if err:
@@ -80,6 +102,13 @@ class HttpClient():
 			if ':' in x:
 				y,z = x.split(':', 1)
 				result[y] = z.strip()
+		if meth == 'POST':
+			result['postdata'] = dict()
+			postdata = s[rnrn:]
+			for line in postdata.split('\n'):
+				if '=' in line:
+					k,v = line.split('=', 1)
+					result['postdata'][k] = self._url_decode(v.strip())
 		return result
 
 	def disconnect(self):
