@@ -172,6 +172,9 @@ if __name__ == "__main__":
 				c.send(200, "OK", "<html><body>hello world</body></html>")
 			elif url.endswith("/redir") or url.endswith("/redir/"):
 				c.redirect("http://www.%s:%d/"%(testdomain, hs.port), headers={'Set-Cookie':'foo=bar; Path=/; HttpOnly; Domain=%s;'%testdomain})
+			elif url == '/post.html':
+				s = repr(req)
+				c.send(200, "OK", '<html><body><pre>%s</pre></body></html>'%s)
 			else:
 				c.send(404, "Not Found", "404: The requested resource was not found")
 		c.disconnect()
