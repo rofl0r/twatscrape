@@ -62,7 +62,9 @@ class HttpClient():
 		cl = 0
 		for line in s.split('\n'):
 			if line.lower().startswith('content-length:'):
-				cl = int(line.split(':', 1)[1].strip())
+				try: cl = int(line.split(':', 1)[1].strip())
+				except: pass
+				break
 		while len(s) < rnrn + 4 + cl:  # 4 == len('\r\n\r\n')
 			r = self.conn.recv(CHUNKSIZE)
 			if len(r) == 0: return None
