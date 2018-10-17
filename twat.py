@@ -250,7 +250,7 @@ def get_style_tag(tag, styles):
 		if tg.strip() == tag: return s.strip()
 	return None
 
-def extract_twats(html, twats, timestamp):
+def extract_twats(html, user, twats, timestamp, checkfn):
 	def find_div_end(html):
 		level = 0
 		for i in xrange(len(html)):
@@ -262,6 +262,7 @@ def extract_twats(html, twats, timestamp):
 				return i + len('</div>')
 
 	regex = re.compile(r'<div.*class.*[" ]tweet[" ]')
+	nfetched = 0
 	while 1:
 		match = regex.search(html)
 		if not match:
@@ -271,6 +272,12 @@ def extract_twats(html, twats, timestamp):
 		slice = html[:div_end]
 		html = html[div_end:]
 		twats = extract_twat(soupify(slice), twats, timestamp)
+		nfetched += 1
+		# if the first two (the very first could be pinned) tweets are already known
+		# do not waste cpu processing more html
+		if nfetched == 2 and checkfn and not checkfn(user, twats):
+			return twats
+
 
 def extract_twat(soup, twats, timestamp):
 	for div in soup.body.find_all('div'): # , attrs={'class':'tweet  '}):
@@ -385,7 +392,7 @@ def get_twats(user, proxies=None, count=0, http=None, checkfn=None):
 	break_loop = False
 
 	while True:
-		twats = extract_twats(res, twats, timestamp)
+		twats = extract_twats(res, user, twats, timestamp, checkfn)
 		if count == 0 or len(twats) == 0 or break_loop or (count != -1 and len(twats) >= count):
 			break
 		if checkfn and not checkfn(user, twats): break
