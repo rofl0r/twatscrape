@@ -11,7 +11,7 @@ div.searchbox input[type=text] {left:0; width: 100%; text-align: center; height:
 div.searchbox .submit {position: absolute; top: 1px; height: 33px; width: 40px; right: 0; border: 0; background: transparent; padding:0; margin: 0;}
 div.searchbox .hide_until_hover {opacity: 0; text-color: #90b4d2;}
 div.searchbox:hover .hide_until_hover {opacity: 1; text-color: white;}
-
+div.watchlist {position: absolute; left: 10%; right: 10%; top: 10%; bottom: 10%; border: 1px solid black; color: black;}
 div.searchbox {
 	position: fixed; left: 30%; right: 30%; top: 0;	height: 1%;
 	background: #90b4d2; overflow: hidden; text-align: center;
