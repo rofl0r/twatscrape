@@ -100,7 +100,7 @@ def build_searchbox(vars):
 
 	return '\n'.join(ret)
 
-def build_socialbar(twat, vars):
+def build_iconbar(twat, vars):
 	bar = '\n<div class="iconbar">'
 
 	## anchor
@@ -223,8 +223,8 @@ def htmlize_twat(twat, vars):
 
 	tw += '\n<div class="twat-title">'
 
-	## add social bar
-	if args.social: tw += build_socialbar(twat, vars)
+	## add icon bar
+	if args.iconbar: tw += build_iconbar(twat, vars)
 
 	time_str = 'unknown' if twat["time"] == 0 else format_time(twat["time"])
 	tw += '%s&nbsp;-&nbsp;%s' % (user_str, time_str)
@@ -671,7 +671,7 @@ if __name__ == '__main__':
 	parser.add_argument('--images', help="show image (default: 1)", default=1, type=int, required=False)
 	parser.add_argument('--tpp', help="twats per page (default: very high number)", default=99999999999, type=int, required=False)
 	parser.add_argument('--proxy', help="use a proxy (syntax: socks5://ip:port)", default=None, type=str, required=False)
-	parser.add_argument('--social', help="show 'social' bar (default: 0)", default=0, type=int, required=False)
+	parser.add_argument('--iconbar', help="show iconbar bar (default: 0)", default=0, type=int, required=False)
 	parser.add_argument('--nohtml', help="strip html from tweets (default: 0)", default=0, type=int, required=False)
 	parser.add_argument('--mirror', help="mirror [i]mages, [f]iles, [e]mojis, [c]ards, [v]ideos (default: None)", default='', type=str, required=False)
 	parser.add_argument('--mirror-size', help="Maximum file size allowed to mirror (in MB) - default: no limit", default=0, type=int, required=False)
