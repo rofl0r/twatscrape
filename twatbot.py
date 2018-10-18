@@ -153,13 +153,11 @@ def add_twatlist(user, twat, insert_pos):
 def write_user_tweets(user):
 	open(user_filename(user), 'w').write(json.dumps(tweets[user], sort_keys=True, indent=4))
 
-def remove_doubles(lst):
+def remove_known_retweets(lst):
 	nl = []
-	lid = ""
 	for x in lst:
-		if lid != x["id"]:
-			nl.append(x)
-		lid = x["id"]
+		if "rid" in x and x["user"] in tweet_cache and x["id"] in tweet_cache[x["user"]]: pass
+		else: nl.append(x)
 	return nl
 
 def format_time(stmp):
@@ -304,7 +302,7 @@ def get_all_tweets(remove_dupes=False):
 		all_tweets.extend(add_owner_to_list(user, tweets[user]))
 
 	all_tweets = sorted(all_tweets, key = lambda x : (retweet_time(x) if 'rid' in x else x["time"], x['time']), reverse=True)
-	if remove_dupes: all_tweets = remove_doubles(all_tweets)
+	if remove_dupes: all_tweets = remove_known_retweets(all_tweets)
 	return all_tweets
 
 def find_tweet_page(all_tweets, twid):
