@@ -297,12 +297,33 @@ def retweet_time(twat):
 	if 'fetched' in twat: return twat['fetched']
 	return twat['time']
 
+def sort_tweets_func(x, y):
+	# somewhere in 2017, the numbering scheme of twitter changed
+	# that's a pity because the twat id is the most accurate
+	# sorting indicator, so we use it on all tweets > 2018
+	timestamp_2018 = 1514764800 #01/01/2018
+	if x['time'] > timestamp_2018 and y['time'] > timestamp_2018:
+		t1 = x['time']
+		t2 = y['time']
+		if t1 == t2: return 0
+		elif t1 > t2: return 1
+		else: return -1
+	else:
+		t1 = retweet_time(x) if 'rid' in x else x["time"]
+		t2 = retweet_time(y) if 'rid' in y else y["time"]
+		if t1 == t2: return 0
+		elif t1 > t2: return 1
+		else: return -1
+
+def sort_tweets(twts):
+	return sorted(twts, cmp=sort_tweets_func, reverse=True)
+
 def get_all_tweets(remove_dupes=False):
 	all_tweets = []
 	for user in watchlist:
 		all_tweets.extend(add_owner_to_list(user, tweets[user]))
 
-	all_tweets = sorted(all_tweets, key = lambda x : (retweet_time(x) if 'rid' in x else x["time"], x['time']), reverse=True)
+	all_tweets = sort_tweets(all_tweets)
 	if remove_dupes: all_tweets = remove_known_retweets(all_tweets)
 	return all_tweets
 
