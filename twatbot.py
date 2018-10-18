@@ -12,6 +12,7 @@ from HTMLParser import HTMLParser
 from http2 import RsHttp
 import threading
 from soup_parser import soupify
+import hashlib
 
 title="twatscrape"
 tweets = dict()
@@ -587,6 +588,7 @@ def configpage(req = {}, vars={}):
 		for item in req['postdata']:
 			if item == 'watchlist':
 				with open('watchlist.txt', 'w') as handle: handle.write(req['postdata'][item])
+				load_watchlist()
 
 	return html, redir
 
@@ -644,12 +646,16 @@ def start_server(ip, port):
 	t.start()
 	return t, done
 
+wl_hash = None
 def load_watchlist():
-	global watchlist
+	global watchlist, wl_hash
 	wl = [x.rstrip() for x in open(args.watchlist, 'r').readlines() if not x.startswith(';')]
-	random.shuffle(wl)
-	watchlist = wl
-	json_loads()
+	newhash = hashlib.md5(''.join(wl)).hexdigest()
+	if newhash != wl_hash:
+		wl_hash = newhash
+		watchlist = wl
+		json_loads()
+		print('watchlist (re)loaded')
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
@@ -661,7 +667,6 @@ if __name__ == '__main__':
 	parser.add_argument('--iframe', help="show iframe (default: 1)", default=1, type=int, required=False)
 	parser.add_argument('--profile', help="check profile every X second(s) (default: 60)", default=60, type=int, required=False)
 	parser.add_argument('--images', help="show image (default: 1)", default=1, type=int, required=False)
-	parser.add_argument('--reload', help="reload watchlist every X secondes (default: 600)", default=600, type=int, required=False)
 	parser.add_argument('--tpp', help="twats per page (default: very high number)", default=99999999999, type=int, required=False)
 	parser.add_argument('--proxy', help="use a proxy (syntax: socks5://ip:port)", default=None, type=str, required=False)
 	parser.add_argument('--social', help="show 'social' bar (default: 0)", default=0, type=int, required=False)
@@ -706,7 +711,6 @@ if __name__ == '__main__':
 	twitter_rshttp = RsHttp('twitter.com', ssl=True, port=443, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
 
 	load_watchlist()
-	if args.reload > 0: watchlist_ticks = time.time()
 
 	## resume/retry mirroring process
 	mirroring_done = threading.Event()
@@ -719,10 +723,6 @@ if __name__ == '__main__':
 
 	while True:
 		try:
-			if args.reload > 0 and (time.time() - watchlist_ticks) > args.reload:
-				load_watchlist()
-				watchlist_ticks = time.time()
-
 			## scrape profile
 			scrape()
 			time.sleep(1)
