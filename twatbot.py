@@ -487,46 +487,36 @@ def fetch_more_tweets_callback(user, twats):
 		if in_twatlist(user, twats[i * -1]): return False
 	return True
 
-def scrape():
-	ticks = time.time()
-	for user in watchlist:
+def scrape(user, first_run = False):
 
+	if first_run:
+		count = args.count
 		checkfn = None
+	else:
+		checkfn = fetch_more_tweets_callback
+		count = -1
 
-		## add dummy value if user hasn't been checked yet
-		if not user in memory:
-			memory[user] = ticks - 86400
-			count = args.count
-		else:
-			count = 0
+	insert_pos = 0
+	sys.stdout.write('\rscraping %s... ' % user)
+	sys.stdout.flush()
 
-		if args.count == -2:
-			checkfn = fetch_more_tweets_callback
-			count = -1
 
-		if (ticks - memory[user]) > args.profile:
-			insert_pos = 0
-			sys.stdout.write('\rscraping %s... ' % user)
+	twats = get_twats(user, proxies=args.proxy, count=count, http=twitter_rshttp, checkfn=checkfn)
+
+	new = False
+	for t in twats:
+		if not in_twatlist(user, t):
+			new = True
+			add_twatlist(user, t, insert_pos)
+			insert_pos += 1
+			if args.mirror: mirror_twat(t, args=args)
+			sys.stdout.write('\rscraping %s... +%d ' % (user, insert_pos))
 			sys.stdout.flush()
 
+	if new: write_user_tweets(user)
 
-			twats = get_twats(user, proxies=args.proxy, count=count, http=twitter_rshttp, checkfn=checkfn)
-
-			new = False
-			for t in twats:
-				if not in_twatlist(user, t):
-					new = True
-					add_twatlist(user, t, insert_pos)
-					insert_pos += 1
-					if args.mirror: mirror_twat(t, args=args)
-					sys.stdout.write('\rscraping %s... +%d ' % (user, insert_pos))
-					sys.stdout.flush()
-
-			if new: write_user_tweets(user)
-
-			memory[user] = time.time()
-			sys.stdout.write('done\n')
-			sys.stdout.flush()
+	sys.stdout.write('done\n')
+	sys.stdout.flush()
 
 
 def resume_retry_mirroring(done):
@@ -675,10 +665,10 @@ def load_watchlist():
 	wl = [x.rstrip() for x in open(args.watchlist, 'r').readlines() if not x.startswith(';')]
 	newhash = hashlib.md5(''.join(wl)).hexdigest()
 	if newhash != wl_hash:
+		print('reloading watchlist')
 		wl_hash = newhash
 		watchlist = wl
 		json_loads()
-		print('watchlist (re)loaded')
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
@@ -744,11 +734,14 @@ if __name__ == '__main__':
 
 	start_server(args.listenip, args.port)
 
+	first_run = True
 	while True:
 		try:
 			## scrape profile
-			scrape()
-			time.sleep(1)
+			for user in watchlist:
+				scrape(user, first_run)
+			first_run = False
+			time.sleep(args.profile)
 
 		except KeyboardInterrupt:
 			break
