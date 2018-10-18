@@ -608,6 +608,8 @@ def vars_from_request(req):
 def httpsrv_client_thread(c, evt_done):
 	req = c.read_request()
 	if req is None: pass
+	elif len(watchlist) == 0:
+		c.redirect('/config.html')
 	elif os.path.isdir(req['url'][1:]):
 		c.send(403,'Forbidden', forbidden_page())
 	elif req['url'] == '/':
