@@ -568,6 +568,18 @@ def forbidden_page():
 		'  </body>\n'
 		'</html>')
 
+def vars_from_request(req):
+	vars={}
+	vars['page'] = 0
+	if '?' in req['url']:
+		a,b= req['url'].split('?')
+		l = b.split('&')
+		for d in l:
+			if not '=' in d: continue
+			e,f=d.split('=')
+			if len(f): vars[e.lower()] = f
+
+	return vars
 
 def httpsrv_client_thread(c, evt_done):
 	req = c.read_request()
@@ -577,16 +589,7 @@ def httpsrv_client_thread(c, evt_done):
 	elif req['url'] == '/':
 		c.redirect('/index.html')
 	elif req['url'].startswith('/index.html'):
-		vars={}
-		vars['page'] = 0
-		if '?' in req['url']:
-			a,b= req['url'].split('?')
-			l = b.split('&')
-			for d in l:
-				if not '=' in d: continue
-				e,f=d.split('=')
-				if len(f): vars[e.lower()] = f
-
+		vars = vars_from_request(req)
 		r, redir = render_site(vars)
 		if redir is not "":
 			c.redirect(redir)
