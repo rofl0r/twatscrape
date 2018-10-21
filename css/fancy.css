@@ -2,6 +2,8 @@ html { font-size: 14px; background: #eee; Font-Family: Monospace; color: white;}
 div.iconbar { position: relative; float: right; margin-right: 1%; font-size: 14px;}
 div.iconbar a { text-decoration: none; }
 
+div.profile_picture {position: absolute; height: 45px; width: 45px; margin: -10px -0px -0px -5px; overflow: hidden; border-radius: 100px 100px 100px 100px; }
+
 div.error_message {position: fixed; top: 25%; left: 25%; right: 25%; background: #90b4d2; border: 1px solid blue; box-shadow: 1px 1px 10px red; text-align: center;}
 div.error_message p.error_text {font-weight:700; color: black}
 div.error_message a {text-decoration: none;}
@@ -39,11 +41,11 @@ a.menu { color: blue; }
 
 
 a:focus { outline: thin dotted; }
-div.twat-container { width: 100%; background: #666; color: white; border: 1px solid white; margin: 1%; margin-top: 5px; width: 98%;}
+div.twat-container { width: 98%; background: #666; color: white; border: 1px solid white; margin: 1%; margin-top: 5px;}
 div.twat-container:hover { border: 1px solid darkgrey; box-shadow: 1px -1px 3px white; }
 
 /*p.twat-title:hover { border: 1px dotted lightgrey; }*/
-p.twat-text { font-size: 14px; word-wrap: auto; display: block; padding: 1%; margin: 0; Font-Family: Monospace;}
+p.twat-text { font-size: 14px; word-wrap: auto; display: block; padding: 1%; padding-top: 2%; margin: 0; Font-Family: Monospace;}
 span.twat-iframe { text-align: center; width: 600px; height: 380px; }
 p.twat-image { text-align: center; margin: 0;}
 img.img { opacity: .6; transition: all 0.5s ease-out;}

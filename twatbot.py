@@ -210,6 +210,9 @@ def user_at_link(user):
 def htmlize_twat(twat, vars):
 	tw = '<div class="twat-container">'
 
+	if os.path.isfile('users/%s/profile.jpg' % twat['owner'].lower()):
+		tw += '<div class="profile_picture"><img width="100%%" height="100%%" src="users/%s/profile.jpg"></div>' % twat['owner'].lower()
+
 	if not 'rid' in twat:
 		retweet_str = ""
 	else:
