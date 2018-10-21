@@ -250,6 +250,23 @@ def get_style_tag(tag, styles):
 		if tg.strip() == tag: return s.strip()
 	return None
 
+def fetch_profile_picture(html, user, proxies):
+	soup = soupify(html)
+	for a in soup.body.find_all('a'):
+		if 'class' in a.attrs and ('ProfileAvatar-container' in a.attrs['class'] and 'profile-picture' in a.attrs['class']):
+			url_components = _split_url(a.attrs['href'])
+			http = RsHttp(host=url_components['host'], port=url_components['port'], timeout=15, ssl=url_components['ssl'], keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
+			while not http.connect(): pass
+
+			hdr, res = http.get(url_components['uri'])
+			if res == '' and hdr != "":
+				print('error fetching profile picture: %s' % url_components)
+			else:
+				res_bytes = res.encode('utf-8') if isinstance(res, unicode) else res
+				with open('users/%s/profile.jpg' % user.lower(), 'w') as h:
+					h.write(res_bytes)
+			return
+
 def extract_twats(html, user, twats, timestamp, checkfn):
 	def find_div_end(html):
 		level = 0
@@ -386,6 +403,10 @@ def get_twats(user, proxies=None, count=0, http=None, checkfn=None):
 		# FIXME : what should happen on connect error ?
 		pass
 	hdr, res = http.get("/%s" % user)
+
+	## fetch profile picture if not exists
+	if not os.path.isfile('users/%s/profile.jpg' % user.lower()):
+		fetch_profile_picture(res, user, proxies)
 
 	twats = []
 

@@ -489,7 +489,7 @@ def fetch_more_tweets_callback(user, twats):
 
 def scrape(user, first_run = False):
 
-	if first_run:
+	if first_run and not args.count == -2:
 		count = args.count
 		checkfn = None
 	else:
