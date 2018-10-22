@@ -41,7 +41,7 @@ a.menu { color: blue; }
 
 
 a:focus { outline: thin dotted; }
-div.twat-container { width: 98%; background: #666; color: #fff; border: 1px solid #fff; margin: 1%; margin-top: 5px;}
+div.twat-container { width: 98%; background: #444; color: #fff; border: 1px solid #fff; margin: 1%; margin-top: 5px;}
 div.twat-container:hover { border: 1px solid darkgrey; box-shadow: 1px -1px 3px #fff; }
 
 /*p.twat-title:hover { border: 1px dotted lightgrey; }*/
