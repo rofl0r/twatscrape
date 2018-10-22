@@ -58,6 +58,21 @@ def _parse_url(url):
 			break
 	return host, port, ssl, url
 
+def _parse_content_type(line):
+	ct = ''
+	cs = ''
+	a = line.split(';')
+	for x in a:
+		if x.lower().startswith('charset='):
+			cs = x[len('charset='):]
+		else:
+			ct = x
+	return ct, cs
+
+TEXTUAL_CONTENT_TYPES_LIST = ['text/html', 'text/plain']
+def _is_textual_content_type(ct):
+	ct = ct.lower()
+	return ct in TEXTUAL_CONTENT_TYPES_LIST
 
 class RsHttp():
 	def __init__(self, host, port=80, ssl=False, follow_redirects=False, auto_set_cookies=False, keep_alive=False, timeout=60, user_agent=None, proxies=None, max_tries=10, **kwargs):
@@ -161,7 +176,10 @@ class RsHttp():
 			elif self._key_match(key, 'Location'):
 				redirect = val
 			elif self._key_match(key, 'Content-Type'):
-				if 'charset=UTF-8' in val: charset = 'utf-8'
+				ct, cs = _parse_content_type(val)
+				if cs.lower() == 'utf-8':
+					if _is_textual_content_type(ct):
+						charset = 'utf-8'
 			elif self._key_match(key, 'Content-Encoding'):
 				if val == 'gzip':
 					unzip = 'gzip'
