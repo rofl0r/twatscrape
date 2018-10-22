@@ -69,7 +69,7 @@ def _mirror_file(url_components, user, tid, args=None, content_type=None, force=
 		## if unset, everything is mirrored
 		if len(filtre):
 			## values don't match anything
-			if not value[0] in filtre and not value[1] in filtre: return
+			if len(value) < 2 or (not value[0] in filtre and not value[1] in filtre): return
 
 		# XXX : mirror html files
 		## we actually don't save html files
