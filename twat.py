@@ -28,6 +28,19 @@ def _hash(str):
 	value = str.encode('utf-8') if isinstance(str, unicode) else str
 	return hashlib.md5(value).hexdigest()
 
+def _get_real_location(url, proxies=None):
+	url_components = _split_url(url)
+
+	http = RsHttp(url_components['host'], ssl=url_components['ssl'], port=url_components['port'], keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
+
+	if not http.connect(): return url
+	hdr = http.head(url_components['uri'])
+
+	for line in hdr.split('\n'):
+		if line.lower().startswith('location: '): return line.split(': ')[1].strip()
+
+	return url
+
 def _mirror_file(url_components, user, tid, args=None, content_type=None, force=False):
 	if not os.path.isdir('users/%s' % user):
 		os.makedirs('users/%s' % user)
@@ -101,6 +114,19 @@ def _mirror_file(url_components, user, tid, args=None, content_type=None, force=
 
 	if os.path.lexists(outname): os.unlink(outname)
 	os.symlink('../../data/%s.%s' % (filehash, ext), outname)
+
+def unshorten_urls(twat, proxies=None, shorteners={}):
+	soup = soupify(twat["text"])
+	for a in soup.body.find_all('a'):
+		# when data-expanded-url is present, check if it links to a shortened link
+		if 'data-expanded-url' in a.attrs:
+			comp = _split_url(a.attrs['data-expanded-url'])
+			if comp['host'] in shorteners:
+				twat['text'] = twat['text'].replace( a.attrs['data-expanded-url'], _get_real_location(a.attrs['data-expanded-url'], proxies=proxies))
+		# t.co urls (used for images) don't contain real url into 'data-expanded-url' anymore
+		elif _split_url(a['href'])['host'] == 't.co':
+			twat['text'] = twat['text'].replace( a['href'], _get_real_location(a['href']))
+	return twat
 
 def mirror_twat(twat, args=None):
 

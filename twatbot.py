@@ -1,4 +1,4 @@
-from twat import get_twats, mirror_twat, get_effective_twat_id
+from twat import get_twats, mirror_twat, get_effective_twat_id, unshorten_urls
 from rocksock import RocksockProxyFromURL
 import time
 import json
@@ -511,6 +511,7 @@ def scrape(user, first_run = False):
 	for t in twats:
 		if not in_twatlist(user, t):
 			new = True
+			if args.unshorten: t = unshorten_urls(t, proxies=args.proxy, shorteners=shorteners)
 			add_twatlist(user, t, insert_pos)
 			insert_pos += 1
 			if args.mirror: mirror_twat(t, args=args)
@@ -688,6 +689,7 @@ if __name__ == '__main__':
 	parser.add_argument('--tpp', help="twats per page (default: very high number)", default=99999999999, type=int, required=False)
 	parser.add_argument('--proxy', help="use a proxy (syntax: socks5://ip:port)", default=None, type=str, required=False)
 	parser.add_argument('--iconbar', help="show iconbar bar (default: 1)", default=1, type=int, required=False)
+	parser.add_argument('--unshorten', help='unshorten shortened links (default: 0)', default=0, type=int, required=False)
 	parser.add_argument('--nohtml', help="strip html from tweets (default: 0)", default=0, type=int, required=False)
 	parser.add_argument('--mirror', help="mirror [i]mages, [f]iles, [e]mojis, [c]ards, [v]ideos (default: None)", default='', type=str, required=False)
 	parser.add_argument('--mirror-size', help="Maximum file size allowed to mirror (in MB) - default: no limit", default=0, type=int, required=False)
@@ -714,6 +716,13 @@ if __name__ == '__main__':
 
 	if args.mirror_size > 0:
 		args.mirror_size = args.mirror_size * 1024*1024
+
+	shorteners = {}
+	if args.unshorten:
+		with open('shorteners.txt', 'r') as f:
+			for i in f.readlines():
+				i = i.strip()
+				if len(i): shorteners[i] = True
 
 	if args.dir:
 		if not os.path.exists(args.dir):
