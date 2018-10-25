@@ -590,7 +590,7 @@ def configpage(req = {}, vars={}):
 	if not 'postdata' in req:
 		content = ''
 		with open('watchlist.txt', 'r') as handle: content = ''.join(handle.readlines())
-		html = [ 
+		html = [
 			'<div class="watchlist"><form name="configuration" action="config.html" method="post">\n',
 			'<textarea name="watchlist" cols="30" rows="20" placeholder="handles you want to follow, one per line">%s</textarea><br/>\n' % content,
 			'<input type="submit" value="save and apply">\n',
@@ -647,7 +647,7 @@ def httpsrv_client_thread(c, evt_done):
 		r, redir = configpage(req,vars)
 		if redir is not "":
 			c.redirect(redir)
-		else:   
+		else:
 			if r == '': r = render_empty(vars=vars)
 			c.send(200, "OK", r)
 
