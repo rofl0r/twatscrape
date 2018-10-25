@@ -678,6 +678,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--dir', help="where to save twats (default: current directory)", type=str, default=None, required=False)
 	parser.add_argument('--watchlist', help="specify watchlist to use (default: watchlist.txt)", type=str, default='watchlist.txt', required=False)
+	parser.add_argument('--randomize-watchlist', help="randomize watchlist on each loop (default: 0)", type=int, default=0, required=False)
 	parser.add_argument('--refresh', help="refresh html page every X seconds - 0: disabled (default: 0)", type=int, default=0, required=False)
 	parser.add_argument('--title', help="defile title (default: %s)" % title, type=str, default=title, required=False)
 	parser.add_argument('--theme', help="select theme (default: fancy)", default='fancy', type=str, required=False)
@@ -741,6 +742,8 @@ if __name__ == '__main__':
 	first_run = True
 	while True:
 		try:
+			## randomize watchlist if requested
+			if args.randomize_watchlist > 0: random.shuffle(watchlist)
 			## scrape profile
 			for user in watchlist:
 				scrape(user, first_run)
