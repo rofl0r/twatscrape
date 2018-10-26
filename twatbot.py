@@ -68,7 +68,7 @@ def build_searchbox(vars):
 	link = make_index_link(vars, exclude=['search', 'find', 'user'])
 
 	if 'search' in vars and len(vars['search']):
-		fill = vars['search']
+		fill = urllib.unquote_plus(vars['search'])
 		search_value = fill
 	else:
 		fill = 'foo "bar baz" -quux'
