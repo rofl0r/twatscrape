@@ -696,7 +696,6 @@ if __name__ == '__main__':
 	parser.add_argument('--ext', help="space-delimited extension to tech when mirroring files (default: None)", default=None, type=str, required=False)
 	parser.add_argument('--count', help="Fetch $count latests tweets (default: 20). -1: whole timeline, -2: continue where left off", default=0, type=int, required=False)
 	parser.add_argument('--upstream-img', help="make image point to the defaut url (default: 0)", default=0, type=int, required=False)
-	parser.add_argument('--linkimg', help="embed image withing <a> - default: 1", default=1, type=int, required=False)
 	parser.add_argument('--resume', help="resume/retry mirroring at startup - default: 0", default=None, type=int, required=False)
 	parser.add_argument('--port', help="port of the integrated webserver - default: 1999", default=1999, type=int, required=False)
 	parser.add_argument('--listenip', help="listenip of the integrated webserver - default: localhost", default="localhost", type=str, required=False)
