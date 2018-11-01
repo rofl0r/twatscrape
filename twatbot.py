@@ -482,12 +482,13 @@ def write_html(html, vars=None, pages=0):
 	return "\n".join(ht).encode('utf-8')
 
 def fetch_more_tweets_callback(user, twats):
-	# TODO ignore pinned tweets
 	# iterate over last 20 tweets only as this is called once per page with the full list
 	twats_per_page = 20
 	if len(twats) < twats_per_page: twats_per_page = len(twats)
 	for i in xrange(1, twats_per_page + 1):
-		if in_twatlist(user, twats[i * -1]): return False
+		twat = twats[i * -1]
+		if 'pinned' in twat and twat['pinned'] == 1: continue
+		if in_twatlist(user, twat): return False
 	return True
 
 def scrape(user, first_run = False):
