@@ -276,8 +276,17 @@ def get_style_tag(tag, styles):
 		if tg.strip() == tag: return s.strip()
 	return None
 
-def fetch_profile_picture(html, user, proxies):
-	soup = soupify(html)
+def fetch_profile_picture(user, proxies, res=None, twhttp=None):
+	user = user.lower()
+	if not os.path.isdir('users/%s' % user):
+		os.makedirs('users/%s' % user)
+	elif os.path.isfile('users/%s/profile.jpg' % user):
+		return
+
+	if not res:
+		hdr, res = twhttp.get("/%s" % user)
+
+	soup = soupify(res)
 	for a in soup.body.find_all('a'):
 		if 'class' in a.attrs and ('ProfileAvatar-container' in a.attrs['class'] and 'profile-picture' in a.attrs['class']):
 			url_components = _split_url(a.attrs['href'])
@@ -289,7 +298,7 @@ def fetch_profile_picture(html, user, proxies):
 				print('error fetching profile picture: %s' % url_components)
 			else:
 				res_bytes = res.encode('utf-8') if isinstance(res, unicode) else res
-				with open('users/%s/profile.jpg' % user.lower(), 'w') as h:
+				with open('users/%s/profile.jpg' % user, 'w') as h:
 					h.write(res_bytes)
 			return
 
@@ -341,10 +350,12 @@ def extract_twat(soup, twats, timestamp):
 
 			tweet_id = div.attrs["data-tweet-id"]
 			tweet_user = div.attrs["data-screen-name"]
+
 			if 'data-retweet-id' in div.attrs:
 				retweet_id = div.attrs['data-retweet-id']
 			if 'data-retweeter' in div.attrs:
 				retweet_user = div.attrs['data-retweeter']
+
 			tdiv = div.find('div', attrs={'class' : 'js-tweet-text-container'})
 			tweet_text = tdiv.find('p').decode_contents()
 			tweet_text = tweet_text.replace('href="/', 'href="https://twitter.com/')
@@ -378,7 +389,6 @@ def extract_twat(soup, twats, timestamp):
 					'id':card_div.attrs['data-item-id'] }
 				dv = card_div.find('div', attrs={'class':'QuoteTweet-text'})
 				quote_tweet['text'] = dv.text
-
 
 			if tweet_user != None and tweet_id:
 				vals = {'id':tweet_id, 'user':tweet_user, 'time':tweet_time, 'text':tweet_text, 'fetched':timestamp}
@@ -429,10 +439,6 @@ def get_twats(user, proxies=None, count=0, http=None, checkfn=None):
 		# FIXME : what should happen on connect error ?
 		pass
 	hdr, res = http.get("/%s" % user)
-
-	## fetch profile picture if not exists
-	if not os.path.isfile('users/%s/profile.jpg' % user.lower()):
-		fetch_profile_picture(res, user, proxies)
 
 	twats = []
 

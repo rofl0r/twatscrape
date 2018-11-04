@@ -3,6 +3,7 @@ div.iconbar { position: relative; float: right; margin-right: 1%; font-size: 14p
 div.iconbar a { text-decoration: none; }
 
 div.profile_picture {position: absolute; height: 45px; width: 45px; margin: -10px 0 0 -5px; overflow: hidden; border-radius: 100px 100px 100px 100px; }
+div.profile_picture_retweet {position: absolute; height: 45px; width: 45px; margin: -10px 0 0 30px; overflow: hidden; border-radius: 100px 100px 100px 100px;}
 
 div.error_message {position: fixed; top: 25%; left: 25%; right: 25%; background: #90b4d2; border: 1px solid blue; box-shadow: 1px 1px 10px red; text-align: center;}
 div.error_message p.error_text {font-weight:700; color: #000;}
