@@ -497,7 +497,7 @@ def get_timestamp(date_format, date=None):
 
 def scrape(user, first_run = False):
 
-	if first_run and not args.count == -2:
+	if first_run and (args.count != -2 and not os.path.isfile(user_filename(user))):
 		count = args.count
 		checkfn = None
 	else:
