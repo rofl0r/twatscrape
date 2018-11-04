@@ -276,8 +276,17 @@ def get_style_tag(tag, styles):
 		if tg.strip() == tag: return s.strip()
 	return None
 
-def fetch_profile_picture(html, user, proxies):
-	soup = soupify(html)
+def fetch_profile_picture(user, proxies, res=None, twhttp=None):
+	user = user.lower()
+	if not os.path.isdir('users/%s' % user):
+		os.makedirs('users/%s' % user)
+	elif os.path.isfile('users/%s/profile.jpg' % user):
+		return
+
+	if not res:
+		hdr, res = twhttp.get("/%s" % user)
+
+	soup = soupify(res)
 	for a in soup.body.find_all('a'):
 		if 'class' in a.attrs and ('ProfileAvatar-container' in a.attrs['class'] and 'profile-picture' in a.attrs['class']):
 			url_components = _split_url(a.attrs['href'])
@@ -289,11 +298,11 @@ def fetch_profile_picture(html, user, proxies):
 				print('error fetching profile picture: %s' % url_components)
 			else:
 				res_bytes = res.encode('utf-8') if isinstance(res, unicode) else res
-				with open('users/%s/profile.jpg' % user.lower(), 'w') as h:
+				with open('users/%s/profile.jpg' % user, 'w') as h:
 					h.write(res_bytes)
 			return
 
-def extract_twats(html, user, twats, timestamp, checkfn):
+def extract_twats(html, user, twats, timestamp, checkfn, proxies=None, twhttp=None):
 	def find_div_end(html):
 		level = 0
 		for i in xrange(len(html)):
@@ -314,7 +323,7 @@ def extract_twats(html, user, twats, timestamp, checkfn):
 		div_end = find_div_end(html)
 		slice = html[:div_end]
 		html = html[div_end:]
-		twats = extract_twat(soupify(slice), twats, timestamp)
+		twats = extract_twat(soupify(slice), twats, timestamp, proxies, twhttp)
 		nfetched += 1
 		# if the first two (the very first could be pinned) tweets are already known
 		# do not waste cpu processing more html
@@ -322,7 +331,7 @@ def extract_twats(html, user, twats, timestamp, checkfn):
 			return twats
 
 
-def extract_twat(soup, twats, timestamp):
+def extract_twat(soup, twats, timestamp, proxies=None, twhttp=None):
 	for div in soup.body.find_all('div'): # , attrs={'class':'tweet  '}):
 		if 'class' in div.attrs and 'tweet' in div.attrs["class"]:
 
@@ -341,10 +350,14 @@ def extract_twat(soup, twats, timestamp):
 
 			tweet_id = div.attrs["data-tweet-id"]
 			tweet_user = div.attrs["data-screen-name"]
+			# fetch profile picture
+			fetch_profile_picture(tweet_user, proxies, twhttp=twhttp)
+
 			if 'data-retweet-id' in div.attrs:
 				retweet_id = div.attrs['data-retweet-id']
 			if 'data-retweeter' in div.attrs:
 				retweet_user = div.attrs['data-retweeter']
+
 			tdiv = div.find('div', attrs={'class' : 'js-tweet-text-container'})
 			tweet_text = tdiv.find('p').decode_contents()
 			tweet_text = tweet_text.replace('href="/', 'href="https://twitter.com/')
@@ -378,7 +391,8 @@ def extract_twat(soup, twats, timestamp):
 					'id':card_div.attrs['data-item-id'] }
 				dv = card_div.find('div', attrs={'class':'QuoteTweet-text'})
 				quote_tweet['text'] = dv.text
-
+				# fetch profile picture
+				fetch_profile_picture(quote_tweet['user'], proxies, twhttp=twhttp)
 
 			if tweet_user != None and tweet_id:
 				vals = {'id':tweet_id, 'user':tweet_user, 'time':tweet_time, 'text':tweet_text, 'fetched':timestamp}
@@ -431,15 +445,14 @@ def get_twats(user, proxies=None, count=0, http=None, checkfn=None):
 	hdr, res = http.get("/%s" % user)
 
 	## fetch profile picture if not exists
-	if not os.path.isfile('users/%s/profile.jpg' % user.lower()):
-		fetch_profile_picture(res, user, proxies)
+	fetch_profile_picture(user, proxies, res=res)
 
 	twats = []
 
 	break_loop = False
 
 	while True:
-		twats = extract_twats(res, user, twats, timestamp, checkfn)
+		twats = extract_twats(res, user, twats, timestamp, checkfn, proxies, http)
 		if count == 0 or len(twats) == 0 or break_loop or (count != -1 and len(twats) >= count):
 			break
 		if checkfn and not checkfn(user, twats): break
