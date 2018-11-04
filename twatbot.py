@@ -1,4 +1,4 @@
-from twat import get_twats, mirror_twat, get_effective_twat_id, unshorten_urls
+from twat import get_twats, mirror_twat, get_effective_twat_id, unshorten_urls, fetch_profile_picture
 from rocksock import RocksockProxyFromURL
 import time
 import json
@@ -207,17 +207,32 @@ def user_at_link(user):
 		return '<a href="?user=%s">@</a>' % user
 	return '<a href="https://twitter.com/%s">@</a>' % user
 
+def has_profile_pic(user):
+	return os.path.isfile(get_profile_pic_path(user))
+
+def get_profile_pic_path(user):
+	return 'users/%s/profile.jpg' % user.lower()
+
 def htmlize_twat(twat, vars):
 	tw = '<div class="twat-container">'
-
-	if os.path.isfile('users/%s/profile.jpg' % twat['owner'].lower()):
-		tw += '<div class="profile_picture"><img width="100%%" height="100%%" src="users/%s/profile.jpg"></div>' % twat['owner'].lower()
+	tweet_pic = None
+	retweet_pic = None
 
 	if not 'rid' in twat:
 		retweet_str = ""
+		if has_profile_pic(twat['owner']): tweet_pic = get_profile_pic_path(twat['owner'])
+
 	else:
+		if has_profile_pic(twat['user']): tweet_pic = get_profile_pic_path(twat['user'])
+		else: tweet_pic = "data:image/gif;base64,R0lGODdhAQABAIAAAP///////ywAAAAAAQABAAACAkQBADs="
+
+		if has_profile_pic(twat['owner']): retweet_pic = get_profile_pic_path(twat['owner'])
+
 		retweet_str = " (RT %s<a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a>)" % \
 		(user_at_link(twat['user']), twat['user'], twat['id'], twat['user'])
+
+	if tweet_pic: tw += '<div class="profile_picture"><img width="100%%" height="100%%" src="%s"></div>' % tweet_pic
+	if retweet_pic: tw += '<div class="profile_picture_retweet"><img width="100%%" height="100%%" src="%s"></div>' % retweet_pic
 
 	user_str =  user_at_link(twat["owner"])
 	user_str += "<a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a>%s" % \
@@ -518,6 +533,12 @@ def scrape(user, first_run = False):
 			if args.unshorten: t = unshorten_urls(t, proxies=args.proxy, shorteners=shorteners)
 			add_twatlist(user, t, insert_pos)
 			insert_pos += 1
+			if 'quote_tweet' in t:
+				if not os.path.isdir(paths.get_user(t[quote_tweet]['user'])): os.makedirs(paths.get_user(t[quote_tweet]['user']))
+				fetch_profile_picture(t[quote_tweet]['user'], args.proxy, twhttp=twitter_rshttp)
+			if 'user' in t:
+				if not os.path.isdir(paths.get_user(t['user'])): os.makedirs(paths.get_user(t['user']))
+				fetch_profile_picture(t['user'], args.proxy, twhttp=twitter_rshttp)
 			if args.mirror: mirror_twat(t, args=args)
 			sys.stdout.write('\r[%s] scraping %s... +%d ' % (get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), user, insert_pos))
 			sys.stdout.flush()
