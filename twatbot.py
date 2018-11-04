@@ -491,6 +491,10 @@ def fetch_more_tweets_callback(user, twats):
 		if in_twatlist(user, twat): return False
 	return True
 
+def get_timestamp(date_format, date=None):
+	if not date: date = time.time()
+	return time.strftime(date_format, time.gmtime(date))
+
 def scrape(user, first_run = False):
 
 	if first_run and not args.count == -2:
@@ -500,10 +504,10 @@ def scrape(user, first_run = False):
 		checkfn = fetch_more_tweets_callback
 		count = -1
 
+	elapsed_time = time.time()
 	insert_pos = 0
-	sys.stdout.write('\rscraping %s... ' % user)
+	sys.stdout.write('\r[%s] scraping %s... ' % (get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), user))
 	sys.stdout.flush()
-
 
 	twats = get_twats(user, proxies=args.proxy, count=count, http=twitter_rshttp, checkfn=checkfn)
 
@@ -515,12 +519,12 @@ def scrape(user, first_run = False):
 			add_twatlist(user, t, insert_pos)
 			insert_pos += 1
 			if args.mirror: mirror_twat(t, args=args)
-			sys.stdout.write('\rscraping %s... +%d ' % (user, insert_pos))
+			sys.stdout.write('\r[%s] scraping %s... +%d ' % (get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), user, insert_pos))
 			sys.stdout.flush()
 
 	if new: write_user_tweets(user)
-
-	sys.stdout.write('done\n')
+	elapsed_time = (time.time() - elapsed_time)
+	sys.stdout.write('done (%s)\n' % get_timestamp("%H:%M:%S", elapsed_time))
 	sys.stdout.flush()
 
 
