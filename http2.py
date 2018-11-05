@@ -4,7 +4,7 @@ from rocksock import Rocksock, RocksockException
 import rocksock
 import urllib, zlib
 import ssl, socket
-import time
+import time, sys
 
 def _parse_errorcode(line):
 	r = line.find(' ')
@@ -88,6 +88,9 @@ class RsHttp():
 		self.proxies = proxies
 		self.cookies = dict()
 		self.max_tries = max_tries
+
+	def _err_log(self, s):
+		sys.stderr.write(s + '\n')
 
 	def connect(self):
 		return self.reconnect()
@@ -233,15 +236,15 @@ class RsHttp():
 					self.conn.disconnect()
 					self.conn = None
 					return False
-				print e.get_errormessage()
+				self._err_log(e.get_errormessage())
 				time.sleep(0.05)
 				continue
 			except socket.gaierror:
-				print "gaie"
+				self._err_log("gaie")
 				time.sleep(0.05)
 				continue
 			except ssl.SSLError as e:
-				print "ssle" + e.reason
+				self._err_log("ssle" + e.reason)
 				time.sleep(0.05)
 				continue
 		return False
