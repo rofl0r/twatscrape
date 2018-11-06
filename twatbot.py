@@ -669,8 +669,11 @@ def httpsrv_client_thread(c, evt_done):
 		c.send(200, "OK", "User-agent: *\nDisallow: /")
 
 	elif req['url'].startswith('/config.html'):
-		vars=vars_from_request(req)
-		r, redir = configpage(req,vars)
+		if args.config > 0:
+			vars=vars_from_request(req)
+			r, redir = configpage(req,vars)
+		else:
+			redir = '/index.html'
 		if redir is not "":
 			c.redirect(redir)
 		else:
@@ -714,6 +717,7 @@ if __name__ == '__main__':
 	parser.add_argument('--refresh', help="refresh html page every X seconds - 0: disabled (default: 0)", type=int, default=0, required=False)
 	parser.add_argument('--title', help="defile title (default: %s)" % title, type=str, default=title, required=False)
 	parser.add_argument('--theme', help="select theme (default: fancy)", default='fancy', type=str, required=False)
+	parser.add_argument('--config', help="enable the /config.html page (default: 1)", default=1, type=int, required=False)
 	parser.add_argument('--iframe', help="show iframe (default: 1)", default=1, type=int, required=False)
 	parser.add_argument('--profile', help="check profile every X second(s) (default: 60)", default=60, type=int, required=False)
 	parser.add_argument('--images', help="show image (default: 1)", default=1, type=int, required=False)
