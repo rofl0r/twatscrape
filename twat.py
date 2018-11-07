@@ -5,6 +5,7 @@ import json
 import os.path
 import hashlib
 import re
+import paths
 
 # the effective id of a twat is the retweet id, if it's a retweet
 def get_effective_twat_id(twat):
@@ -42,10 +43,7 @@ def _get_real_location(url, proxies=None):
 	return url
 
 def _mirror_file(url_components, user, tid, args=None, content_type=None, force=False):
-	if not os.path.isdir('users/%s' % user):
-		os.makedirs('users/%s' % user)
-
-	outname = 'users/%s/%s-%s' % (user,tid,url_components['filename'])
+	outname = paths.get_user(user)+ '/%s-%s' % (tid, url_components['filename'])
 	if not force and os.path.exists(outname):
 		return
 
@@ -159,11 +157,9 @@ def mirror_twat(twat, args=None):
 
 	## mirror videos
 	if 'v' in args.mirror and 'video' in twat:
-		if not os.path.isdir('users/%s' % user):
-			os.makedirs('users/%s' % user)
 		tid = str(twat['id'])
 		url = 'https://twitter.com/%s/status/%s' % (twat['user'], tid)
-		outname = 'users/%s/%s.mp4' % (twat['user'].lower(),tid)
+		outname = paths.get_user(twat['user']) + '/%s.mp4' % tid
 		if not os.path.exists('data/%s.mp4' % tid):
 			os.system('%s -o data/%s.mp4 %s > /dev/null 2>&1' % (args.ytdl, tid, url))
 		if not os.path.exists('%s' % outname) and os.path.exists('data/%s.mp4' % tid):
@@ -277,11 +273,8 @@ def get_style_tag(tag, styles):
 	return None
 
 def fetch_profile_picture(user, proxies, res=None, twhttp=None):
-	user = user.lower()
-	if not os.path.isdir('users/%s' % user):
-		os.makedirs('users/%s' % user)
-	elif os.path.isfile('users/%s/profile.jpg' % user):
-		return
+	pic_path = paths.get_profile_pic(user)
+	if os.path.isfile(pic_path): return
 
 	if not res:
 		hdr, res = twhttp.get("/%s" % user)
@@ -298,7 +291,7 @@ def fetch_profile_picture(user, proxies, res=None, twhttp=None):
 				print('error fetching profile picture: %s' % url_components)
 			else:
 				res_bytes = res.encode('utf-8') if isinstance(res, unicode) else res
-				with open('users/%s/profile.jpg' % user, 'w') as h:
+				with open(pic_path, 'w') as h:
 					h.write(res_bytes)
 			return
 
@@ -350,8 +343,6 @@ def extract_twat(soup, twats, timestamp, proxies=None, twhttp=None):
 
 			tweet_id = div.attrs["data-tweet-id"]
 			tweet_user = div.attrs["data-screen-name"]
-			# fetch profile picture
-			fetch_profile_picture(tweet_user, proxies, twhttp=twhttp)
 
 			if 'data-retweet-id' in div.attrs:
 				retweet_id = div.attrs['data-retweet-id']
@@ -392,6 +383,7 @@ def extract_twat(soup, twats, timestamp, proxies=None, twhttp=None):
 				dv = card_div.find('div', attrs={'class':'QuoteTweet-text'})
 				quote_tweet['text'] = dv.text
 				# fetch profile picture
+				if not os.path.isdir(paths.get_user(quote_tweet['user'])): os.makedirs(paths.get_user(quote_tweet['user']))
 				fetch_profile_picture(quote_tweet['user'], proxies, twhttp=twhttp)
 
 			if tweet_user != None and tweet_id:
