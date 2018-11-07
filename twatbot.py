@@ -692,7 +692,12 @@ def start_server(ip, port):
 wl_hash = None
 def load_watchlist():
 	global watchlist, wl_hash
-	wl = [x.rstrip() for x in open(args.watchlist, 'r').readlines() if not x.startswith(';')]
+	wl = []
+	for x in open(args.watchlist, 'r').readlines():
+		if not x.startswith(';'):
+			x = x.rstrip()
+			if not os.path.exists(paths.get_user(x)): os.makedirs(paths.get_user(x))
+			wl.append(x)
 	newhash = hashlib.md5(''.join(wl)).hexdigest()
 	if newhash != wl_hash:
 		print('reloading watchlist')
