@@ -1,4 +1,4 @@
-from twat import get_twats, mirror_twat, get_effective_twat_id, unshorten_urls
+from twat import get_twats, mirror_twat, get_effective_twat_id, unshorten_urls, fetch_profile_picture
 from rocksock import RocksockProxyFromURL
 import time
 import json
@@ -523,6 +523,12 @@ def scrape(user, first_run = False):
 			if args.unshorten: t = unshorten_urls(t, proxies=args.proxy, shorteners=shorteners)
 			add_twatlist(user, t, insert_pos)
 			insert_pos += 1
+			if 'quote_tweet' in t:
+				if not os.path.isdir(paths.get_user(t[quote_tweet]['user'])): os.makedirs(paths.get_user(t[quote_tweet]['user']))
+				fetch_profile_picture(t[quote_tweet]['user'], args.proxy, twhttp=twitter_rshttp)
+			if 'user' in t:
+				if not os.path.isdir(paths.get_user(t['user'])): os.makedirs(paths.get_user(t['user']))
+				fetch_profile_picture(t['user'], args.proxy, twhttp=twitter_rshttp)
 			if args.mirror: mirror_twat(t, args=args)
 			sys.stdout.write('\r[%s] scraping %s... +%d ' % (get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), user, insert_pos))
 			sys.stdout.flush()

@@ -295,7 +295,7 @@ def fetch_profile_picture(user, proxies, res=None, twhttp=None):
 					h.write(res_bytes)
 			return
 
-def extract_twats(html, user, twats, timestamp, checkfn, proxies=None, twhttp=None):
+def extract_twats(html, user, twats, timestamp, checkfn):
 	def find_div_end(html):
 		level = 0
 		for i in xrange(len(html)):
@@ -316,7 +316,7 @@ def extract_twats(html, user, twats, timestamp, checkfn, proxies=None, twhttp=No
 		div_end = find_div_end(html)
 		slice = html[:div_end]
 		html = html[div_end:]
-		twats = extract_twat(soupify(slice), twats, timestamp, proxies, twhttp)
+		twats = extract_twat(soupify(slice), twats, timestamp)
 		nfetched += 1
 		# if the first two (the very first could be pinned) tweets are already known
 		# do not waste cpu processing more html
@@ -324,7 +324,7 @@ def extract_twats(html, user, twats, timestamp, checkfn, proxies=None, twhttp=No
 			return twats
 
 
-def extract_twat(soup, twats, timestamp, proxies=None, twhttp=None):
+def extract_twat(soup, twats, timestamp):
 	for div in soup.body.find_all('div'): # , attrs={'class':'tweet  '}):
 		if 'class' in div.attrs and 'tweet' in div.attrs["class"]:
 
@@ -382,9 +382,6 @@ def extract_twat(soup, twats, timestamp, proxies=None, twhttp=None):
 					'id':card_div.attrs['data-item-id'] }
 				dv = card_div.find('div', attrs={'class':'QuoteTweet-text'})
 				quote_tweet['text'] = dv.text
-				# fetch profile picture
-				if not os.path.isdir(paths.get_user(quote_tweet['user'])): os.makedirs(paths.get_user(quote_tweet['user']))
-				fetch_profile_picture(quote_tweet['user'], proxies, twhttp=twhttp)
 
 			if tweet_user != None and tweet_id:
 				vals = {'id':tweet_id, 'user':tweet_user, 'time':tweet_time, 'text':tweet_text, 'fetched':timestamp}
@@ -436,15 +433,12 @@ def get_twats(user, proxies=None, count=0, http=None, checkfn=None):
 		pass
 	hdr, res = http.get("/%s" % user)
 
-	## fetch profile picture if not exists
-	fetch_profile_picture(user, proxies, res=res)
-
 	twats = []
 
 	break_loop = False
 
 	while True:
-		twats = extract_twats(res, user, twats, timestamp, checkfn, proxies, http)
+		twats = extract_twats(res, user, twats, timestamp, checkfn)
 		if count == 0 or len(twats) == 0 or break_loop or (count != -1 and len(twats) >= count):
 			break
 		if checkfn and not checkfn(user, twats): break
