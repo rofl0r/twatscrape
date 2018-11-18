@@ -65,11 +65,11 @@ def replace_url_in_twat(twat, args=None):
 
 	return twat['text']
 
-def build_searchbox(vars):
-	link = make_index_link(vars, exclude=['search', 'find', 'user'])
+def build_searchbox(variables):
+	link = make_index_link(variables, exclude=['search', 'find', 'user'])
 
-	if 'search' in vars and len(vars['search']):
-		fill = urllib.unquote_plus(vars['search'])
+	if 'search' in variables and len(variables['search']):
+		fill = urllib.unquote_plus(variables['search'])
 		search_value = fill
 	else:
 		fill = 'foo "bar baz" -quux'
@@ -78,7 +78,7 @@ def build_searchbox(vars):
 	user_sel = ['<center><table><tr>']
 	i = 0
 	for user in sorted(watchlist, key=str.lower):
-		selected = '' if (not 'user' in vars or not user in vars['user']) else ' checked'
+		selected = '' if (not 'user' in variables or not user in variables['user']) else ' checked'
 		user_sel.append("""<td width="33%%"><label class="hide_until_hover"><input id="u_%s" class="hide_until_hover" type="checkbox" value="%s"%s>%s</label></td>""" % (user, user, selected, user))
 		i = i + 1
 		if i >= 3:
@@ -96,16 +96,16 @@ def build_searchbox(vars):
 		' </form><br />',
 		'</div>'
 	]
-	if len(search_value) or 'user' in vars:
+	if len(search_value) or 'user' in variables:
 		ret.insert(7, '<span class="gotoindex hide_until_hover"><a href="%s">%s</a></span>' % (link,link))
 
 	return '\n'.join(ret)
 
-def build_iconbar(twat, vars):
+def build_iconbar(twat, variables):
 	bar = '\n<div class="iconbar">'
 
 	## anchor
-	il = make_index_link(vars)
+	il = make_index_link(variables)
 	if not '?' in il: il += '?'
 	else: il += '&'
 	id = get_effective_twat_id(twat)
@@ -203,7 +203,7 @@ def user_at_link(user):
 		return '<a href="?user=%s">@</a>' % user
 	return '<a href="https://twitter.com/%s">@</a>' % user
 
-def htmlize_twat(twat, vars):
+def htmlize_twat(twat, variables):
 	tw = '<div class="twat-container">'
 	tweet_pic = None
 	retweet_pic = None
@@ -232,7 +232,7 @@ def htmlize_twat(twat, vars):
 	tw += '\n<div class="twat-title">'
 
 	## add icon bar
-	if args.iconbar: tw += build_iconbar(twat, vars)
+	if args.iconbar: tw += build_iconbar(twat, variables)
 
 	time_str = 'unknown' if twat["time"] == 0 else format_time(twat["time"])
 	tw += '%s&nbsp;-&nbsp;%s' % (user_str, time_str)
@@ -295,7 +295,7 @@ def htmlize_twat(twat, vars):
 			'text' : twat['quote']['text'],
 			'time' : 0
 		}
-		tw += htmlize_twat(pseudo_twat, vars)
+		tw += htmlize_twat(pseudo_twat, variables)
 
 	tw += '</div>\n'
 
@@ -390,13 +390,13 @@ def find_tweets(all_tweets, search=None, users=None):
 
 # return tuple of html, redirect_url
 # only one of both is set to something other than ""
-def render_site(vars = {}):
+def render_site(variables = {}):
 	html = []
 
-	page = 0 if not 'page' in vars else int(vars['page'])
-	find = "" if not 'find' in vars else vars['find']
-	search = None if not 'search' in vars else vars['search']
-	users = None if not 'user' in vars else urllib.unquote_plus(vars['user']).lower().split(',')
+	page = 0 if not 'page' in variables else int(variables['page'])
+	find = "" if not 'find' in variables else variables['find']
+	search = None if not 'search' in variables else variables['search']
+	users = None if not 'user' in variables else urllib.unquote_plus(variables['user']).lower().split(',')
 
 	# don't remove duplicates if users is specified: this could remove retweets
 	remove_dupes = True if not users else False
@@ -404,9 +404,9 @@ def render_site(vars = {}):
 	all_tweets = get_all_tweets(remove_dupes)
 	if users or search: all_tweets = find_tweets(all_tweets, search=search, users=users)
 	if find != '':
-		vars['page'] = find_tweet_page(all_tweets, find)
-		vars.pop('find', None)
-		return "", make_index_link(vars) + '#%s'%find
+		variables['page'] = find_tweet_page(all_tweets, find)
+		variables.pop('find', None)
+		return "", make_index_link(variables) + '#%s'%find
 
 	pagetotalf = len(all_tweets) / float(args.tpp)
 	pagetotal = int(pagetotalf)
@@ -417,24 +417,24 @@ def render_site(vars = {}):
 
 	for i in xrange(page*args.tpp, max):
 		twat = all_tweets[i]
-		html.append(htmlize_twat(twat, vars))
+		html.append(htmlize_twat(twat, variables))
 
 	if len(html):
-		return write_html(html=html, vars=vars, pages=pagetotal), ""
+		return write_html(html=html, variables=variables, pages=pagetotal), ""
 
 	return "", ""
-def render_empty(vars = {}):
+def render_empty(variables = {}):
 	html = ['<div class="error_message"><p class="twatter">&#129296;</p><p class="error_text">There is nothing here..<p><p><a href="/">Back to index</a></p></div>']
-	return write_html(html=html, vars=vars)
+	return write_html(html=html, variables=variables)
 
 
-def make_index_link(vars, exclude=[]):
+def make_index_link(variables, exclude=[]):
 	s = '/index.html'
 	t = ''
-	for x in vars:
+	for x in variables:
 		if x in exclude: continue
 		if len(t): t += '&'
-		t += '%s=%s'%(x, str(vars[x]))
+		t += '%s=%s'%(x, str(variables[x]))
 	if len(t): s += '?' + t
 	return s
 
@@ -454,7 +454,7 @@ def page_selection(curr, total, margin=5):
 		else: i = i + 1
 	return set
 
-def page_selection_html(vars, page, pages):
+def page_selection_html(variables, page, pages):
 	div = []
 	sel = page_selection(page, pages)
 	for i in xrange(len(sel)):
@@ -463,17 +463,17 @@ def page_selection_html(vars, page, pages):
 		if sel[i] == page:
 			div.append(str(page))
 		else:
-			vars['page'] = sel[i]
-			indx = make_index_link(vars)
+			variables['page'] = sel[i]
+			indx = make_index_link(variables)
 			div.append('<a class="menu" href="%s">%d</a>' % (indx,sel[i]))
-	vars['page'] = page
+	variables['page'] = page
 	return div
 
-def write_html(html, vars=None, pages=0):
+def write_html(html, variables=None, pages=0):
 	ht = [ html_header() ]
-	page = int(vars['page']) if 'page' in vars else 0
+	page = int(variables['page']) if 'page' in variables else 0
 
-	div = page_selection_html(vars, page, pages)
+	div = page_selection_html(variables, page, pages)
 	if len(div):
 		ht.append('\n<div class="menu">%s</div>\n' % '&nbsp;'.join(div))
 
@@ -482,7 +482,7 @@ def write_html(html, vars=None, pages=0):
 	if len(div):
 		ht.append('\n<div class="menu">%s</div>\n' % '&nbsp;'.join(div))
 
-	ht.append(build_searchbox(vars))
+	ht.append(build_searchbox(variables))
 	ht.append("\n</body></html>")
 
 	return "\n".join(ht).encode('utf-8')
@@ -601,7 +601,7 @@ def forbidden_page():
 		'  </body>\n'
 		'</html>')
 
-def configpage(req = {}, vars={}):
+def configpage(req = {}, variables={}):
 	html = ''
 	redir = ''
 	if not 'postdata' in req:
@@ -613,7 +613,7 @@ def configpage(req = {}, vars={}):
 			'<input type="submit" value="save and apply">\n',
 			'</form></div>\n'
 		]
-		html = write_html(html=html, vars=vars)
+		html = write_html(html=html, variables=variables)
 
 	else:
 		redir = 'index.html'
@@ -624,18 +624,18 @@ def configpage(req = {}, vars={}):
 
 	return html, redir
 
-def vars_from_request(req):
-	vars={}
-	vars['page'] = 0
+def variables_from_request(req):
+	variables={}
+	variables['page'] = 0
 	if '?' in req['url']:
 		a,b= req['url'].split('?')
 		l = b.split('&')
 		for d in l:
 			if not '=' in d: continue
 			e,f=d.split('=')
-			if len(f): vars[e.lower()] = f
+			if len(f): variables[e.lower()] = f
 
-	return vars
+	return variables
 
 def httpsrv_client_thread(c, evt_done):
 	req = c.read_request()
@@ -647,12 +647,12 @@ def httpsrv_client_thread(c, evt_done):
 	elif req['url'] == '/':
 		c.redirect('/index.html')
 	elif req['url'].startswith('/index.html'):
-		vars = vars_from_request(req)
-		r, redir = render_site(vars)
+		variables = variables_from_request(req)
+		r, redir = render_site(variables)
 		if redir is not "":
 			c.redirect(redir)
 		else:
-			if r == '': r = render_empty(vars=vars)
+			if r == '': r = render_empty(variables=variables)
 			c.send(200, "OK", r)
 	elif not '..' in req['url'] and file_exists(os.getcwd() + req['url']):
 		c.serve_file(os.getcwd() + req['url'])
@@ -661,14 +661,14 @@ def httpsrv_client_thread(c, evt_done):
 
 	elif req['url'].startswith('/config.html'):
 		if args.config > 0:
-			vars=vars_from_request(req)
-			r, redir = configpage(req,vars)
+			variables=variables_from_request(req)
+			r, redir = configpage(req,variables)
 		else:
 			redir = '/index.html'
 		if redir is not "":
 			c.redirect(redir)
 		else:
-			if r == '': r = render_empty(vars=vars)
+			if r == '': r = render_empty(variables=variables)
 			c.send(200, "OK", r)
 
 	else:
