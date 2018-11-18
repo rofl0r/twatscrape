@@ -116,7 +116,7 @@ def build_iconbar(twat, vars):
 	## wayback machine
 	bar += '&nbsp;<a target="_blank" href="https://web.archive.org/save/https://twitter.com/%s/status/%s" title="wayback">%s</a>' % (twat['user'], twat['id'], '&#9852;')
 	## json file
-	bar += '&nbsp;<a target="_blank" href="%s">%s</a>' % (paths.get_user_filename(twat['owner']), '&#128190;')
+	bar += '&nbsp;<a target="_blank" href="%s">%s</a>' % (paths.get_user_json(twat['owner']), '&#128190;')
 
 	bar += '</div>\n'
 	return bar
@@ -148,7 +148,7 @@ def add_twatlist(user, twat, insert_pos):
 	tweet_cache[user][get_effective_twat_id(twat)] = True
 
 def write_user_tweets(user):
-	open(paths.get_user_filename(user), 'w').write(json.dumps(tweets[user], sort_keys=True, indent=4))
+	open(paths.get_user_json(user), 'w').write(json.dumps(tweets[user], sort_keys=True, indent=4))
 
 def remove_known_retweets(lst):
 	nl = []
@@ -502,7 +502,7 @@ def get_timestamp(date_format, date=None):
 
 def scrape(user, first_run = False):
 
-	if first_run and (args.count != -2 and not os.path.isfile(paths.get_user_filename(user))):
+	if first_run and (args.count != -2 and not os.path.isfile(paths.get_user_json(user))):
 		count = args.count
 		checkfn = None
 	else:
@@ -553,7 +553,7 @@ def resume_retry_mirroring(done):
 def load_user_json(user):
 	tweet_cache[user] = dict()
 	try:
-		tweets[user] = json.loads(open(paths.get_user_filename(user), 'r').read())
+		tweets[user] = json.loads(open(paths.get_user_json(user), 'r').read())
 		for i in xrange(len(tweets[user])):
 			tweet_cache[user][get_effective_twat_id(tweets[user][i])] = True
 	except:
