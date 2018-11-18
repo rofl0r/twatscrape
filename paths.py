@@ -6,7 +6,7 @@ def get_user(user):
 	return 'users/%s' % user
 
 ## json path
-def get_user_filename(user):
+def get_user_json(user):
 	return get_user(user) + '/twats.json'
 
 ## profile path
