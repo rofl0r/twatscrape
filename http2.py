@@ -98,7 +98,8 @@ class RsHttp():
 	def _key_match(self, want, got):
 		return want.lower() == got.lower()
 
-	def _make_request(self, typ, url, extras=[]):
+	def _make_request(self, typ, url, extras=None):
+		extras = extras if extras else []
 		s  = typ + ' '+ url +' HTTP/1.1\r\n'
 		if self.port != 80 and self.port != 443:
 			s += 'Host: %s:%d\r\n'%(self.host,self.port)
@@ -136,18 +137,22 @@ class RsHttp():
 			print ">>>\n", s
 		return s
 
-	def _make_head_request(self, url, extras=[]):
+	def _make_head_request(self, url, extras=None):
 		return self._make_request('HEAD', url, extras)
 
-	def _make_get_request(self, url, extras=[]):
+	def _make_get_request(self, url, extras=None):
 		return self._make_request('GET', url, extras)
 
-	def _make_post_request(self, url, values, extras=[]):
+	def _make_post_request_raw(self, url, data, extras=None):
+		x = extras if extras else []
+		x.append('Content-Type: application/x-www-form-urlencoded')
+		x.append('Content-Length: ' + str(len(data)))
+		x.append('p0$tD4ta:' + data)
+		return self._make_request('POST', url, x)
+
+	def _make_post_request(self, url, values, extras=None):
 		data = urllib.urlencode(values)
-		extras.append('Content-Type: application/x-www-form-urlencoded')
-		extras.append('Content-Length: ' + str(len(data)))
-		extras.append('p0$tD4ta:' + data)
-		return self._make_request('POST', url, extras)
+		return self._make_post_request_raw(url, data, extras)
 
 	def _get_response(self):
 		def parse_header_fields(line):
@@ -290,7 +295,7 @@ class RsHttp():
 		return False
 
 
-	def get(self, url, extras=[]):
+	def get(self, url, extras=None):
 		req = self._make_get_request(url, extras)
 		hdr, res, redirect = self._send_and_recv(req)
 
@@ -306,7 +311,7 @@ class RsHttp():
 
 		return hdr, res
 
-	def _head_i(self, url, extras=[]):
+	def _head_i(self, url, extras=None):
 		req = self._make_head_request(url, extras)
 		if not self._send_raw(req): return ""
 		s = ''
@@ -322,7 +327,7 @@ class RsHttp():
 		if self.debugreq: print "<<<\n", s
 		return s
 
-	def head(self, url, extras=[]):
+	def head(self, url, extras=None):
 		tries = 0
 		while tries < self.max_tries:
 			tries += 1
@@ -330,7 +335,12 @@ class RsHttp():
 			if res is not None: return res
 		return ""
 
-	def post(self, url, values, extras=[]):
+	def post_raw(self, url, data, extras=None):
+		req = self._make_post_request_raw(url, data, extras)
+		hdr, res, redirect = self._send_and_recv(req)
+		return hdr, res
+
+	def post(self, url, values, extras=None):
 		req = self._make_post_request(url, values, extras)
 		hdr, res, redirect = self._send_and_recv(req)
 		return hdr, res
