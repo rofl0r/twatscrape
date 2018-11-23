@@ -191,6 +191,9 @@ class RsHttp():
 			elif self._key_match(key, 'Content-Length'):
 				q = int(val)
 
+		if q == -1 and code >= 400 and code < 600:
+			return (s, res, redirect)
+
 		if not chunked:
 			res = self.conn.recv(q)
 		else:
