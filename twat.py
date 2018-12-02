@@ -200,6 +200,7 @@ def mirror_twat(twat, args=None):
 						# FIXME : what should happen on connect error ?
 						pass
 					hdr, res = http.get('/%s' % uri)
+					res = res.encode('utf-8') if isinstance(res, unicode) else res
 					with open('%s/%s' % (emodir, filename), 'w') as h:
 						h.write(res)
 
