@@ -427,15 +427,11 @@ def render_empty(variables = {}):
 	html = ['<div class="error_message"><p class="twatter">&#129296;</p><p class="error_text">There is nothing here..<p><p><a href="/">Back to index</a></p></div>']
 	return write_html(html=html, variables=variables)
 
-
-def make_index_link(variables, exclude=[]):
-	s = '/index.html'
-	t = ''
-	for x in variables:
-		if x in exclude: continue
-		if len(t): t += '&'
-		t += '%s=%s'%(x, str(variables[x]))
-	if len(t): s += '?' + t
+def make_index_link(variables, exclude=None):
+	exclude = exclude if exclude else []
+	s =  '/index.html'
+	t = [ '%s=%s'%(x, str(variables[x])) for x in variables if not x in exclude ]
+	if len(t): return '%s?%s' % (s, '&'.join(t))
 	return s
 
 def page_selection(curr, total, margin=5):
