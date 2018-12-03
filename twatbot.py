@@ -105,7 +105,7 @@ def build_iconbar(twat, variables):
 	bar = '\n<div class="iconbar">'
 
 	## anchor
-	il = make_index_link(variables)
+	il = make_index_link(variables, ['page'])
 	if not '?' in il: il += '?'
 	else: il += '&'
 	id = get_effective_twat_id(twat)
