@@ -88,6 +88,7 @@ class RsHttp():
 		self.proxies = proxies
 		self.cookies = dict()
 		self.max_tries = max_tries
+		self.headers = []
 
 	def _err_log(self, s):
 		sys.stderr.write(s + '\n')
@@ -113,6 +114,8 @@ class RsHttp():
 		s += 'Accept-Encoding: gzip, deflate\r\n'
 		s += 'User-Agent: %s\r\n'%self.user_agent
 		s += 'DNT: 1\r\n'
+		for i in self.headers:
+			s += i + '\r\n'
 
 		cs = ''
 		for c in self.cookies:
@@ -350,6 +353,11 @@ class RsHttp():
 
 	def xhr_post(self, url, values={}):
 		return  self.post(url, values, ['X-Requested-With: XMLHttpRequest'])
+
+	def add_header(self, s):
+		# copy a header verbatim into each request, example:
+		# http.add_header("Referer: http://bbc.com")
+		self.headers.append(s)
 
 	def set_cookie(self, c):
 		if c.lower().startswith('set-cookie: '):
