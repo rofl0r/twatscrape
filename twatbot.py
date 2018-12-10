@@ -14,6 +14,7 @@ import threading
 from soup_parser import soupify
 import hashlib
 import paths
+from utils import safe_write
 
 title="twatscrape"
 tweets = dict()
@@ -148,7 +149,9 @@ def add_twatlist(user, twat, insert_pos):
 	tweet_cache[user][get_effective_twat_id(twat)] = True
 
 def write_user_tweets(user):
-	open(paths.get_user_json(user), 'w').write(json.dumps(tweets[user], sort_keys=True, indent=4))
+	fn = paths.get_user_json(user)
+	content = json.dumps(tweets[user], sort_keys=True, indent=4)
+	safe_write(fn, content)
 
 def remove_known_retweets(lst):
 	nl = []
