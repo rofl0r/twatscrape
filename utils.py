@@ -1,4 +1,7 @@
 import os
+import time
+import sys
+import errno
 
 def safe_write(fn, contents):
 	bak = ''
@@ -15,6 +18,18 @@ def safe_write(fn, contents):
 	if bak != '':
 		os.unlink(bak)
 	return True
+
+def retry_write(fn, contents):
+	while 1:
+		try:
+			with open(fn, 'w') as h: h.write(contents)
+			break
+		except IOError as e:
+			if e.errno == errno.ENOSPC:
+				sys.stderr.write('disk full, retrying in 10s\n')
+				time.sleep(10)
+			else:
+				raise e
 
 if __name__ == "__main__":
 	try: data = open('test.dat', 'r').read()

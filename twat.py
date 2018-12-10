@@ -6,6 +6,7 @@ import os.path
 import hashlib
 import re
 import paths
+from utils import retry_write
 
 # the effective id of a twat is the retweet id, if it's a retweet
 def get_effective_twat_id(twat):
@@ -106,9 +107,9 @@ def _mirror_file(url_components, user, tid, args=None, content_type=None, force=
 
 	res_bytes = res.encode('utf-8') if isinstance(res, unicode) else res
 	filehash = _hash(res_bytes)
-	if not os.path.exists('data/%s.%s' % (filehash, ext)):
-		with open('data/%s.%s' % (filehash, ext), 'w') as h:
-			h.write(res_bytes)
+	out_fn = 'data/%s.%s' % (filehash, ext)
+	if not os.path.exists(out_fn):
+		retry_write(out_fn, res_bytes)
 
 	if os.path.lexists(outname): os.unlink(outname)
 	os.symlink('../../data/%s.%s' % (filehash, ext), outname)
@@ -201,8 +202,7 @@ def mirror_twat(twat, args=None):
 						pass
 					hdr, res = http.get('/%s' % uri)
 					res = res.encode('utf-8') if isinstance(res, unicode) else res
-					with open('%s/%s' % (emodir, filename), 'w') as h:
-						h.write(res)
+					retry_write('%s/%s' % (emodir, filename), res)
 
 
 def add_tweet(id, user, time, text):
@@ -292,8 +292,7 @@ def fetch_profile_picture(user, proxies, res=None, twhttp=None):
 				print('error fetching profile picture: %s' % url_components)
 			else:
 				res_bytes = res.encode('utf-8') if isinstance(res, unicode) else res
-				with open(pic_path, 'w') as h:
-					h.write(res_bytes)
+				retry_write(pic_path, res_bytes)
 			return
 
 def extract_twats(html, user, twats, timestamp, checkfn):
