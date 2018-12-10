@@ -14,7 +14,7 @@ import threading
 from soup_parser import soupify
 import hashlib
 import paths
-from utils import safe_write
+from utils import safe_write, retry_makedirs
 
 title="twatscrape"
 tweets = dict()
@@ -524,10 +524,10 @@ def scrape(user, first_run = False):
 			add_twatlist(user, t, insert_pos)
 			insert_pos += 1
 			if 'quote_tweet' in t:
-				if not os.path.isdir(paths.get_user(t[quote_tweet]['user'])): os.makedirs(paths.get_user(t[quote_tweet]['user']))
+				if not os.path.isdir(paths.get_user(t[quote_tweet]['user'])): retry_makedirs(paths.get_user(t[quote_tweet]['user']))
 				fetch_profile_picture(t[quote_tweet]['user'], args.proxy, twhttp=twitter_rshttp)
 			if 'user' in t:
-				if not os.path.isdir(paths.get_user(t['user'])): os.makedirs(paths.get_user(t['user']))
+				if not os.path.isdir(paths.get_user(t['user'])): retry_makedirs(paths.get_user(t['user']))
 				fetch_profile_picture(t['user'], args.proxy, twhttp=twitter_rshttp)
 			if args.mirror: mirror_twat(t, args=args)
 			sys.stdout.write('\r[%s] scraping %s... +%d ' % (get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), user, insert_pos))
@@ -689,7 +689,7 @@ def load_watchlist():
 	for x in open(args.watchlist, 'r').readlines():
 		if not x.startswith(';'):
 			x = x.rstrip()
-			if not os.path.exists(paths.get_user(x)): os.makedirs(paths.get_user(x))
+			if not os.path.exists(paths.get_user(x)): retry_makedirs(paths.get_user(x))
 			wl.append(x)
 	newhash = hashlib.md5(''.join(wl)).hexdigest()
 	if newhash != wl_hash:
@@ -749,7 +749,7 @@ if __name__ == '__main__':
 
 	if args.dir:
 		if not os.path.exists(args.dir):
-			os.makedirs(args.dir)
+			retry_makedirs(args.dir)
 		for d in site_dirs:
 			if not os.path.exists(args.dir + d):
 				os.symlink(os.getcwd() + d, args.dir + d)

@@ -6,7 +6,7 @@ import os.path
 import hashlib
 import re
 import paths
-from utils import retry_write
+from utils import retry_write, retry_makedirs
 
 # the effective id of a twat is the retweet id, if it's a retweet
 def get_effective_twat_id(twat):
@@ -134,7 +134,7 @@ def mirror_twat(twat, args=None):
 	else:
 		user = twat['user'].lower()
 
-	if not os.path.isdir('data'): os.makedirs( 'data')
+	if not os.path.isdir('data'): retry_makedirs( 'data')
 
 	## soupify user's text
 	soup = soupify(twat["text"])
@@ -193,7 +193,7 @@ def mirror_twat(twat, args=None):
 				uri = '%s/%s' % (emodir, filename)
 
 				if not os.path.isdir(emodir):
-					os.makedirs( emodir )
+					retry_makedirs( emodir )
 
 				if not os.path.exists('%s/%s' % (emodir,filename)):
 					http = RsHttp(host=host, port=443, timeout=15, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")

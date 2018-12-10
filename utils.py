@@ -31,6 +31,18 @@ def retry_write(fn, contents):
 			else:
 				raise e
 
+def retry_makedirs(fn):
+	while 1:
+		try:
+			os.makedirs(fn)
+			break
+		except OSError as e:
+			if e.errno == errno.ENOSPC:
+				sys.stderr.write('makedir: disk full, retrying in 10s\n')
+				time.sleep(10)
+			else:
+				raise e
+
 if __name__ == "__main__":
 	try: data = open('test.dat', 'r').read()
 	except: data = ''
