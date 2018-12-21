@@ -19,7 +19,6 @@ from utils import safe_write, retry_makedirs
 title="twatscrape"
 tweets = dict()
 tweet_cache = dict()
-memory = {}
 watchlist = []
 site_dirs = [
 	"/css",
