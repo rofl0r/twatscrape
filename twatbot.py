@@ -20,6 +20,7 @@ title="twatscrape"
 tweets = dict()
 tweet_cache = dict()
 watchlist = []
+new_accounts = []
 site_dirs = [
 	"/css",
 ]
@@ -499,11 +500,11 @@ def get_timestamp(date_format, date=None):
 	if not date: date = time.time()
 	return time.strftime(date_format, time.gmtime(date))
 
-def scrape(user, first_run = False):
-
-	if first_run and (args.count != -2 and not os.path.isfile(paths.get_user_json(user))):
+def scrape(user):
+	if user in new_accounts:
 		count = args.count
 		checkfn = None
+		new_accounts.remove(user)
 	else:
 		checkfn = fetch_more_tweets_callback
 		count = -1
@@ -688,7 +689,10 @@ def load_watchlist():
 	for x in open(args.watchlist, 'r').readlines():
 		if not x.startswith(';'):
 			x = x.rstrip()
-			if not os.path.exists(paths.get_user(x)): retry_makedirs(paths.get_user(x))
+			if not os.path.exists(paths.get_user_json(x)):
+				new_accounts.append(x)
+				if not os.path.exists(paths.get_user(x)):
+					retry_makedirs(paths.get_user(x))
 			wl.append(x)
 	newhash = hashlib.md5(''.join(wl)).hexdigest()
 	if newhash != wl_hash:
@@ -717,7 +721,7 @@ if __name__ == '__main__':
 	parser.add_argument('--mirror', help="mirror [i]mages, [f]iles, [e]mojis, [c]ards, [v]ideos (default: None)", default='', type=str, required=False)
 	parser.add_argument('--mirror-size', help="Maximum file size allowed to mirror (in MB) - default: no limit", default=0, type=int, required=False)
 	parser.add_argument('--ext', help="space-delimited extension to fetch when mirroring files (default: None)", default=None, type=str, required=False)
-	parser.add_argument('--count', help="Fetch $count latests tweets (default: 20). -1: whole timeline, -2: continue where left off", default=0, type=int, required=False)
+	parser.add_argument('--count', help="Fetch $count latests tweets for a new account (default: 20). -1: whole timeline", default=0, type=int, required=False)
 	parser.add_argument('--upstream-img', help="make image point to the defaut url (default: 0)", default=0, type=int, required=False)
 	parser.add_argument('--resume', help="resume/retry mirroring at startup - default: 0", default=None, type=int, required=False)
 	parser.add_argument('--port', help="port of the integrated webserver - default: 1999", default=1999, type=int, required=False)
@@ -770,15 +774,13 @@ if __name__ == '__main__':
 
 	start_server(args.listenip, args.port)
 
-	first_run = True
 	while True:
 		try:
 			## randomize watchlist if requested
 			if args.randomize_watchlist > 0: random.shuffle(watchlist)
 			## scrape profile
 			for user in watchlist:
-				scrape(user, first_run)
-			first_run = False
+				scrape(user)
 			time.sleep(args.profile)
 
 		except KeyboardInterrupt:
