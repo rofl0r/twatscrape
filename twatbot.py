@@ -315,8 +315,8 @@ def sort_tweets_func(x, y):
 	# sorting indicator, so we use it on all tweets > 2018
 	timestamp_2018 = 1514764800 #01/01/2018
 	if x['time'] > timestamp_2018 and y['time'] > timestamp_2018:
-		t1 = x['time']
-		t2 = y['time']
+		t1 = int(get_effective_twat_id(x))
+		t2 = int(get_effective_twat_id(y))
 		if t1 == t2: return 0
 		elif t1 > t2: return 1
 		else: return -1
