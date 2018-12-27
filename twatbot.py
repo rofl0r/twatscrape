@@ -102,16 +102,18 @@ def build_searchbox(variables):
 
 	return '\n'.join(ret)
 
-def build_iconbar(twat, variables):
+def build_iconbar(twat, variables, quoted):
 	bar = '\n<div class="iconbar">'
 
 	## anchor
-	il = make_index_link(variables, ['page'])
-	if not '?' in il: il += '?'
-	else: il += '&'
-	id = get_effective_twat_id(twat)
-	il += 'find=%s'%id
-	bar += '<a href="%s" name="%s">%s</a>'%(il, id,'&#9875;')
+	if not quoted:
+		il = make_index_link(variables, ['page'])
+		if not '?' in il: il += '?'
+		else: il += '&'
+		id = get_effective_twat_id(twat)
+		il += 'find=%s'%id
+		bar += '<a href="%s" name="%s">%s</a>'%(il, id,'&#9875;')
+
 	## twitter
 	bar += '&nbsp;<a target="_blank" href="https://api.twitter.com/1.1/statuses/retweets/%d.json" title="retweet">%s</a>' % (int(twat['id']), '&#128038;')
 	## wayback machine
@@ -206,7 +208,7 @@ def user_at_link(user):
 		return '<a href="?user=%s">@</a>' % user
 	return '<a href="https://twitter.com/%s">@</a>' % user
 
-def htmlize_twat(twat, variables):
+def htmlize_twat(twat, variables, quoted=False):
 	tw = '<div class="twat-container">'
 	tweet_pic = None
 	retweet_pic = None
@@ -235,7 +237,7 @@ def htmlize_twat(twat, variables):
 	tw += '\n<div class="twat-title">'
 
 	## add icon bar
-	if args.iconbar: tw += build_iconbar(twat, variables)
+	if args.iconbar: tw += build_iconbar(twat, variables, quoted)
 
 	time_str = 'unknown' if twat["time"] == 0 else format_time(twat["time"])
 	tw += '%s&nbsp;-&nbsp;%s' % (user_str, time_str)
@@ -298,7 +300,7 @@ def htmlize_twat(twat, variables):
 			'text' : twat['quote']['text'],
 			'time' : 0
 		}
-		tw += htmlize_twat(pseudo_twat, variables)
+		tw += htmlize_twat(pseudo_twat, variables, quoted=True)
 
 	tw += '</div>\n'
 
