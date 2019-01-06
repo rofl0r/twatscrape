@@ -406,7 +406,7 @@ class Rocksock():
 				self._connect_socks4(s4a, pnum)
 			except RocksockException as e:
 				if e.get_error() == RS_E_TARGETPROXY_CONNECT_FAILED:
-					s4 = self._setup_socks4_header(self, False, curr)
+					s4 = self._setup_socks4_header(False, curr)
 					self._connect_socks4(s4a, pnum)
 				else: raise e
 		elif prev.type == RS_PT_SOCKS5:
