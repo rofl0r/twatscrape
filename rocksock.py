@@ -56,6 +56,9 @@ class RocksockException(Exception):
 	def get_error(self):
 		return self.error
 
+	def get_errortype(self):
+		return self.errortype
+
 	def reraise(self):
 		import sys
 		ei = sys.exc_info()
