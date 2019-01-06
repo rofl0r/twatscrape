@@ -127,6 +127,8 @@ class RocksockProxy():
 			    'socks5' : RS_PT_SOCKS5,
 			    'http'   : RS_PT_HTTP }
 		self.type = typemap[type] if type in typemap else type
+		if not self.type in [RS_PT_NONE, RS_PT_SOCKS4, RS_PT_SOCKS5, RS_PT_HTTP]:
+			raise ValueError('Invalid proxy type')
 		self.username = username
 		self.password = password
 		self.hostinfo = RocksockHostinfo(host, port)
