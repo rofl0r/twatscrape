@@ -325,7 +325,7 @@ class Rocksock():
 		if v4a:
 			buf += '\0\0\0\x01'
 		else:
-			af, sa = self._resolve(dest, True)
+			af, sa = self._resolve(dest.hostinfo, True)
 			if af != socket.AF_INET: raise RocksockException(RS_E_SOCKS4_NO_IP6, failedproxy=-1)
 			buf += self._ip_to_bytes(sa[0])
 		buf += '\0'
