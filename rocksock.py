@@ -111,7 +111,7 @@ class RocksockException(Exception):
 			if self.error == RS_E_SSL_GENERIC and self.failedproxy != None:
 				msg += ': ' + self.failedproxy #failedproxy is repurposed for SSL exceptions
 		else: #RS_ET_OWN
-			msg = errordict[self.error]
+			msg = errordict[self.error] + " (proxy %d)"%self.failedproxy
 		return msg
 
 
