@@ -1,4 +1,4 @@
-import socket, ssl, select
+import socket, ssl, select, copy
 
 # rs_proxyType
 RS_PT_NONE = 0
@@ -160,7 +160,7 @@ class Rocksock():
 			if not verifycert: self.sslcontext.verify_mode = ssl.CERT_NONE
 		else:
 			self.sslcontext = None
-		self.proxychain = proxies if proxies else []
+		self.proxychain = copy.copy(proxies) if proxies else []
 		target = RocksockProxy(host, port, RS_PT_NONE)
 		self.proxychain.append(target)
 		self.sock = None
