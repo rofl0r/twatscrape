@@ -1,4 +1,4 @@
-import socket, ssl, select, copy
+import socket, ssl, select, copy, errno
 
 # rs_proxyType
 RS_PT_NONE = 0
@@ -103,7 +103,6 @@ class RocksockException(Exception):
 			RS_E_INVALID_PROXY_URL : "invalid proxy URL string"
 		}
 		if self.errortype == RS_ET_SYS:
-			import errno
 			if self.error in errno.errorcode:
 				msg = "ERRNO: " + errno.errorcode[self.error]
 			else:
@@ -172,6 +171,12 @@ class Rocksock():
 		self.sock = None
 		self.timeout = timeout
 
+	def _translate_socket_error(self, e, pnum):
+		fp = self._failed_proxy(pnum)
+		if e.errno == errno.ECONNREFUSED:
+			return RocksockException(RS_E_TARGET_CONN_REFUSED, failedproxy=fp)
+		return RocksockException(e.errno, errortype=RS_ET_SYS, failedproxy=fp)
+
 	def _failed_proxy(self, pnum):
 		if pnum < 0: return -1
 		if pnum >= len(self.proxychain)-1: return -1
@@ -195,7 +200,7 @@ class Rocksock():
 		except socket.timeout:
 			raise RocksockException(RS_E_HIT_TIMEOUT, failedproxy=self._failed_proxy(0))
 		except socket.error as e:
-			raise RocksockException(e.errno, errortype=RS_ET_SYS, failedproxy=self._failed_proxy(0))
+			raise self._translate_socket_error(e, 0)
 
 		for pnum in xrange(1, len(self.proxychain)):
 			curr = self.proxychain[pnum]
@@ -210,7 +215,7 @@ class Rocksock():
 				#if hasattr(e, 'library'): subsystem = e.library
 				raise RocksockException(RS_E_SSL_GENERIC, failedproxy=reason, errortype=RS_ET_SSL)
 			except socket.error as e:
-				raise RocksockException(e.errno, errortype=RS_ET_SYS)
+				raise self._translate_socket_error(e, -1)
 			except Exception as e:
 				raise e
 			"""
@@ -259,7 +264,7 @@ class Rocksock():
 			except socket.timeout:
 				raise RocksockException(RS_E_HIT_TIMEOUT, failedproxy=self._failed_proxy(pnum))
 			except socket.error as e:
-				raise RocksockException(e.errno, errortype=RS_ET_SYS, failedproxy=self._failed_proxy(pnum))
+				raise self._translate_socket_error(e, pnum)
 			except ssl.SSLError as e:
 				s = self._get_ssl_exception_reason(e)
 				if s == 'The read operation timed out':
