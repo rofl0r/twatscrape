@@ -252,6 +252,8 @@ class Rocksock():
 				chunk = self.sock.recv(n)
 			except socket.timeout:
 				raise RocksockException(RS_E_HIT_TIMEOUT, failedproxy=self._failed_proxy(pnum))
+			except socket.error as e:
+				raise RocksockException(e.errno, errortype=RS_ET_SYS, failedproxy=self._failed_proxy(pnum))
 			except ssl.SSLError as e:
 				s = self._get_ssl_exception_reason(e)
 				if s == 'The read operation timed out':
