@@ -92,7 +92,11 @@ class RsHttp():
 		self.cookies = dict()
 		self.max_tries = max_tries
 		self.log_errors = log_errors
+		self.last_rs_exception = None
 		self.headers = []
+
+	def get_last_rocksock_exception(self):
+		return self.last_rs_exception
 
 	def _err_log(self, s):
 		if self.log_errors:
@@ -247,6 +251,7 @@ class RsHttp():
 				self.conn.connect()
 				return True
 			except RocksockException as e:
+				self.last_rs_exception = e
 				if e.errortype == rocksock.RS_ET_GAI and e.error==-2:
 					# -2: Name does not resolve
 					self.conn.disconnect()
@@ -282,6 +287,7 @@ class RsHttp():
 		try:
 			return func(*args)
 		except RocksockException as e:
+			self.last_rs_exception = e
 			self.conn.disconnect()
 			if not self.reconnect(): return failret
 		except IOError:
