@@ -310,6 +310,7 @@ class RsHttp():
 				self.use_ssl = use_ssl
 			self.conn.disconnect()
 			self.conn = None
+			self.reconnect()
 			return self.get(url, extras)
 
 		return hdr, res
