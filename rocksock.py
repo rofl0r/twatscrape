@@ -117,6 +117,8 @@ class RocksockException(Exception):
 
 class RocksockHostinfo():
 	def __init__(self, host, port):
+		if port < 0 or port > 65535:
+			raise RocksockException(RS_E_INVALID_PROXY_URL, failedproxy=-1)
 		self.host = host
 		self.port = port
 
