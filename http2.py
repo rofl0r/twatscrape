@@ -75,7 +75,7 @@ def _is_textual_content_type(ct):
 	return ct in TEXTUAL_CONTENT_TYPES_LIST
 
 class RsHttp():
-	def __init__(self, host, port=80, ssl=False, follow_redirects=False, auto_set_cookies=False, keep_alive=False, timeout=60, user_agent=None, proxies=None, max_tries=10, **kwargs):
+	def __init__(self, host, port=80, ssl=False, follow_redirects=False, auto_set_cookies=False, keep_alive=False, timeout=60, user_agent=None, proxies=None, max_tries=10, log_errors=True, **kwargs):
 		self.host = host
 		self.port = port
 		self.use_ssl = ssl
@@ -88,10 +88,12 @@ class RsHttp():
 		self.proxies = proxies
 		self.cookies = dict()
 		self.max_tries = max_tries
+		self.log_errors = log_errors
 		self.headers = []
 
 	def _err_log(self, s):
-		sys.stderr.write(s + '\n')
+		if self.log_errors:
+			sys.stderr.write(s + '\n')
 
 	def connect(self):
 		return self.reconnect()
