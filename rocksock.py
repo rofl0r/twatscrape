@@ -125,6 +125,37 @@ class RocksockHostinfo():
 		self.host = host
 		self.port = port
 
+def RocksockHostinfoFromString(s):
+	host, port = s.split(':')
+	return RocksockHostinfo(host, port)
+
+def isnumericipv4(ip):
+	try:
+		a,b,c,d = ip.split('.')
+		if int(a) < 256 and int(b) < 256 and int(c) < 256 and int(d) < 256:
+			return True
+		return False
+	except:
+		return False
+
+def resolve(hostinfo, want_v4=True):
+	if isnumericipv4(hostinfo.host):
+		return socket.AF_INET, (hostinfo.host, hostinfo.port)
+	try:
+		for res in socket.getaddrinfo(hostinfo.host, hostinfo.port, \
+				socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE):
+			af, socktype, proto, canonname, sa = res
+			if want_v4 and af != socket.AF_INET: continue
+			if af != socket.AF_INET and af != socket.AF_INET6: continue
+			else: return af, sa
+
+	except socket.gaierror as e:
+		eno, str = e.args
+		raise RocksockException(eno, str, errortype=RS_ET_GAI)
+
+	return None, None
+
+
 class RocksockProxy():
 	def __init__(self, host, port, type, username = None, password=None, **kwargs):
 		typemap = { 'none'   : RS_PT_NONE,
@@ -184,7 +215,7 @@ class Rocksock():
 
 	def connect(self):
 
-		af, sa = self._resolve(self.proxychain[0].hostinfo, True)
+		af, sa = resolve(self.proxychain[0].hostinfo, True)
 		try:
 			x = af+1
 		except TypeError:
@@ -294,32 +325,6 @@ class Rocksock():
 			s += self.recv(1)
 		return s
 
-	def _isnumericipv4(self, ip):
-		try:
-			a,b,c,d = ip.split('.')
-			if int(a) < 256 and int(b) < 256 and int(c) < 256 and int(d) < 256:
-				return True
-			return False
-		except:
-			return False
-
-	def _resolve(self, hostinfo, want_v4=True):
-		if self._isnumericipv4(hostinfo.host):
-			return socket.AF_INET, (hostinfo.host, hostinfo.port)
-		try:
-			for res in socket.getaddrinfo(hostinfo.host, hostinfo.port, \
-					socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE):
-				af, socktype, proto, canonname, sa = res
-				if want_v4 and af != socket.AF_INET: continue
-				if af != socket.AF_INET and af != socket.AF_INET6: continue
-				else: return af, sa
-
-		except socket.gaierror as e:
-			eno, str = e.args
-			raise RocksockException(eno, str, errortype=RS_ET_GAI)
-
-		return None, None
-
 	def _ip_to_int(self, ip):
 		a,b,c,d = ip.split('.')
 		h = "0x%.2X%.2X%.2X%.2X"%(int(a),int(b),int(c),int(d))
@@ -340,7 +345,7 @@ class Rocksock():
 		if v4a:
 			buf += '\0\0\0\x01'
 		else:
-			af, sa = self._resolve(dest.hostinfo, True)
+			af, sa = resolve(dest.hostinfo, True)
 			if af != socket.AF_INET: raise RocksockException(RS_E_SOCKS4_NO_IP6, failedproxy=-1)
 			buf += self._ip_to_bytes(sa[0])
 		buf += '\0'
@@ -388,7 +393,7 @@ class Rocksock():
 					raise RocksockException(RS_E_PROXY_AUTH_FAILED, failedproxy=self._failed_proxy(pnum))
 			else: raise RocksockException(RS_E_PROXY_AUTH_FAILED, failedproxy=self._failed_proxy(pnum))
 		dst = self.proxychain[pnum]
-		numeric = self._isnumericipv4(dst.hostinfo.host)
+		numeric = isnumericipv4(dst.hostinfo.host)
 		if numeric:
 			dstaddr = self._ip_to_bytes(dst.hostinfo.host)
 		else:
