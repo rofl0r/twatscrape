@@ -208,6 +208,9 @@ def user_at_link(user):
 		return '<a href="?user=%s">@</a>' % user
 	return '<a href="https://twitter.com/%s">@</a>' % user
 
+def replace_twat_text(text):
+	return text.replace('\n', '<br>').replace( u'\xa0', ' ')
+
 def htmlize_twat(twat, variables, quoted=False):
 	tw = '<div class="twat-container">'
 	tweet_pic = None
@@ -248,7 +251,7 @@ def htmlize_twat(twat, variables, quoted=False):
 	## strip html ?
 	if args.nohtml: twat['text']= strip_tags(twat['text'])
 
-	tw += '<p class="twat-text">%s</p>\n' % (twat["text"].replace('\n', '<br>'))
+	tw += '<p class="twat-text">%s</p>\n' % (replace_twat_text(twat['text']))
 
 	if 'curl' in twat and args.iframe > 0:
 		user = twat['user'].lower()
