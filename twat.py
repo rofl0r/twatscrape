@@ -186,6 +186,8 @@ def mirror_twat(twat, args=None):
 		for img in soup.body.find_all('img'):
 			if 'class' in img.attrs and 'Emoji' in img.attrs['class']:
 				src = img.attrs['src']
+				src = src.encode('utf-8') if isinstance(src, unicode) else src
+
 				split = src.split('/')
 				host = split[2]
 				emodir = '/'.join(split[3: len(split) - 1])
