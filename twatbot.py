@@ -19,6 +19,7 @@ from utils import safe_write, retry_makedirs
 title="twatscrape"
 tweets = dict()
 tweet_cache = dict()
+disabled_users = dict()
 watchlist = []
 new_accounts = []
 site_dirs = [
@@ -692,13 +693,17 @@ def load_watchlist():
 	global watchlist, wl_hash
 	wl = []
 	for x in open(args.watchlist, 'r').readlines():
-		if not x.startswith(';'):
-			x = x.rstrip()
-			if not os.path.exists(paths.get_user_json(x)):
-				new_accounts.append(x)
-				if not os.path.exists(paths.get_user(x)):
-					retry_makedirs(paths.get_user(x))
-			wl.append(x)
+		x = x.rstrip()
+		if x.startswith(';'):
+			username = x[1:]
+			disabled_users[username] = True
+		else:
+			username = x
+		if not os.path.exists(paths.get_user_json(username)):
+			new_accounts.append(username)
+			if not os.path.exists(paths.get_user(username)):
+				retry_makedirs(paths.get_user(username))
+		wl.append(username)
 	newhash = hashlib.md5(''.join(wl)).hexdigest()
 	if newhash != wl_hash:
 		print('reloading watchlist')
@@ -785,7 +790,8 @@ if __name__ == '__main__':
 			if args.randomize_watchlist > 0: random.shuffle(watchlist)
 			## scrape profile
 			for user in watchlist:
-				scrape(user)
+				if not user in disabled_users:
+					scrape(user)
 			time.sleep(args.profile)
 
 		except KeyboardInterrupt:
