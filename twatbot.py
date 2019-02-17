@@ -15,6 +15,7 @@ from soup_parser import soupify
 import hashlib
 import paths
 from utils import safe_write, retry_makedirs
+import socket, errno
 
 title="twatscrape"
 tweets = dict()
@@ -570,10 +571,7 @@ def json_loads():
 		if not user in tweets:
 			load_user_json(user)
 
-def serve_loop(ip, port, done):
-	from httpsrv import HttpSrv
-	hs = HttpSrv(ip, port)
-	hs.setup()
+def serve_loop(hs, done):
 	client_threads = []
 	while not done.is_set():
 		c = hs.wait_client()
@@ -683,7 +681,21 @@ def httpsrv_client_thread(c, evt_done):
 
 def start_server(ip, port):
 	done = threading.Event()
-	t = threading.Thread(target=serve_loop, args=(ip, port, done))
+	from httpsrv import HttpSrv
+	hs = HttpSrv(ip, port)
+	try:
+		hs.setup()
+	except socket.error as e:
+		if e.errno == errno.EADDRINUSE:
+			sys.stderr.write((
+				"ERROR: server socket address in use\n"
+				"wait a couple seconds and try again.\n"
+				"in case you're in pdb, you need to quit it\n"))
+			sys.exit(1)
+		else:
+			raise e
+
+	t = threading.Thread(target=serve_loop, args=(hs, done))
 	t.daemon = True
 	t.start()
 	return t, done
