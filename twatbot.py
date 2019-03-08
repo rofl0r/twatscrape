@@ -107,14 +107,18 @@ def build_searchbox(variables):
 def build_iconbar(twat, variables, quoted):
 	bar = '\n<div class="iconbar">'
 
-	## anchor
+	## anchor / next
 	if not quoted:
 		il = make_index_link(variables, ['page'])
 		if not '?' in il: il += '?'
 		else: il += '&'
 		id = get_effective_twat_id(twat)
-		il += 'find=%s'%id
-		bar += '<a href="%s" name="%s">%s</a>'%(il, id,'&#9875;')
+		il2 = il + 'find_next=%s'%id
+		bar += '<a href="%s" name="%s">%s</a>'%(il2, id,'&#9194;')
+		il2 = il + 'find=%s'%id
+		bar += '<a href="%s" name="%s">%s</a>'%(il2, id,'&#9875;')
+		il2 = il + 'find_prev=%s'%id
+		bar += '<a href="%s" name="%s">%s</a>'%(il2, id,'&#9193;')
 
 	## twitter
 	bar += '&nbsp;<a target="_blank" href="https://api.twitter.com/1.1/statuses/retweets/%d.json" title="retweet">%s</a>' % (int(twat['id']), '&#128038;')
@@ -346,10 +350,12 @@ def get_all_tweets(remove_dupes=False):
 	if remove_dupes: all_tweets = remove_known_retweets(all_tweets)
 	return all_tweets
 
-def find_tweet_page(all_tweets, twid):
+def find_tweet_page(all_tweets, twid, offset):
 	for i in xrange(0, len(all_tweets)):
 		if get_effective_twat_id(all_tweets[i]) == twid:
-			return int(i / args.tpp)
+			if i + offset >= 0 and i < len(all_tweets):
+				i += offset
+			return int(i / args.tpp), get_effective_twat_id(all_tweets[i])
 	return 0
 
 def parse_search(str):
@@ -404,7 +410,21 @@ def render_site(variables = {}):
 	html = []
 
 	page = 0 if not 'page' in variables else int(variables['page'])
-	find = "" if not 'find' in variables else variables['find']
+	if 'find' in variables:
+		find_offset = 0
+		find = variables['find']
+		variables.pop('find', None)
+	elif 'find_next' in variables:
+		find_offset = -1
+		find = variables['find_next']
+		variables.pop('find_next', None)
+	elif 'find_prev' in variables:
+		find_offset = 1
+		find = variables['find_prev']
+		variables.pop('find_prev', None)
+	else:
+		find_offset = None
+		find = ''
 	search = None if not 'search' in variables else variables['search']
 	users = None if not 'user' in variables else urllib.unquote_plus(variables['user']).lower().split(',')
 
@@ -414,9 +434,8 @@ def render_site(variables = {}):
 	all_tweets = get_all_tweets(remove_dupes)
 	if users or search: all_tweets = find_tweets(all_tweets, search=search, users=users)
 	if find != '':
-		variables['page'] = find_tweet_page(all_tweets, find)
-		variables.pop('find', None)
-		return "", make_index_link(variables) + '#%s'%find
+		variables['page'], tid = find_tweet_page(all_tweets, find, find_offset)
+		return "", make_index_link(variables) + '#%s'%tid
 
 	pagetotalf = len(all_tweets) / float(args.tpp)
 	pagetotal = int(pagetotalf)
