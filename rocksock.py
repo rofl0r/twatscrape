@@ -196,7 +196,12 @@ class Rocksock():
 			if not verifycert: self.sslcontext.verify_mode = ssl.CERT_NONE
 		else:
 			self.sslcontext = None
-		self.proxychain = copy.copy(proxies) if proxies else []
+		self.proxychain = []
+		for p in proxies:
+			if isinstance(p, basestring):
+				self.proxychain.append(RocksockProxyFromURL(p))
+			else:
+				self.proxychain.append(p)
 		target = RocksockProxy(host, port, RS_PT_NONE)
 		self.proxychain.append(target)
 		self.sock = None
