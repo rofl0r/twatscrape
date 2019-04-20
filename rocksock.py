@@ -179,7 +179,7 @@ def RocksockProxyFromURL(url):
 	if x == -1: return None # port is obligatory
 	port = int(url[x+len(':'):]) #TODO: catch exception when port is non-numeric
 	url = url[:x]
-	x = url.find('@')
+	x = url.rfind('@')
 	if x != -1:
 		u, p = url[:x].split(':')
 		url = url[x+len('@'):]
