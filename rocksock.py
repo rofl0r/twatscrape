@@ -282,7 +282,10 @@ class Rocksock():
 	def send(self, buf, pnum=-1):
 		if self.sock is None:
 			raise RocksockException(RS_E_NO_SOCKET, failedproxy=self._failed_proxy(pnum))
-		return self.sock.sendall(buf)
+		try:
+			return self.sock.sendall(buf)
+		except socket.error as e:
+			raise self._translate_socket_error(e, pnum)
 
 	def _get_ssl_exception_reason(self, e):
 		s = ''
