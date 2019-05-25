@@ -226,8 +226,8 @@ class Rocksock():
 			x = af+1
 		except TypeError:
 			raise(RocksockException(-3, "unexpected problem resolving DNS, try again", failedproxy=self._failed_proxy(0), errortype=RS_ET_GAI))
-#			print "GOT A WEIRD AF"
-#			print af
+#			print("GOT A WEIRD AF")
+#			print(af)
 #			raise(RocksockException(-6666, af, errortype=RS_ET_GAI))
 
 		self.sock = socket.socket(af, socket.SOCK_STREAM)
@@ -463,12 +463,12 @@ if __name__ == '__main__':
 	try:
 		rs.connect()
 	except RocksockException as e:
-		print e.get_errormessage()
+		print(e.get_errormessage())
 		e.reraise()
 	rs.send('GET / HTTP/1.0\r\n\r\n')
-	print rs.recvline()
+	print(rs.recvline())
 	rs.disconnect()
 	rs.connect()
 	rs.send('GET / HTTP/1.0\r\n\r\n')
-	print rs.recvline()
+	print(rs.recvline())
 
