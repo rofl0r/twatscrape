@@ -181,7 +181,9 @@ class RsHttp():
 		s = ''
 		res = ''
 		#'HTTP/1.1 302 Found\r\n'
-		l = self.conn.recvline().strip()
+		l = ''
+		while not l.startswith('HTTP/'):
+			l = self.conn.recvline().strip()
 		s = l + '\n'
 		foo, code, msg = _parse_errorcode(l)
 		while True:
