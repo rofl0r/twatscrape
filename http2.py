@@ -373,6 +373,12 @@ class RsHttp():
 		# http.add_header("Referer: http://bbc.com")
 		self.headers.append(s)
 
+	def add_headers(self, lines):
+		# copy a multi-line header chunk verbatim into each request:
+		for line in lines.split('\n'):
+			line = line.rstrip('\r')
+			if len(line): self.headers.append(line)
+
 	def set_cookie(self, c):
 		if c.lower().startswith('set-cookie: '):
 			c = c[len('Set-Cookie: '):]
