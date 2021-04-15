@@ -8,5 +8,3 @@ run python2 twatbot.py
 
 it will createn a webservice listening on port 1999 & update it with new twats.
 
-WWG1WGA
-
