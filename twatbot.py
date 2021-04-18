@@ -802,7 +802,8 @@ if __name__ == '__main__':
 	args.proxy = [RocksockProxyFromURL(args.proxy)] if args.proxy else None
 
 	## global rshttp object used with get_twats()
-	twitter_rshttp = RsHttp('twitter.com', ssl=True, port=443, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
+	#twitter_rshttp = RsHttp('twitter.com', ssl=True, port=443, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
+	twitter_rshttp = RsHttp('nitter.fdn.fr', ssl=True, port=443, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
 
 	load_watchlist()
 

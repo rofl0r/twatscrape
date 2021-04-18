@@ -308,7 +308,7 @@ def extract_twats(html, user, twats, timestamp, checkfn):
 			if level == 0:
 				return i + len('</div>')
 
-	regex = re.compile(r'<div.*class.*[" ]tweet[" ]')
+	regex = re.compile(r'<div.*class.*[" ]timeline.item[" ]')
 	nfetched = 0
 	while 1:
 		match = regex.search(html)
@@ -328,7 +328,7 @@ def extract_twats(html, user, twats, timestamp, checkfn):
 
 def extract_twat(soup, twats, timestamp):
 	for div in soup.body.find_all('div'): # , attrs={'class':'tweet  '}):
-		if 'class' in div.attrs and 'tweet' in div.attrs["class"]:
+		if 'class' in div.attrs and 'timeline-item' in div.attrs["class"]:
 
 			tweet_id = 0
 			tweet_user = None
@@ -343,46 +343,35 @@ def extract_twat(soup, twats, timestamp):
 
 			pinned = ('user-pinned' in div.attrs["class"])
 
-			tweet_id = div.attrs["data-tweet-id"]
-			tweet_user = div.attrs["data-screen-name"]
-			if 'data-retweet-id' in div.attrs:
-				retweet_id = div.attrs['data-retweet-id']
-			if 'data-retweeter' in div.attrs:
-				retweet_user = div.attrs['data-retweeter']
-			tdiv = div.find('div', attrs={'class' : 'js-tweet-text-container'})
-			tweet_text = tdiv.find('p').decode_contents()
-			tweet_text = tweet_text.replace('href="/', 'href="https://twitter.com/')
+			tweet_id = div.find('a', attrs={'class': 'tweet-link'}).get('href').split('/')[3].split('#')[0]
+			tweet_user = div.find('a', attrs={'class': 'username'}).get('title').lstrip('@')
 
-			small = div.find('small', attrs={'class':'time'})
-			for span in small.find_all('span'):
-				if 'data-time' in span.attrs:
-					tweet_time = int(span.attrs['data-time'])
-					break
+			tweet_text = div.find('div', attrs={'class': 'tweet-content'}).get_text()
+			tweet_time = div.find('span', attrs={'class': 'tweet-date'}).find('a').get('title')
+
+			# it's a retweet
+			rt = div.find('div', attrs={'class': 'retweet-header'})
+			if rt is not None:
+				retweet_user = div.find('a', attrs={'class':'attribution'}).get('href').lstrip('/')
+
+			# user quotes someone else
+			quoted = div.find('div', attrs={'class':'quote-text'})
+			if quoted:
+				quote_tweet = {
+					'user': 'foobar',
+					'id': 'notyet',
+					'text': quoted.get_text()
+				}
+
+			print(tweet_id, tweet_user, retweet_user, retweet_id, tweet_time, retweet_user)
+			print(tweet_text, quote_tweet)
 
 			# find "card" embedding external links with photo
-			card_div = div.find('div', attrs={'class':"js-macaw-cards-iframe-container"})
-			if card_div: card_url = card_div.attrs['data-full-card-iframe-url'].split('?')[0]
-
-			# find embedded photos
-			card_div = div.find('div', attrs={'class':"AdaptiveMediaOuterContainer"})
+			card_div = div.find('div', attrs={'class':"card-container"})
 			if card_div:
 				images = []
-				for dv in card_div.find_all('div', attrs={'class':'AdaptiveMedia-photoContainer'}):
-					images.append(dv.attrs["data-image-url"])
-				for dv in card_div.find_all('div', attrs={'class':'PlayableMedia-player'}):
-					video = True
-					bg = get_style_tag('background-image', dv.attrs["style"])
-					if bg.startswith("url('"):
-						bg = bg[5:-2]
-						images.append(bg)
-			card_div = div.find('div', attrs={'class':'QuoteTweet-innerContainer'})
-			if card_div:
-				quote_tweet = {
-					'user':card_div.attrs['data-screen-name'],
-					'id':card_div.attrs['data-item-id'] }
-				dv = card_div.find('div', attrs={'class':'QuoteTweet-text'})
-				quote_tweet['text'] = dv.text
-
+				for img in card_div.find_all('img'):
+					images.append(img.get('src'))
 
 			if tweet_user != None and tweet_id:
 				vals = {'id':tweet_id, 'user':tweet_user, 'time':tweet_time, 'text':tweet_text, 'fetched':timestamp}
@@ -420,7 +409,7 @@ def extract_twat(soup, twats, timestamp):
 # received twats, and can decide whether fetching will be continued or not,
 # by returning True (continue) or False.
 def get_twats(user, proxies=None, count=0, http=None, checkfn=None):
-	host = 'twitter.com'
+	host = 'nitter.fdn.fr'
 	if not http:
 		http = RsHttp(host=host, port=443, timeout=15, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
 #	http.debugreq = True
