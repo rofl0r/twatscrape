@@ -168,9 +168,6 @@ def remove_known_retweets(lst):
 		else: nl.append(x)
 	return nl
 
-def format_time(stmp):
-	return time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(stmp))
-
 def add_owner_to_list(user, lst):
 	nl = []
 	for x in lst:
@@ -248,7 +245,7 @@ def htmlize_twat(twat, variables, quoted=False):
 	## add icon bar
 	if args.iconbar: tw += build_iconbar(twat, variables, quoted)
 
-	time_str = 'unknown' if twat["time"] == 0 else format_time(twat["time"])
+	time_str = 'unknown' if twat["time"] == 0 else twat['time']
 	tw += '%s&nbsp;-&nbsp;%s' % (user_str, time_str)
 
 	tw += '\n</div>\n'
@@ -540,7 +537,7 @@ def scrape(user):
 	sys.stdout.write('\r[%s] scraping %s... ' % (get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), user))
 	sys.stdout.flush()
 
-	twats = get_twats(user, proxies=args.proxy, count=count, http=twitter_rshttp, checkfn=checkfn)
+	twats, cursor = get_twats(user, proxies=args.proxy, count=count, http=twitter_rshttp, checkfn=checkfn)
 
 	new = False
 	for t in twats:
@@ -802,8 +799,8 @@ if __name__ == '__main__':
 	args.proxy = [RocksockProxyFromURL(args.proxy)] if args.proxy else None
 
 	## global rshttp object used with get_twats()
-	#twitter_rshttp = RsHttp('twitter.com', ssl=True, port=443, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
 	twitter_rshttp = RsHttp('nitter.fdn.fr', ssl=True, port=443, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
+        twitter_rshttp.set_cookie('hlsPlayback=on')
 
 	load_watchlist()
 

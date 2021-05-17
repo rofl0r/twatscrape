@@ -310,20 +310,22 @@ def extract_twats(html, user, twats, timestamp, checkfn):
 
 	regex = re.compile(r'<div.*class.*[" ]timeline.item[" ]')
 	nfetched = 0
+        cursor = [ a.get('href') for a in soupify(html).body.find_all('a') if a.get('href').startswith('?cursor=') ]
 	while 1:
 		match = regex.search(html)
 		if not match:
-			return twats
+			return twats, cursor
 		html = html[match.start():]
 		div_end = find_div_end(html)
 		slice = html[:div_end]
 		html = html[div_end:]
-		twats = extract_twat(soupify(slice), twats, timestamp)
+		#twats = extract_twat(soupify(slice), twats, timestamp)
+		twats = extract_twat(soupify(html), twats, timestamp)
 		nfetched += 1
 		# if the first two (the very first could be pinned) tweets are already known
 		# do not waste cpu processing more html
 		if nfetched == 2 and checkfn and not checkfn(user, twats):
-			return twats
+			return twats, cursor
 
 
 def extract_twat(soup, twats, timestamp):
@@ -352,26 +354,31 @@ def extract_twat(soup, twats, timestamp):
 			# it's a retweet
 			rt = div.find('div', attrs={'class': 'retweet-header'})
 			if rt is not None:
-				retweet_user = div.find('a', attrs={'class':'attribution'}).get('href').lstrip('/')
+                            try: retweet_user = div.find('a', attrs={'class':'attribution'}).get('href').lstrip('/')
+                            except: pass
 
 			# user quotes someone else
 			quoted = div.find('div', attrs={'class':'quote-text'})
 			if quoted:
+                                qtext = quoted.get_text()
+                                quoted = div.find('div', attrs={'class': 'quote-big'})
+                                quote_link = quoted.find('a', attrs={'class': 'quote-link'}).get('href')
+                                quser = quote_link.split('/')[1]
+                                qid = quote_link.split('/')[3].split('#')[0]
+                                qtime = quoted.find('span', attrs={'class': 'tweet-date'}).get('title')
 				quote_tweet = {
-					'user': 'foobar',
-					'id': 'notyet',
-					'text': quoted.get_text()
+					'user': quser,
+					'id': qid,
+					'text': qtext,
+                                        'time': qtime
 				}
-
-			print(tweet_id, tweet_user, retweet_user, retweet_id, tweet_time, retweet_user)
-			print(tweet_text, quote_tweet)
 
 			# find "card" embedding external links with photo
 			card_div = div.find('div', attrs={'class':"card-container"})
 			if card_div:
 				images = []
 				for img in card_div.find_all('img'):
-					images.append(img.get('src'))
+				        images.append(img.get('src'))
 
 			if tweet_user != None and tweet_id:
 				vals = {'id':tweet_id, 'user':tweet_user, 'time':tweet_time, 'text':tweet_text, 'fetched':timestamp}
@@ -385,16 +392,17 @@ def extract_twat(soup, twats, timestamp):
 				# next is equivalent to the next-newer twat.
 				if len(twats) and not 'pinned' in twats[len(twats)-1]:
 					next_twat = twats[len(twats)-1]
-					vals['next'] = next_twat['id']
-					if retweet_id:
-						pr_time = 0
-						if 'rid' in next_twat:
-							if 'rid_time' in next_twat:
-								pr_time = next_twat['rid_time'] - 1
-						else:
-							pr_time = next_twat['time'] - 1
+                                        if len(next_twat):
+                                            vals['next'] = next_twat['id']
+                                            if retweet_id:
+                                                    pr_time = 0
+                                                    if 'rid' in next_twat:
+                                                            if 'rid_time' in next_twat:
+                                                                    pr_time = next_twat['rid_time'] - 1
+                                                    else:
+                                                            pr_time = next_twat['time'] - 1
 
-						if pr_time != 0: vals['rid_time'] = pr_time
+                                                    if pr_time != 0: vals['rid_time'] = pr_time
 
 				twats.append(vals)
 		break
@@ -428,20 +436,20 @@ def get_twats(user, proxies=None, count=0, http=None, checkfn=None):
 	break_loop = False
 
 	while True:
-		twats = extract_twats(res, user, twats, timestamp, checkfn)
+		twats, cursor = extract_twats(res, user, twats, timestamp, checkfn)
 		if count == 0 or len(twats) == 0 or break_loop or (count != -1 and len(twats) >= count):
 			break
 		if checkfn and not checkfn(user, twats): break
 
 		# fetch additional tweets that are not in the initial set of 20:
 		last_id = get_effective_twat_id(twats[len(twats)-1])
-		hdr, res = http.xhr_get("https://twitter.com/i/profiles/show/%s/timeline/tweets?include_available_features=1&include_entities=1&max_position=%s&reset_error_state=false"%(user, last_id))
-		if not "200 OK" in hdr: break
-		resp = json.loads(res)
-		if not resp["has_more_items"]: break_loop = True
-		res = resp["items_html"]
+                if not len(cursor):
+                        break
+                hdr, res = http.get("/%s%s"%(user, cursor[0]))
 
-	return twats
+		if not "200 OK" in hdr: break
+
+	return twats, cursor
 
 if __name__ == '__main__':
 	print repr ( get_twats('realdonaldtrump') )
