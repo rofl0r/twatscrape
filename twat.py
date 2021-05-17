@@ -1,5 +1,6 @@
 from http2 import RsHttp, _parse_url
 from soup_parser import soupify
+from nitter import nitter_connect, get_nitter_instance, set_invalid_nitter
 import time, datetime, calendar
 import json
 import os.path
@@ -275,19 +276,27 @@ def get_style_tag(tag, styles):
 		if tg.strip() == tag: return s.strip()
 	return None
 
-def fetch_profile_picture(user, proxies, res=None, twhttp=None, instances=['nitter.fdn.fr']):
+def fetch_profile_picture(user, proxies, res=None, twhttp=None, nitters={}):
 	pic_path = paths.get_profile_pic(user)
 	if os.path.isfile(pic_path): return
 
 	if not res:
+		while not twhttp:
+			twhttp, host, nitters = nitter_connect(nitters, proxies)
+			# no avail. instance, pic will be scraped another time
+			if not twhttp: return
+
 		hdr, res = twhttp.get("/%s" % user)
 
 	soup = soupify(res)
 	for meta in soup.find_all('meta', attrs={'property': 'og:image'}):
-		pic_url = meta.get('content') if '://' in meta.get('content') else 'https://%s%s' % (random.choice(instances), meta.get('content'))
+		pic_url = meta.get('content') if '://' in meta.get('content') else 'https://%s%s' % (get_nitter_instance(nitters), meta.get('content'))
 		url_components = _split_url(pic_url)
 		http = RsHttp(host=url_components['host'], port=url_components['port'], timeout=15, ssl=url_components['ssl'], keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
-		while not http.connect(): pass
+
+		# if connection fails, the profile picture
+		# will be fetched another time
+		if not http.connect(): return
 
 		hdr, res = http.get(url_components['uri'])
 		if res == '' and hdr != "":
@@ -299,7 +308,7 @@ def fetch_profile_picture(user, proxies, res=None, twhttp=None, instances=['nitt
 
 	return
 
-def extract_twats(html, user, twats, timestamp, checkfn, instances):
+def extract_twats(html, user, twats, timestamp, checkfn, nitters):
 	def find_div_end(html):
 		level = 0
 		for i in xrange(len(html)):
@@ -322,7 +331,7 @@ def extract_twats(html, user, twats, timestamp, checkfn, instances):
 		slice = html[:div_end]
 		html = html[div_end:]
 		#twats = extract_twat(soupify(slice), twats, timestamp)
-		twats = extract_twat(soupify(html), twats, timestamp, instances)
+		twats = extract_twat(soupify(html), twats, timestamp, nitters)
 		nfetched += 1
 		# if the first two (the very first could be pinned) tweets are already known
 		# do not waste cpu processing more html
@@ -336,7 +345,7 @@ def nitter_time_to_timegm(nt):
 	dtdt = datetime.datetime(int(d[2]), int(d[1]), int(d[0]), int(t[0]), int(t[1]))
 	return calendar.timegm(dtdt.timetuple())
 
-def extract_twat(soup, twats, timestamp,instances=['nitter.fdn.fr']):
+def extract_twat(soup, twats, timestamp,nitters={}):
 	for div in soup.body.find_all('div'): # , attrs={'class':'tweet  '}):
 		if 'class' in div.attrs and 'timeline-item' in div.attrs["class"]:
 
@@ -387,7 +396,7 @@ def extract_twat(soup, twats, timestamp,instances=['nitter.fdn.fr']):
 			if card_div:
 				images = []
 				for img in card_div.find_all('img'):
-					images.append('https://%s%s' % (random.choice(instances), img.get('src')))
+					images.append('https://%s%s' % (get_nitter_instance(nitters), img.get('src')))
 
 			if tweet_user != None and tweet_id:
 				vals = {'id':tweet_id, 'user':tweet_user, 'time':tweet_time, 'text':tweet_text, 'fetched':timestamp}
@@ -425,40 +434,54 @@ def extract_twat(soup, twats, timestamp,instances=['nitter.fdn.fr']):
 # if checkfn is passed , it'll be called with the username and current list of
 # received twats, and can decide whether fetching will be continued or not,
 # by returning True (continue) or False.
-def get_twats(user, proxies=None, count=0, http=None, checkfn=None, instances=['nitter.fnd.fr']):
-	host = random.choice(instances)
-	if not http:
-		http = RsHttp(host=host, port=443, timeout=15, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
-#	http.debugreq = True
+def get_twats(user, proxies=None, count=0, http=None, checkfn=None, nitters={}):
+
+	while True:
+		http, host, nitters = nitter_connect(nitters, proxies)
+		# unable to connect to any instance
+		if not http:
+			time.sleep(60)
+			continue
+		hdr, res = http.get("/%s" % user)
+		# we probably hit rate limiting
+		if not '200 OK' in hdr:
+			nitters = set_invalid_nitter(host, nitters)
+		else:
+			break
 
 	# make sure all tweets fetched in a single invocation get the same timestamp,
 	# otherwise ordering might become messed up, once we sort them
 	timestamp = int(time.time())
-
-	while not http.connect():
-		# FIXME : what should happen on connect error ?
-		pass
-	hdr, res = http.get("/%s" % user)
 
 	twats = []
 
 	break_loop = False
 
 	while True:
-		twats, cursor = extract_twats(res, user, twats, timestamp, checkfn, instances)
+		twats, cursor = extract_twats(res, user, twats, timestamp, checkfn, nitters)
 		if count == 0 or len(twats) == 0 or break_loop or (count != -1 and len(twats) >= count):
 			break
 		if checkfn and not checkfn(user, twats): break
 
 		# fetch additional tweets that are not in the initial set of 20:
 		last_id = get_effective_twat_id(twats[len(twats)-1])
+
+		# we scrapped everything
 		if not len(cursor):
 			break
-		hdr, res = http.get("/%s%s"%(user, cursor[0]))
 
-		if not "200 OK" in hdr: break
+		while True:
+			hdr, res = http.get("/%s%s"%(user, cursor[0]))
+			# rate limiting issue
+			if not "200 OK" in hdr:
+				nitters = set_invalid_nitter(host, nitters)
+				http, host, nitters = nitter_connect(nitters, proxies)
+				# no available nitter instance
+				if not http:
+					time.sleep(60)
+			else: break
 
-	return twats
+	return twats, nitters
 
 if __name__ == '__main__':
 	print repr ( get_twats('realdonaldtrump') )

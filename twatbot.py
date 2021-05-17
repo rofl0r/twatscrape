@@ -1,5 +1,6 @@
 from twat import get_twats, mirror_twat, get_effective_twat_id, unshorten_urls, fetch_profile_picture
 from rocksock import RocksockProxyFromURL
+from nitter import set_invalid_nitter, get_nitter_instance
 import time
 import json
 import argparse
@@ -26,7 +27,7 @@ new_accounts = []
 site_dirs = [
 	"/css",
 ]
-
+nitters = {}
 def replace_url_in_twat(twat, args=None):
 
 	user = twat['user'].lower()
@@ -527,6 +528,8 @@ def get_timestamp(date_format, date=None):
 	return time.strftime(date_format, time.gmtime(date))
 
 def scrape(user):
+	global nitters
+
 	if user in new_accounts:
 		count = args.count
 		checkfn = None
@@ -540,7 +543,7 @@ def scrape(user):
 	sys.stdout.write('\r[%s] scraping %s... ' % (get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), user))
 	sys.stdout.flush()
 
-	twats = get_twats(user, proxies=args.proxy, count=count, http=twitter_rshttp, checkfn=checkfn, instances=args.instances)
+	twats, nitters = get_twats(user, proxies=args.proxy, count=count, http=twitter_rshttp, checkfn=checkfn, nitters=nitters)
 
 	new = False
 	for t in twats:
@@ -551,10 +554,10 @@ def scrape(user):
 			insert_pos += 1
 			if 'quote_tweet' in t:
 				if not os.path.isdir(paths.get_user(t[quote_tweet]['user'])): retry_makedirs(paths.get_user(t[quote_tweet]['user']))
-				fetch_profile_picture(t[quote_tweet]['user'], args.proxy, twhttp=twitter_rshttp, instances=args.instances)
+				fetch_profile_picture(t[quote_tweet]['user'], args.proxy, twhttp=twitter_rshttp, nitters=nitters)
 			if 'user' in t:
 				if not os.path.isdir(paths.get_user(t['user'])): retry_makedirs(paths.get_user(t['user']))
-				fetch_profile_picture(t['user'], args.proxy, twhttp=twitter_rshttp)
+				fetch_profile_picture(t['user'], args.proxy, twhttp=twitter_rshttp, nitters=nitters)
 			if args.mirror: mirror_twat(t, args=args)
 			sys.stdout.write('\r[%s] scraping %s... +%d ' % (get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), user, insert_pos))
 			sys.stdout.flush()
@@ -792,6 +795,11 @@ if __name__ == '__main__':
 				    'nitter.exonip.de',
 				    'nitter.koyu.space' ]
 
+	random.shuffle(args.instances)
+	nitters = {}
+	for instance in args.instances:
+		nitters[instance] = {'fail_ticks': 0, 'ban_time': 0}
+
 	if args.mirror and 'v' in args.mirror:
 		if not args.ytdl: args.ytdl = 'youtube-dl'
 		try:
@@ -821,9 +829,7 @@ if __name__ == '__main__':
 
 	args.proxy = [RocksockProxyFromURL(args.proxy)] if args.proxy else None
 
-	## global rshttp object used with get_twats()
-	twitter_rshttp = RsHttp(random.choice(args.instances), ssl=True, port=443, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
-	twitter_rshttp.set_cookie('hlsPlayback=on')
+	twitter_rshttp = None
 
 	load_watchlist()
 
