@@ -5,6 +5,7 @@ import json
 import os.path
 import hashlib
 import re
+import random
 import paths
 from utils import retry_write, retry_makedirs
 
@@ -275,7 +276,7 @@ def get_style_tag(tag, styles):
 		if tg.strip() == tag: return s.strip()
 	return None
 
-def fetch_profile_picture(user, proxies, res=None, twhttp=None):
+def fetch_profile_picture(user, proxies, res=None, twhttp=None, instances=['nitter.fdn.fr']):
         print('fetch_profile_picture')
 	pic_path = paths.get_profile_pic(user)
 	if os.path.isfile(pic_path): return
@@ -286,7 +287,7 @@ def fetch_profile_picture(user, proxies, res=None, twhttp=None):
 	soup = soupify(res)
         for meta in soup.find_all('meta', attrs={'property': 'og:image'}):
                 if not meta.get('content').startswith('/pic/profile_images'): continue
-                url_components = _split_url('https://nitter.fdn.fr%s' % meta.get('content'))
+                url_components = _split_url('https://%s%s' % (random.choice(instances), meta.get('content')))
                 http = RsHttp(host=url_components['host'], port=url_components['port'], timeout=15, ssl=url_components['ssl'], keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
                 while not http.connect(): pass
 
@@ -300,7 +301,7 @@ def fetch_profile_picture(user, proxies, res=None, twhttp=None):
 
         return
 
-def extract_twats(html, user, twats, timestamp, checkfn):
+def extract_twats(html, user, twats, timestamp, checkfn, instances):
 	def find_div_end(html):
 		level = 0
 		for i in xrange(len(html)):
@@ -331,7 +332,7 @@ def extract_twats(html, user, twats, timestamp, checkfn):
 			return twats, cursor
 
 
-def extract_twat(soup, twats, timestamp):
+def extract_twat(soup, twats, timestamp,instances=['nitter.fdn.fr']):
 	for div in soup.body.find_all('div'): # , attrs={'class':'tweet  '}):
 		if 'class' in div.attrs and 'timeline-item' in div.attrs["class"]:
 
@@ -381,7 +382,7 @@ def extract_twat(soup, twats, timestamp):
 			if card_div:
 				images = []
 				for img in card_div.find_all('img'):
-                                        images.append('https://nitter.fdn.fr%s' % img.get('src'))
+                                        images.append('https://%s%s' % (random.choice(instances), img.get('src')))
 
 			if tweet_user != None and tweet_id:
 				vals = {'id':tweet_id, 'user':tweet_user, 'time':tweet_time, 'text':tweet_text, 'fetched':timestamp}
@@ -419,8 +420,8 @@ def extract_twat(soup, twats, timestamp):
 # if checkfn is passed , it'll be called with the username and current list of
 # received twats, and can decide whether fetching will be continued or not,
 # by returning True (continue) or False.
-def get_twats(user, proxies=None, count=0, http=None, checkfn=None):
-	host = 'nitter.fdn.fr'
+def get_twats(user, proxies=None, count=0, http=None, checkfn=None, instances=['nitter.fnd.fr']):
+	host = random.choice(instances)
 	if not http:
 		http = RsHttp(host=host, port=443, timeout=15, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
 #	http.debugreq = True
@@ -439,7 +440,7 @@ def get_twats(user, proxies=None, count=0, http=None, checkfn=None):
 	break_loop = False
 
 	while True:
-		twats, cursor = extract_twats(res, user, twats, timestamp, checkfn)
+		twats, cursor = extract_twats(res, user, twats, timestamp, checkfn, instances)
 		if count == 0 or len(twats) == 0 or break_loop or (count != -1 and len(twats) >= count):
 			break
 		if checkfn and not checkfn(user, twats): break

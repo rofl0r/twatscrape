@@ -537,7 +537,7 @@ def scrape(user):
 	sys.stdout.write('\r[%s] scraping %s... ' % (get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), user))
 	sys.stdout.flush()
 
-	twats, cursor = get_twats(user, proxies=args.proxy, count=count, http=twitter_rshttp, checkfn=checkfn)
+	twats, cursor = get_twats(user, proxies=args.proxy, count=count, http=twitter_rshttp, checkfn=checkfn, instances=args.instances)
 
 	new = False
 	for t in twats:
@@ -548,7 +548,7 @@ def scrape(user):
 			insert_pos += 1
 			if 'quote_tweet' in t:
 				if not os.path.isdir(paths.get_user(t[quote_tweet]['user'])): retry_makedirs(paths.get_user(t[quote_tweet]['user']))
-				fetch_profile_picture(t[quote_tweet]['user'], args.proxy, twhttp=twitter_rshttp)
+				fetch_profile_picture(t[quote_tweet]['user'], args.proxy, twhttp=twitter_rshttp, instances=args.instances)
 			if 'user' in t:
 				if not os.path.isdir(paths.get_user(t['user'])): retry_makedirs(paths.get_user(t['user']))
 				fetch_profile_picture(t['user'], args.proxy, twhttp=twitter_rshttp)
@@ -765,9 +765,29 @@ if __name__ == '__main__':
 	parser.add_argument('--port', help="port of the integrated webserver - default: 1999", default=1999, type=int, required=False)
 	parser.add_argument('--listenip', help="listenip of the integrated webserver - default: localhost", default="localhost", type=str, required=False)
 	parser.add_argument('--ytdl', help="Define full path to youtube-dl", default=None, type=str, required=False)
+        parser.add_argument('--instances', help="define nitter instance(s), comma separated - deault: letsencrypt instances", default=None, type=str, required=False)
 
 
 	args = parser.parse_args()
+
+        if args.instances:
+                args.instances = [ instance.strip() for instance in args.instance.split(',') ]
+        else:
+                args.instances = [  'nitter.42l.fr',
+                                    'nitter.fdn.fr',
+                                    'nitter.pussthecat.org',
+                                    'nitter.nixnet.services',
+                                    'nitter.tedomum.net',
+                                    'nitter.unixfox.eu',
+                                    'nitter.eu',
+                                    'nitter.namazso.eu',
+                                    'nitter.mailstation.de',
+                                    'nitter.cattube.org',
+                                    'birdsite.xanny.family',
+                                    'nitter.40two.app',
+                                    'nitter.skrep.in',
+                                    'nitter.exonip.de',
+                                    'nitter.koyu.space' ]
 
 	if args.mirror and 'v' in args.mirror:
 		if not args.ytdl: args.ytdl = 'youtube-dl'
@@ -799,7 +819,7 @@ if __name__ == '__main__':
 	args.proxy = [RocksockProxyFromURL(args.proxy)] if args.proxy else None
 
 	## global rshttp object used with get_twats()
-	twitter_rshttp = RsHttp('nitter.fdn.fr', ssl=True, port=443, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
+	twitter_rshttp = RsHttp(random.choice(args.instances), ssl=True, port=443, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
         twitter_rshttp.set_cookie('hlsPlayback=on')
 
 	load_watchlist()
