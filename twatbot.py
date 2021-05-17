@@ -765,29 +765,29 @@ if __name__ == '__main__':
 	parser.add_argument('--port', help="port of the integrated webserver - default: 1999", default=1999, type=int, required=False)
 	parser.add_argument('--listenip', help="listenip of the integrated webserver - default: localhost", default="localhost", type=str, required=False)
 	parser.add_argument('--ytdl', help="Define full path to youtube-dl", default=None, type=str, required=False)
-        parser.add_argument('--instances', help="define nitter instance(s), comma separated - deault: letsencrypt instances", default=None, type=str, required=False)
+	parser.add_argument('--instances', help="define nitter instance(s), comma separated - deault: letsencrypt instances", default=None, type=str, required=False)
 
 
 	args = parser.parse_args()
 
-        if args.instances:
-                args.instances = [ instance.strip() for instance in args.instances.split(',') ]
-        else:
-                args.instances = [  'nitter.42l.fr',
-                                    'nitter.fdn.fr',
-                                    'nitter.pussthecat.org',
-                                    'nitter.nixnet.services',
-                                    'nitter.tedomum.net',
-                                    'nitter.unixfox.eu',
-                                    'nitter.eu',
-                                    'nitter.namazso.eu',
-                                    'nitter.mailstation.de',
-                                    'nitter.cattube.org',
-                                    'birdsite.xanny.family',
-                                    'nitter.40two.app',
-                                    'nitter.skrep.in',
-                                    'nitter.exonip.de',
-                                    'nitter.koyu.space' ]
+	if args.instances:
+		args.instances = [ instance.strip() for instance in args.instances.split(',') ]
+	else:
+		args.instances = [  'nitter.42l.fr',
+				    'nitter.fdn.fr',
+				    'nitter.pussthecat.org',
+				    'nitter.nixnet.services',
+				    'nitter.tedomum.net',
+				    'nitter.unixfox.eu',
+				    'nitter.eu',
+				    'nitter.namazso.eu',
+				    'nitter.mailstation.de',
+				    'nitter.cattube.org',
+				    'birdsite.xanny.family',
+				    'nitter.40two.app',
+				    'nitter.skrep.in',
+				    'nitter.exonip.de',
+				    'nitter.koyu.space' ]
 
 	if args.mirror and 'v' in args.mirror:
 		if not args.ytdl: args.ytdl = 'youtube-dl'
@@ -820,7 +820,7 @@ if __name__ == '__main__':
 
 	## global rshttp object used with get_twats()
 	twitter_rshttp = RsHttp(random.choice(args.instances), ssl=True, port=443, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
-        twitter_rshttp.set_cookie('hlsPlayback=on')
+	twitter_rshttp.set_cookie('hlsPlayback=on')
 
 	load_watchlist()
 

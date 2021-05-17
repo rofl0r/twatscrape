@@ -8,7 +8,6 @@ import re
 import random
 import paths
 from utils import retry_write, retry_makedirs
-
 # the effective id of a twat is the retweet id, if it's a retweet
 def get_effective_twat_id(twat):
 	if 'rid' in twat: return twat['rid']
@@ -284,21 +283,21 @@ def fetch_profile_picture(user, proxies, res=None, twhttp=None, instances=['nitt
 		hdr, res = twhttp.get("/%s" % user)
 
 	soup = soupify(res)
-        for meta in soup.find_all('meta', attrs={'property': 'og:image'}):
-                pic_url = meta.get('content') if '://' in meta.get('content') else 'https://%s%s' % (random.choice(instances), meta.get('content'))
-                url_components = _split_url(pic_url)
-                http = RsHttp(host=url_components['host'], port=url_components['port'], timeout=15, ssl=url_components['ssl'], keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
-                while not http.connect(): pass
+	for meta in soup.find_all('meta', attrs={'property': 'og:image'}):
+		pic_url = meta.get('content') if '://' in meta.get('content') else 'https://%s%s' % (random.choice(instances), meta.get('content'))
+		url_components = _split_url(pic_url)
+		http = RsHttp(host=url_components['host'], port=url_components['port'], timeout=15, ssl=url_components['ssl'], keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
+		while not http.connect(): pass
 
-                hdr, res = http.get(url_components['uri'])
-                if res == '' and hdr != "":
-                        print('error fetching profile picture: %s' % url_components)
-                else:
-                        res_bytes = res.encode('utf-8') if isinstance(res, unicode) else res
-                        retry_write(pic_path, res_bytes)
-                return
+		hdr, res = http.get(url_components['uri'])
+		if res == '' and hdr != "":
+			print('error fetching profile picture: %s' % url_components)
+		else:
+			res_bytes = res.encode('utf-8') if isinstance(res, unicode) else res
+			retry_write(pic_path, res_bytes)
+		return
 
-        return
+	return
 
 def extract_twats(html, user, twats, timestamp, checkfn, instances):
 	def find_div_end(html):
@@ -313,7 +312,7 @@ def extract_twats(html, user, twats, timestamp, checkfn, instances):
 
 	regex = re.compile(r'<div.*class.*[" ]timeline.item[" ]')
 	nfetched = 0
-        cursor = [ a.get('href') for a in soupify(html).body.find_all('a') if a.get('href').startswith('?cursor=') ]
+	cursor = [ a.get('href') for a in soupify(html).body.find_all('a') if a.get('href').startswith('?cursor=') ]
 	while 1:
 		match = regex.search(html)
 		if not match:
@@ -357,23 +356,23 @@ def extract_twat(soup, twats, timestamp,instances=['nitter.fdn.fr']):
 			# it's a retweet
 			rt = div.find('div', attrs={'class': 'retweet-header'})
 			if rt is not None:
-                            try: retweet_user = div.find('a', attrs={'class':'attribution'}).get('href').lstrip('/')
-                            except: pass
+				try: retweet_user = div.find('a', attrs={'class':'attribution'}).get('href').lstrip('/')
+				except: pass
 
 			# user quotes someone else
 			quoted = div.find('div', attrs={'class':'quote-text'})
 			if quoted:
-                                qtext = quoted.get_text()
-                                quoted = div.find('div', attrs={'class': 'quote-big'})
-                                quote_link = quoted.find('a', attrs={'class': 'quote-link'}).get('href')
-                                quser = quote_link.split('/')[1]
-                                qid = quote_link.split('/')[3].split('#')[0]
-                                qtime = quoted.find('span', attrs={'class': 'tweet-date'}).get('title')
+				qtext = quoted.get_text()
+				quoted = div.find('div', attrs={'class': 'quote-big'})
+				quote_link = quoted.find('a', attrs={'class': 'quote-link'}).get('href')
+				quser = quote_link.split('/')[1]
+				qid = quote_link.split('/')[3].split('#')[0]
+				qtime = quoted.find('span', attrs={'class': 'tweet-date'}).get('title')
 				quote_tweet = {
 					'user': quser,
 					'id': qid,
 					'text': qtext,
-                                        'time': qtime
+					'time': qtime
 				}
 
 			# find "card" embedding external links with photo
@@ -381,7 +380,7 @@ def extract_twat(soup, twats, timestamp,instances=['nitter.fdn.fr']):
 			if card_div:
 				images = []
 				for img in card_div.find_all('img'):
-                                        images.append('https://%s%s' % (random.choice(instances), img.get('src')))
+					images.append('https://%s%s' % (random.choice(instances), img.get('src')))
 
 			if tweet_user != None and tweet_id:
 				vals = {'id':tweet_id, 'user':tweet_user, 'time':tweet_time, 'text':tweet_text, 'fetched':timestamp}
@@ -395,17 +394,17 @@ def extract_twat(soup, twats, timestamp,instances=['nitter.fdn.fr']):
 				# next is equivalent to the next-newer twat.
 				if len(twats) and not 'pinned' in twats[len(twats)-1]:
 					next_twat = twats[len(twats)-1]
-                                        if len(next_twat):
-                                            vals['next'] = next_twat['id']
-                                            if retweet_id:
-                                                    pr_time = 0
-                                                    if 'rid' in next_twat:
-                                                            if 'rid_time' in next_twat:
-                                                                    pr_time = next_twat['rid_time'] - 1
-                                                    else:
-                                                            pr_time = next_twat['time'] - 1
+					if len(next_twat):
+						vals['next'] = next_twat['id']
+						if retweet_id:
+							pr_time = 0
+							if 'rid' in next_twat:
+								if 'rid_time' in next_twat:
+									pr_time = next_twat['rid_time'] - 1
+							else:
+								pr_time = next_twat['time'] - 1
 
-                                                    if pr_time != 0: vals['rid_time'] = pr_time
+							if pr_time != 0: vals['rid_time'] = pr_time
 
 				twats.append(vals)
 		break
@@ -446,9 +445,9 @@ def get_twats(user, proxies=None, count=0, http=None, checkfn=None, instances=['
 
 		# fetch additional tweets that are not in the initial set of 20:
 		last_id = get_effective_twat_id(twats[len(twats)-1])
-                if not len(cursor):
-                        break
-                hdr, res = http.get("/%s%s"%(user, cursor[0]))
+		if not len(cursor):
+			break
+		hdr, res = http.get("/%s%s"%(user, cursor[0]))
 
 		if not "200 OK" in hdr: break
 
