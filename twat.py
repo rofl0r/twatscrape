@@ -285,8 +285,8 @@ def fetch_profile_picture(user, proxies, res=None, twhttp=None, instances=['nitt
 
 	soup = soupify(res)
         for meta in soup.find_all('meta', attrs={'property': 'og:image'}):
-                if not meta.get('content').startswith('/pic/profile_images'): continue
-                url_components = _split_url('https://%s%s' % (random.choice(instances), meta.get('content')))
+                pic_url = meta.get('content') if '://' in meta.get('content') else 'https://%s%s' % (random.choice(instances), meta.get('content'))
+                url_components = _split_url(pic_url)
                 http = RsHttp(host=url_components['host'], port=url_components['port'], timeout=15, ssl=url_components['ssl'], keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
                 while not http.connect(): pass
 
