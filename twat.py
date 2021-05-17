@@ -378,7 +378,7 @@ def extract_twat(soup, twats, timestamp):
 			if card_div:
 				images = []
 				for img in card_div.find_all('img'):
-				        images.append(img.get('src'))
+                                        images.append('https://nitter.fdn.fr%s' % img.get('src'))
 
 			if tweet_user != None and tweet_id:
 				vals = {'id':tweet_id, 'user':tweet_user, 'time':tweet_time, 'text':tweet_text, 'fetched':timestamp}
