@@ -1,6 +1,6 @@
 from http2 import RsHttp, _parse_url
 from soup_parser import soupify
-import time
+import time, datetime, calendar
 import json
 import os.path
 import hashlib
@@ -329,6 +329,12 @@ def extract_twats(html, user, twats, timestamp, checkfn, instances):
 		if nfetched == 2 and checkfn and not checkfn(user, twats):
 			return twats, cursor
 
+def nitter_time_to_timegm(nt):
+	nt = nt.split(',')
+	d = nt[0].split('/')
+	t = nt[1].strip().split(':')
+	dtdt = datetime.datetime(int(d[2]), int(d[1]), int(d[0]), int(t[0]), int(t[1]))
+	return calendar.timegm(dtdt.timetuple())
 
 def extract_twat(soup, twats, timestamp,instances=['nitter.fdn.fr']):
 	for div in soup.body.find_all('div'): # , attrs={'class':'tweet  '}):
@@ -351,7 +357,7 @@ def extract_twat(soup, twats, timestamp,instances=['nitter.fdn.fr']):
 			tweet_user = div.find('a', attrs={'class': 'username'}).get('title').lstrip('@')
 
 			tweet_text = div.find('div', attrs={'class': 'tweet-content'}).get_text()
-			tweet_time = div.find('span', attrs={'class': 'tweet-date'}).find('a').get('title')
+			tweet_time = nitter_time_to_timegm( div.find('span', attrs={'class': 'tweet-date'}).find('a').get('title') )
 
 			# it's a retweet
 			rt = div.find('div', attrs={'class': 'retweet-header'})
@@ -368,6 +374,7 @@ def extract_twat(soup, twats, timestamp,instances=['nitter.fdn.fr']):
 				quser = quote_link.split('/')[1]
 				qid = quote_link.split('/')[3].split('#')[0]
 				qtime = quoted.find('span', attrs={'class': 'tweet-date'}).get('title')
+				if qtime: qtime = nitter_time_to_timegm( qtime )
 				quote_tweet = {
 					'user': quser,
 					'id': qid,

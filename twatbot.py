@@ -168,6 +168,9 @@ def remove_known_retweets(lst):
 		else: nl.append(x)
 	return nl
 
+def format_time(stmp):
+	return time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(stmp))
+
 def add_owner_to_list(user, lst):
 	nl = []
 	for x in lst:
@@ -245,7 +248,7 @@ def htmlize_twat(twat, variables, quoted=False):
 	## add icon bar
 	if args.iconbar: tw += build_iconbar(twat, variables, quoted)
 
-	time_str = 'unknown' if twat["time"] == 0 else twat['time']
+	time_str = 'unknown' if twat["time"] == 0 else format_time(twat["time"])
 	tw += '%s&nbsp;-&nbsp;%s' % (user_str, time_str)
 
 	tw += '\n</div>\n'
