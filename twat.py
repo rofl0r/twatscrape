@@ -458,7 +458,7 @@ def get_twats(user, proxies=None, count=0, http=None, checkfn=None, instances=['
 
 		if not "200 OK" in hdr: break
 
-	return twats, cursor
+	return twats
 
 if __name__ == '__main__':
 	print repr ( get_twats('realdonaldtrump') )
