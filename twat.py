@@ -277,7 +277,6 @@ def get_style_tag(tag, styles):
 	return None
 
 def fetch_profile_picture(user, proxies, res=None, twhttp=None, instances=['nitter.fdn.fr']):
-        print('fetch_profile_picture')
 	pic_path = paths.get_profile_pic(user)
 	if os.path.isfile(pic_path): return
 
