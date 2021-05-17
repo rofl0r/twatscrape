@@ -540,7 +540,7 @@ def scrape(user):
 	sys.stdout.write('\r[%s] scraping %s... ' % (get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), user))
 	sys.stdout.flush()
 
-	twats, cursor = get_twats(user, proxies=args.proxy, count=count, http=twitter_rshttp, checkfn=checkfn, instances=args.instances)
+	twats = get_twats(user, proxies=args.proxy, count=count, http=twitter_rshttp, checkfn=checkfn, instances=args.instances)
 
 	new = False
 	for t in twats:
