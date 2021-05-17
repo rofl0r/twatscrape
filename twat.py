@@ -1,13 +1,13 @@
 from http2 import RsHttp, _parse_url
 from soup_parser import soupify
-import time
+import time, datetime, calendar
 import json
 import os.path
 import hashlib
 import re
+import random
 import paths
 from utils import retry_write, retry_makedirs
-
 # the effective id of a twat is the retweet id, if it's a retweet
 def get_effective_twat_id(twat):
 	if 'rid' in twat: return twat['rid']
@@ -275,7 +275,7 @@ def get_style_tag(tag, styles):
 		if tg.strip() == tag: return s.strip()
 	return None
 
-def fetch_profile_picture(user, proxies, res=None, twhttp=None):
+def fetch_profile_picture(user, proxies, res=None, twhttp=None, instances=['nitter.fdn.fr']):
 	pic_path = paths.get_profile_pic(user)
 	if os.path.isfile(pic_path): return
 
@@ -283,21 +283,23 @@ def fetch_profile_picture(user, proxies, res=None, twhttp=None):
 		hdr, res = twhttp.get("/%s" % user)
 
 	soup = soupify(res)
-	for a in soup.body.find_all('a'):
-		if 'class' in a.attrs and ('ProfileAvatar-container' in a.attrs['class'] and 'profile-picture' in a.attrs['class']):
-			url_components = _split_url(a.attrs['href'])
-			http = RsHttp(host=url_components['host'], port=url_components['port'], timeout=15, ssl=url_components['ssl'], keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
-			while not http.connect(): pass
+	for meta in soup.find_all('meta', attrs={'property': 'og:image'}):
+		pic_url = meta.get('content') if '://' in meta.get('content') else 'https://%s%s' % (random.choice(instances), meta.get('content'))
+		url_components = _split_url(pic_url)
+		http = RsHttp(host=url_components['host'], port=url_components['port'], timeout=15, ssl=url_components['ssl'], keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
+		while not http.connect(): pass
 
-			hdr, res = http.get(url_components['uri'])
-			if res == '' and hdr != "":
-				print('error fetching profile picture: %s' % url_components)
-			else:
-				res_bytes = res.encode('utf-8') if isinstance(res, unicode) else res
-				retry_write(pic_path, res_bytes)
-			return
+		hdr, res = http.get(url_components['uri'])
+		if res == '' and hdr != "":
+			print('error fetching profile picture: %s' % url_components)
+		else:
+			res_bytes = res.encode('utf-8') if isinstance(res, unicode) else res
+			retry_write(pic_path, res_bytes)
+		return
 
-def extract_twats(html, user, twats, timestamp, checkfn):
+	return
+
+def extract_twats(html, user, twats, timestamp, checkfn, instances):
 	def find_div_end(html):
 		level = 0
 		for i in xrange(len(html)):
@@ -308,27 +310,35 @@ def extract_twats(html, user, twats, timestamp, checkfn):
 			if level == 0:
 				return i + len('</div>')
 
-	regex = re.compile(r'<div.*class.*[" ]tweet[" ]')
+	regex = re.compile(r'<div.*class.*[" ]timeline.item[" ]')
 	nfetched = 0
+	cursor = [ a.get('href') for a in soupify(html).body.find_all('a') if a.get('href').startswith('?cursor=') ]
 	while 1:
 		match = regex.search(html)
 		if not match:
-			return twats
+			return twats, cursor
 		html = html[match.start():]
 		div_end = find_div_end(html)
 		slice = html[:div_end]
 		html = html[div_end:]
-		twats = extract_twat(soupify(slice), twats, timestamp)
+		#twats = extract_twat(soupify(slice), twats, timestamp)
+		twats = extract_twat(soupify(html), twats, timestamp, instances)
 		nfetched += 1
 		# if the first two (the very first could be pinned) tweets are already known
 		# do not waste cpu processing more html
 		if nfetched == 2 and checkfn and not checkfn(user, twats):
-			return twats
+			return twats, cursor
 
+def nitter_time_to_timegm(nt):
+	nt = nt.split(',')
+	d = nt[0].split('/')
+	t = nt[1].strip().split(':')
+	dtdt = datetime.datetime(int(d[2]), int(d[1]), int(d[0]), int(t[0]), int(t[1]))
+	return calendar.timegm(dtdt.timetuple())
 
-def extract_twat(soup, twats, timestamp):
+def extract_twat(soup, twats, timestamp,instances=['nitter.fdn.fr']):
 	for div in soup.body.find_all('div'): # , attrs={'class':'tweet  '}):
-		if 'class' in div.attrs and 'tweet' in div.attrs["class"]:
+		if 'class' in div.attrs and 'timeline-item' in div.attrs["class"]:
 
 			tweet_id = 0
 			tweet_user = None
@@ -343,46 +353,41 @@ def extract_twat(soup, twats, timestamp):
 
 			pinned = ('user-pinned' in div.attrs["class"])
 
-			tweet_id = div.attrs["data-tweet-id"]
-			tweet_user = div.attrs["data-screen-name"]
-			if 'data-retweet-id' in div.attrs:
-				retweet_id = div.attrs['data-retweet-id']
-			if 'data-retweeter' in div.attrs:
-				retweet_user = div.attrs['data-retweeter']
-			tdiv = div.find('div', attrs={'class' : 'js-tweet-text-container'})
-			tweet_text = tdiv.find('p').decode_contents()
-			tweet_text = tweet_text.replace('href="/', 'href="https://twitter.com/')
+			tweet_id = div.find('a', attrs={'class': 'tweet-link'}).get('href').split('/')[3].split('#')[0]
+			tweet_user = div.find('a', attrs={'class': 'username'}).get('title').lstrip('@')
 
-			small = div.find('small', attrs={'class':'time'})
-			for span in small.find_all('span'):
-				if 'data-time' in span.attrs:
-					tweet_time = int(span.attrs['data-time'])
-					break
+			tweet_text = div.find('div', attrs={'class': 'tweet-content'}).get_text()
+			tweet_time = nitter_time_to_timegm( div.find('span', attrs={'class': 'tweet-date'}).find('a').get('title') )
+
+			# it's a retweet
+			rt = div.find('div', attrs={'class': 'retweet-header'})
+			if rt is not None:
+			    try: retweet_user = div.find('a', attrs={'class':'attribution'}).get('href').lstrip('/')
+			    except: pass
+
+			# user quotes someone else
+			quoted = div.find('div', attrs={'class':'quote-text'})
+			if quoted:
+				qtext = quoted.get_text()
+				quoted = div.find('div', attrs={'class': 'quote-big'})
+				quote_link = quoted.find('a', attrs={'class': 'quote-link'}).get('href')
+				quser = quote_link.split('/')[1]
+				qid = quote_link.split('/')[3].split('#')[0]
+				qtime = quoted.find('span', attrs={'class': 'tweet-date'}).get('title')
+				if qtime: qtime = nitter_time_to_timegm( qtime )
+				quote_tweet = {
+					'user': quser,
+					'id': qid,
+					'text': qtext,
+					'time': qtime
+				}
 
 			# find "card" embedding external links with photo
-			card_div = div.find('div', attrs={'class':"js-macaw-cards-iframe-container"})
-			if card_div: card_url = card_div.attrs['data-full-card-iframe-url'].split('?')[0]
-
-			# find embedded photos
-			card_div = div.find('div', attrs={'class':"AdaptiveMediaOuterContainer"})
+			card_div = div.find('div', attrs={'class':"card-container"})
 			if card_div:
 				images = []
-				for dv in card_div.find_all('div', attrs={'class':'AdaptiveMedia-photoContainer'}):
-					images.append(dv.attrs["data-image-url"])
-				for dv in card_div.find_all('div', attrs={'class':'PlayableMedia-player'}):
-					video = True
-					bg = get_style_tag('background-image', dv.attrs["style"])
-					if bg.startswith("url('"):
-						bg = bg[5:-2]
-						images.append(bg)
-			card_div = div.find('div', attrs={'class':'QuoteTweet-innerContainer'})
-			if card_div:
-				quote_tweet = {
-					'user':card_div.attrs['data-screen-name'],
-					'id':card_div.attrs['data-item-id'] }
-				dv = card_div.find('div', attrs={'class':'QuoteTweet-text'})
-				quote_tweet['text'] = dv.text
-
+				for img in card_div.find_all('img'):
+					images.append('https://%s%s' % (random.choice(instances), img.get('src')))
 
 			if tweet_user != None and tweet_id:
 				vals = {'id':tweet_id, 'user':tweet_user, 'time':tweet_time, 'text':tweet_text, 'fetched':timestamp}
@@ -396,16 +401,17 @@ def extract_twat(soup, twats, timestamp):
 				# next is equivalent to the next-newer twat.
 				if len(twats) and not 'pinned' in twats[len(twats)-1]:
 					next_twat = twats[len(twats)-1]
-					vals['next'] = next_twat['id']
-					if retweet_id:
-						pr_time = 0
-						if 'rid' in next_twat:
-							if 'rid_time' in next_twat:
-								pr_time = next_twat['rid_time'] - 1
-						else:
-							pr_time = next_twat['time'] - 1
+					if len(next_twat):
+					    vals['next'] = next_twat['id']
+					    if retweet_id:
+						    pr_time = 0
+						    if 'rid' in next_twat:
+							    if 'rid_time' in next_twat:
+								    pr_time = next_twat['rid_time'] - 1
+						    else:
+							    pr_time = next_twat['time'] - 1
 
-						if pr_time != 0: vals['rid_time'] = pr_time
+						    if pr_time != 0: vals['rid_time'] = pr_time
 
 				twats.append(vals)
 		break
@@ -419,8 +425,8 @@ def extract_twat(soup, twats, timestamp):
 # if checkfn is passed , it'll be called with the username and current list of
 # received twats, and can decide whether fetching will be continued or not,
 # by returning True (continue) or False.
-def get_twats(user, proxies=None, count=0, http=None, checkfn=None):
-	host = 'twitter.com'
+def get_twats(user, proxies=None, count=0, http=None, checkfn=None, instances=['nitter.fnd.fr']):
+	host = random.choice(instances)
 	if not http:
 		http = RsHttp(host=host, port=443, timeout=15, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
 #	http.debugreq = True
@@ -439,18 +445,18 @@ def get_twats(user, proxies=None, count=0, http=None, checkfn=None):
 	break_loop = False
 
 	while True:
-		twats = extract_twats(res, user, twats, timestamp, checkfn)
+		twats, cursor = extract_twats(res, user, twats, timestamp, checkfn, instances)
 		if count == 0 or len(twats) == 0 or break_loop or (count != -1 and len(twats) >= count):
 			break
 		if checkfn and not checkfn(user, twats): break
 
 		# fetch additional tweets that are not in the initial set of 20:
 		last_id = get_effective_twat_id(twats[len(twats)-1])
-		hdr, res = http.xhr_get("https://twitter.com/i/profiles/show/%s/timeline/tweets?include_available_features=1&include_entities=1&max_position=%s&reset_error_state=false"%(user, last_id))
+		if not len(cursor):
+			break
+		hdr, res = http.get("/%s%s"%(user, cursor[0]))
+
 		if not "200 OK" in hdr: break
-		resp = json.loads(res)
-		if not resp["has_more_items"]: break_loop = True
-		res = resp["items_html"]
 
 	return twats
 
