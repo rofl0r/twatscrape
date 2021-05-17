@@ -323,7 +323,7 @@ def extract_twats(html, user, twats, timestamp, checkfn, instances):
 		slice = html[:div_end]
 		html = html[div_end:]
 		#twats = extract_twat(soupify(slice), twats, timestamp)
-		twats = extract_twat(soupify(html), twats, timestamp)
+		twats = extract_twat(soupify(html), twats, timestamp, instances)
 		nfetched += 1
 		# if the first two (the very first could be pinned) tweets are already known
 		# do not waste cpu processing more html
