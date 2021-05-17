@@ -771,7 +771,7 @@ if __name__ == '__main__':
 	args = parser.parse_args()
 
         if args.instances:
-                args.instances = [ instance.strip() for instance in args.instance.split(',') ]
+                args.instances = [ instance.strip() for instance in args.instances.split(',') ]
         else:
                 args.instances = [  'nitter.42l.fr',
                                     'nitter.fdn.fr',
