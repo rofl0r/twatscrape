@@ -276,6 +276,7 @@ def get_style_tag(tag, styles):
 	return None
 
 def fetch_profile_picture(user, proxies, res=None, twhttp=None):
+        print('fetch_profile_picture')
 	pic_path = paths.get_profile_pic(user)
 	if os.path.isfile(pic_path): return
 
@@ -283,19 +284,21 @@ def fetch_profile_picture(user, proxies, res=None, twhttp=None):
 		hdr, res = twhttp.get("/%s" % user)
 
 	soup = soupify(res)
-	for a in soup.body.find_all('a'):
-		if 'class' in a.attrs and ('ProfileAvatar-container' in a.attrs['class'] and 'profile-picture' in a.attrs['class']):
-			url_components = _split_url(a.attrs['href'])
-			http = RsHttp(host=url_components['host'], port=url_components['port'], timeout=15, ssl=url_components['ssl'], keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
-			while not http.connect(): pass
+        for meta in soup.find_all('meta', attrs={'property': 'og:image'}):
+                if not meta.get('content').startswith('/pic/profile_images'): continue
+                url_components = _split_url('https://nitter.fdn.fr%s' % meta.get('content'))
+                http = RsHttp(host=url_components['host'], port=url_components['port'], timeout=15, ssl=url_components['ssl'], keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
+                while not http.connect(): pass
 
-			hdr, res = http.get(url_components['uri'])
-			if res == '' and hdr != "":
-				print('error fetching profile picture: %s' % url_components)
-			else:
-				res_bytes = res.encode('utf-8') if isinstance(res, unicode) else res
-				retry_write(pic_path, res_bytes)
-			return
+                hdr, res = http.get(url_components['uri'])
+                if res == '' and hdr != "":
+                        print('error fetching profile picture: %s' % url_components)
+                else:
+                        res_bytes = res.encode('utf-8') if isinstance(res, unicode) else res
+                        retry_write(pic_path, res_bytes)
+                return
+
+        return
 
 def extract_twats(html, user, twats, timestamp, checkfn):
 	def find_div_end(html):
