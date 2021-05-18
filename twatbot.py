@@ -216,7 +216,7 @@ def user_at_link(user):
 	return '<a href="https://twitter.com/%s">@</a>' % user
 
 def replace_twat_text(text):
-	return text.encode('ascii','ignore').replace('\n', '<br>').replace( u'\xa0', ' ').replace(u'\0xe2', '	')
+	return text.replace('\n', '<br>').replace( u'\xa0', ' ').replace(u'\0xe2', '	')
 
 def htmlize_twat(twat, variables, quoted=False):
 	tw = '<div class="twat-container">'
