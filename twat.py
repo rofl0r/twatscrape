@@ -365,7 +365,7 @@ def extract_twat(soup, twats, timestamp,nitters={}):
 			tweet_id = div.find('a', attrs={'class': 'tweet-link'}).get('href').split('/')[3].split('#')[0]
 			tweet_user = div.find('a', attrs={'class': 'username'}).get('title').lstrip('@')
 
-			tweet_text = ''.join( [ str(i.encode('utf8')) for i in  div.find('div', attrs={'class': 'tweet-content'}).contents ] )
+			tweet_text = div.find('div', attrs={'class': 'tweet-content'}).get_text()
 			tweet_time = nitter_time_to_timegm( div.find('span', attrs={'class': 'tweet-date'}).find('a').get('title') )
 
 			# it's a retweet
