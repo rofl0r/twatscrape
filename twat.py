@@ -392,7 +392,7 @@ def extract_twat(soup, twats, timestamp,nitters={}):
 				}
 
 			# find "card" embedding external links with photo
-			card_div = div.find('div', attrs={'class':"attachements", 'class': "card"})
+			card_div = div.find('div', attrs={'class': "card"})
 			if card_div:
 				images = []
 				for img in card_div.find_all('img'):
