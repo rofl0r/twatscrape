@@ -159,10 +159,9 @@ class HttpSrv():
 
 		return None, None
 
-	def __init__(self, listenip, port, clients):
+	def __init__(self, listenip, port):
 		self.port = port
 		self.listenip = listenip
-		self.clients = clients
 		self.s = None
 
 	def setup(self):
@@ -170,7 +169,7 @@ class HttpSrv():
 		s = socket.socket(af, socket.SOCK_STREAM)
 		s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		s.bind((sa[0], sa[1]))
-		s.listen(self.clients)
+		s.listen(128)
 		self.s = s
 
 	def wait_client(self):

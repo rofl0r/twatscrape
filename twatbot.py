@@ -701,10 +701,10 @@ def httpsrv_client_thread(c, evt_done):
 	c.disconnect()
 	evt_done.set()
 
-def start_server(ip, port, clients):
+def start_server(ip, port):
 	done = threading.Event()
 	from httpsrv import HttpSrv
-	hs = HttpSrv(ip, port, clients)
+	hs = HttpSrv(ip, port)
 	try:
 		hs.setup()
 	except socket.error as e:
@@ -772,7 +772,6 @@ if __name__ == '__main__':
 	parser.add_argument('--listenip', help="listenip of the integrated webserver - default: localhost", default="localhost", type=str, required=False)
 	parser.add_argument('--ytdl', help="Define full path to youtube-dl", default=None, type=str, required=False)
 	parser.add_argument('--instances', help="define nitter instance(s), comma separated - deault: letsencrypt instances", default=None, type=str, required=False)
-	parser.add_argument('--clients', help="specify how many connexions httpsrv will handle - default: 1", default=1, type=int, required=False)
 
 
 	args = parser.parse_args()
@@ -841,7 +840,7 @@ if __name__ == '__main__':
 		thread_resume_mirroring.start()
 	else: mirroring_done.set()
 
-	start_server(args.listenip, args.port, args.clients)
+	start_server(args.listenip, args.port)
 
 	while True:
 		try:
