@@ -36,12 +36,19 @@ def replace_url_in_twat(twat, args=None):
 
 	# linked files
 	for a in soup.body.find_all('a'):
+		## replace /search?q= links
+		if a.attrs['href'].startswith('/search'):
+			twat['text'] = twat['text'].replace('/search?q=', '/index.html?search=')
+
 		## @username : replace when local
-		if 'data-mentioned-user-id' in a.attrs:
-			username = a.attrs['href'].split('/')[3]
+		elif 'title' in a.attrs:
+			username = a.attrs['href'].split('/')[1]
 			at_link = user_at_link(username)
 			rebuild = '<b>%s<a href="https://twitter.com/%s">%s</a></b>' % (at_link, username, username)
-			twat['text'] = twat['text'].replace(str(a), rebuild)
+			# this fails when nonascii chars are present in a['title']
+			# XXX: would be nice to remove that 'title' attr, which would solve the issue
+			try: twat['text'] = twat['text'].replace(str(a), rebuild)
+			except: pass
 
 		elif 'data-expanded-url' in a.attrs:
 			if 'f' in args.mirror:
@@ -216,7 +223,9 @@ def user_at_link(user):
 	return '<a href="https://twitter.com/%s">@</a>' % user
 
 def replace_twat_text(text):
-	return text.replace('\n', '<br>').replace( u'\xa0', ' ').replace(u'\0xe2', '	')
+	try: text = text.decode('utf8').replace('\n', '<br>') #replace( u'\xa0', ' ').replace(u'\0xe2', '	')
+	except: pass
+	return text
 
 def htmlize_twat(twat, variables, quoted=False):
 	tw = '<div class="twat-container">'
@@ -253,6 +262,7 @@ def htmlize_twat(twat, variables, quoted=False):
 	tw += '%s&nbsp;-&nbsp;%s' % (user_str, time_str)
 
 	tw += '\n</div>\n'
+
 	## link to mirrored filed, emojis and such
 	if args.mirror: twat['text'] = replace_url_in_twat(twat, args=args)
 	## strip html ?
@@ -804,7 +814,10 @@ if __name__ == '__main__':
 		if not args.ytdl: args.ytdl = 'youtube-dl'
 		try:
 			## update on startup
-			os.system('%s -U > /dev/null 2>&1' % args.ytdl)
+			if args.proxy:
+				os.system('%s --proxy %s -U > /dev/null 2>&1' % (args.ytdl, args.proxy))
+			else:
+				os.system('%s -U > /dev/null 2>&1' % args.ytdl)
 		except:
 			print('youtube-dl not found, videos won\'t be downloaded (path: %s)' % args.ytdl)
 			args.mirror = args.mirror.replace('v','')

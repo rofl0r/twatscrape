@@ -118,14 +118,12 @@ def _mirror_file(url_components, user, tid, args=None, content_type=None, force=
 def unshorten_urls(twat, proxies=None, shorteners={}):
 	soup = soupify(twat["text"])
 	for a in soup.body.find_all('a'):
-		# when data-expanded-url is present, check if it links to a shortened link
-		if 'data-expanded-url' in a.attrs:
-			comp = _split_url(a.attrs['data-expanded-url'])
-			if comp['host'] in shorteners:
-				twat['text'] = twat['text'].replace( a.attrs['data-expanded-url'], _get_real_location(a.attrs['data-expanded-url'], proxies=proxies))
-		# t.co urls (used for images) don't contain real url into 'data-expanded-url' anymore
-		elif _split_url(a['href'])['host'] == 't.co':
-			twat['text'] = twat['text'].replace( a['href'], _get_real_location(a['href']))
+		href = a.attrs['href']
+		comp = _split_url(href)
+		if comp['host'] in shorteners:
+			try: twat['text'] = twat['text'].decode('utf8').replace( href, _get_real_location(href, proxies=proxies))
+			except: pass
+
 	return twat
 
 def mirror_twat(twat, args=None):
@@ -163,7 +161,10 @@ def mirror_twat(twat, args=None):
 		url = 'https://twitter.com/%s/status/%s' % (twat['user'], tid)
 		outname = paths.get_user(twat['user']) + '/%s.mp4' % tid
 		if not os.path.exists('data/%s.mp4' % tid):
-			os.system('%s -o data/%s.mp4 %s > /dev/null 2>&1' % (args.ytdl, tid, url))
+			if args.proxy:
+				os.system('%s --proxy %s -o data/%s.mp4 %s > /dev/null 2>&1' % (args.ytdl, args.proxy, tid, url))
+			else:
+				os.system('%s -o data/%s.mp4 %s > /dev/null 2>&1' % (args.ytdl, tid, url))
 		if not os.path.exists('%s' % outname) and os.path.exists('data/%s.mp4' % tid):
 			os.symlink('../../data/%s.mp4' % tid, outname)
 
@@ -365,7 +366,15 @@ def extract_twat(soup, twats, timestamp,nitters={}):
 			tweet_id = div.find('a', attrs={'class': 'tweet-link'}).get('href').split('/')[3].split('#')[0]
 			tweet_user = div.find('a', attrs={'class': 'username'}).get('title').lstrip('@')
 
-			tweet_text = div.find('div', attrs={'class': 'tweet-content'}).get_text()
+			tt = [ i for i in div.find('div', attrs={'class': 'tweet-content'}).contents ]
+			tweet_text = ''
+			for t in tt:
+				if 'Tag' in str(type(t)):
+					t = str(t.encode('utf-8'))
+				else:
+					t = str(t.string.encode('utf-8')) if isinstance( t.string, unicode) else str(t.string)
+				tweet_text += t #str(t).encode('utf-8') if 'Tag' in str(type(t)) else t.string.encode('utf-8')
+
 			tweet_time = nitter_time_to_timegm( div.find('span', attrs={'class': 'tweet-date'}).find('a').get('title') )
 
 			# it's a retweet
