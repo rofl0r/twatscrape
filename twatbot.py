@@ -814,7 +814,10 @@ if __name__ == '__main__':
 		if not args.ytdl: args.ytdl = 'youtube-dl'
 		try:
 			## update on startup
-			os.system('%s -U > /dev/null 2>&1' % args.ytdl)
+			if args.proxy:
+				os.system('%s --proxy %s -U > /dev/null 2>&1' % (args.ytdl, args.proxy))
+			else:
+				os.system('%s -U > /dev/null 2>&1' % args.ytdl)
 		except:
 			print('youtube-dl not found, videos won\'t be downloaded (path: %s)' % args.ytdl)
 			args.mirror = args.mirror.replace('v','')
