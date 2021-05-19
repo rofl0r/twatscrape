@@ -391,14 +391,14 @@ def extract_twat(soup, twats, timestamp,nitters={}):
 					'time': qtime
 				}
 
-			# find "card" embedding external links with photo
-			card_div = div.find('div', attrs={'class': "card"})
-			if card_div:
+			# find attachments
+			attachments_div = div.find('div', attrs={'class': 'attachments'})
+			if attachments_div:
 				images = []
-				for img in card_div.find_all('img'):
+				for img in attachments_div.find_all('img'):
 					images.append('https://%s%s' % (get_nitter_instance(nitters), img.get('src')))
 
-				for vid in card_div.find_all('video'):
+				for vid in attachments_div.find_all('video'):
 					video = True
 					bg = vid.get('poster')
 					images.append('https://%s%s' % (get_nitter_instance(nitters), bg))
