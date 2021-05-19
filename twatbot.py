@@ -36,8 +36,12 @@ def replace_url_in_twat(twat, args=None):
 
 	# linked files
 	for a in soup.body.find_all('a'):
+		if a.attrs['href'].startswith('/search'):
+			#a.attrs['href'] = 'index.php?search=%s' % a.attrs['href'].replace('/search?q=', '')
+			twat['text'] = twat['text'].replace('/search?q=', '/index.php?search=') #a.attrs['href'] = 'index.php?search=%s' % a.attrs['href'].replace('/search?q=', '')
+
 		## @username : replace when local
-		if 'data-mentioned-user-id' in a.attrs:
+		elif 'data-mentioned-user-id' in a.attrs:
 			username = a.attrs['href'].split('/')[3]
 			at_link = user_at_link(username)
 			rebuild = '<b>%s<a href="https://twitter.com/%s">%s</a></b>' % (at_link, username, username)
