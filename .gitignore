@@ -3,4 +3,5 @@
 *.json
 *.patch
 data/
+users/
 watchlist.txt
