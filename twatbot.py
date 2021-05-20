@@ -50,30 +50,6 @@ def replace_url_in_twat(twat, args=None):
 			try: twat['text'] = twat['text'].replace(str(a), rebuild)
 			except: pass
 
-		elif 'data-expanded-url' in a.attrs:
-			if 'f' in args.mirror:
-				filename = a.attrs['data-expanded-url'].split('/')[-1]
-				tw_fn = paths.get_user(user) + '/%s-%s' % (twat['id'], filename)
-				## file was mirrored
-				if os.path.exists(tw_fn):
-					twat['text'] = twat['text'].replace(a['href'], tw_fn)
-
-				## still replace shorten urls with expanded ones
-				else:
-					twat['text'] = twat['text'].replace(a['href'], a.attrs['data-expanded-url'])
-
-			## still replace shorten urls with expanded ones
-			else:
-				twat['text'] = twat['text'].replace(a['href'], a.attrs['data-expanded-url'])
-
-	# emojis
-	if 'e' in args.mirror:
-		for img in soup.body.find_all('img'):
-			if 'class' in img.attrs and 'Emoji' in img.attrs['class']:
-				src = img.attrs['src'].encode('utf-8', 'replace')
-				split = src.split('/')
-				twat['text'] = twat['text'].replace(src, '/%s' % '/'.join(split[3:]))
-
 	return twat['text']
 
 def build_searchbox(variables):
