@@ -380,8 +380,8 @@ def extract_twat(soup, twats, timestamp,nitters={}):
 			# it's a retweet
 			rt = div.find('div', attrs={'class': 'retweet-header'})
 			if rt is not None:
-				try: retweet_user = div.find('a', attrs={'class':'attribution'}).get('href').lstrip('/')
-				except: pass
+				retweet_user = div.find('a', attrs={'class':'username'}).get('title').lstrip('@')
+				retweet_id = tweet_id
 
 			# user quotes someone else
 			quoted = div.find('div', attrs={'class':'quote-text'})
