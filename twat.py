@@ -359,6 +359,7 @@ def extract_twat(soup, twats, timestamp,nitters={}):
 			card_url = None
 			card_title = None
 			card_description = None
+			card_destination = None
 			images = None
 			quote_tweet = None
 			video = False
@@ -417,10 +418,14 @@ def extract_twat(soup, twats, timestamp,nitters={}):
 			# card div..
 			card_div = div.find('div', attrs={'class': 'card'})
 			if card_div:
-				card_url = card_div.find('a', attrs={'class':'card-container'}).get('href')
-				card_title = card_div.find('h2', attrs={'class': 'card-title'}).get_text()
-				card_description = card_div.find('p', attrs={'class': 'card-description'}).get_text()
-				card_destination = card_div.find('span', attrs={'class': 'card-destination'}).get_text()
+				try: card_url = card_div.find('a', attrs={'class':'card-container'}).get('href')
+				except: pass
+				try: card_title = card_div.find('h2', attrs={'class': 'card-title'}).get_text()
+				except: pass
+				try: card_description = card_div.find('p', attrs={'class': 'card-description'}).get_text()
+				except: pass
+				try: card_destination = card_div.find('span', attrs={'class': 'card-destination'}).get_text()
+				except: pass
 
 			if tweet_user != None and tweet_id:
 				vals = {'id':tweet_id, 'user':tweet_user, 'time':tweet_time, 'text':tweet_text, 'fetched':timestamp}
@@ -428,6 +433,7 @@ def extract_twat(soup, twats, timestamp,nitters={}):
 				if card_url: vals['curl'] = card_url
 				if card_title: vals['ctitle'] = card_title
 				if card_description: vals['cdesc'] = card_description
+				if card_destination: vals['cdest'] = card_destination
 				if images: vals['images'] = images
 				if quote_tweet: vals['quote'] = quote_tweet
 				if pinned: vals['pinned'] = 1
