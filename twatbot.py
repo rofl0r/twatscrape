@@ -781,6 +781,7 @@ if __name__ == '__main__':
 	parser.add_argument('--port', help="port of the integrated webserver - default: 1999", default=1999, type=int, required=False)
 	parser.add_argument('--listenip', help="listenip of the integrated webserver - default: localhost", default="localhost", type=str, required=False)
 	parser.add_argument('--ytdl', help="Define full path to youtube-dl", default=None, type=str, required=False)
+	parser.add_argument('--ytdl-upgrade', help="Define whether or not youtube-dl should be upgraded on statup - default: False", default=False, type=bool, required=False)
 	parser.add_argument('--instances', help="define nitter instance(s), comma separated - deault: letsencrypt instances", default=None, type=str, required=False)
 
 
@@ -813,11 +814,18 @@ if __name__ == '__main__':
 	if args.mirror and 'v' in args.mirror:
 		if not args.ytdl: args.ytdl = 'youtube-dl'
 		try:
+			# check if youtube-dl exists
+			os.system('%s --help > /dev/null 2>&1' % args.ytdl)
 			## update on startup
-			if args.proxy:
-				os.system('%s --proxy %s -U > /dev/null 2>&1' % (args.ytdl, args.proxy))
-			else:
-				os.system('%s -U > /dev/null 2>&1' % args.ytdl)
+			if args.ytdl_upgrade:
+				try:
+					if args.proxy:
+						os.system('%s --proxy %s -U > /dev/null 2>&1' % (args.ytdl, args.proxy))
+					else:
+						os.system('%s -U > /dev/null 2>&1' % args.ytdl)
+				except:
+					print('Could not upgrade youtube-dl (path: %s).' % args.ytdl)
+					pass
 		except:
 			print('youtube-dl not found, videos won\'t be downloaded (path: %s)' % args.ytdl)
 			args.mirror = args.mirror.replace('v','')
