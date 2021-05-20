@@ -250,7 +250,7 @@ def htmlize_twat(twat, variables, quoted=False):
 		user = twat['user'].lower()
 		ifu = paths.get_user(user) + '/%s-%s' % (twat['id'], "card.html")
 		if (not 'c' in args.mirror) or (not file_exists(ifu)):
-			ifu = "https://twitter.com%s?cardname=summary_large_image"%twat['curl']
+			ifu = twat['curl']
 		tw += '<span class="twat-iframe"><iframe src="%s"></iframe></span>\n'%ifu
 
 	if 'images' in twat:
