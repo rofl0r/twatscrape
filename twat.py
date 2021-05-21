@@ -143,9 +143,16 @@ def mirror_twat(twat, args=None):
 
 	if 'c' in args.mirror and 'curl' in twat:
 		url = twat['curl']
-		url_components = _split_url(url)
-		url_components['filename'] = 'card.html' #% twat['id']
-		_mirror_file(url_components, user, twat['id'], args)
+		# XXX: unsupported nitter feature
+		# this displays fine when loading from twitter in a regular browser,
+		# which is probably converted using some js code
+		# TODO: check if nitter handles card:// stuff..
+		unsuported_shemes = ['card://']
+		for _us in unsuported_shemes:
+			if url.startswith(_us): continue
+			url_components = _split_url(url)
+			url_components['filename'] = 'card.html' #% twat['id']
+			_mirror_file(url_components, user, twat['id'], args)
 
 	if 'f' in args.mirror:
 		for a in soup.body.find_all('a'):
