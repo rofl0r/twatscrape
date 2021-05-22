@@ -513,7 +513,7 @@ def get_timestamp(date_format, date=None):
 	if not date: date = time.time()
 	return time.strftime(date_format, time.gmtime(date))
 
-def scrape(user):
+def scrape(user, http, host):
 	global nitters
 
 	if user in new_accounts:
@@ -529,7 +529,7 @@ def scrape(user):
 	sys.stdout.write('\r[%s] scraping %s... ' % (get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), user))
 	sys.stdout.flush()
 
-	twats, nitters = get_twats(user, proxies=args.proxy, count=count, http=twitter_rshttp, checkfn=checkfn, nitters=nitters)
+	twats, nitters, host, http = get_twats(user, proxies=args.proxy, count=count, http=http, checkfn=checkfn, nitters=nitters, host=host)
 
 	new = False
 	for t in twats:
@@ -540,10 +540,10 @@ def scrape(user):
 			insert_pos += 1
 			if 'quote_tweet' in t:
 				if not os.path.isdir(paths.get_user(t[quote_tweet]['user'])): retry_makedirs(paths.get_user(t[quote_tweet]['user']))
-				fetch_profile_picture(t[quote_tweet]['user'], args.proxy, twhttp=twitter_rshttp, nitters=nitters)
+				fetch_profile_picture(t[quote_tweet]['user'], args.proxy, twhttp=nitter_rshttp, nitters=nitters)
 			if 'user' in t:
 				if not os.path.isdir(paths.get_user(t['user'])): retry_makedirs(paths.get_user(t['user']))
-				fetch_profile_picture(t['user'], args.proxy, twhttp=twitter_rshttp, nitters=nitters)
+				fetch_profile_picture(t['user'], args.proxy, twhttp=nitter_rshttp, nitters=nitters)
 			if args.mirror: mirror_twat(t, args=args)
 			sys.stdout.write('\r[%s] scraping %s... +%d ' % (get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), user, insert_pos))
 			sys.stdout.flush()
@@ -552,6 +552,7 @@ def scrape(user):
 	elapsed_time = (time.time() - elapsed_time)
 	sys.stdout.write('done (%s)\n' % get_timestamp("%H:%M:%S", elapsed_time))
 	sys.stdout.flush()
+	return http, host
 
 
 def resume_retry_mirroring(done):
@@ -826,7 +827,8 @@ if __name__ == '__main__':
 
 	args.proxy = [RocksockProxyFromURL(args.proxy)] if args.proxy else None
 
-	twitter_rshttp = None
+	nitter_rshttp = None
+	host = None
 
 	load_watchlist()
 
@@ -846,7 +848,7 @@ if __name__ == '__main__':
 			## scrape profile
 			for user in watchlist:
 				if not user in disabled_users:
-					scrape(user)
+					nitter_rshttp, host = scrape(user, nitter_rshttp, host)
 			time.sleep(args.profile)
 
 		except KeyboardInterrupt:

@@ -1,6 +1,6 @@
 from http2 import RsHttp, _parse_url
 from soup_parser import soupify
-from nitter import nitter_connect, get_nitter_instance, set_invalid_nitter
+from nitter import nitter_get, nitter_connect, get_nitter_instance, set_invalid_nitter
 import time, datetime, calendar
 import json
 import os.path
@@ -473,20 +473,10 @@ def extract_twat(soup, twats, timestamp,nitters={}):
 # if checkfn is passed , it'll be called with the username and current list of
 # received twats, and can decide whether fetching will be continued or not,
 # by returning True (continue) or False.
-def get_twats(user, proxies=None, count=0, http=None, checkfn=None, nitters={}):
+def get_twats(user, proxies=None, count=0, http=None, checkfn=None, nitters={}, host=None):
 
-	while True:
-		http, host, nitters = nitter_connect(nitters, proxies)
-		# unable to connect to any instance
-		if not http:
-			time.sleep(60)
-			continue
-		hdr, res = http.get("/%s" % user)
-		# we probably hit rate limiting
-		if not '200 OK' in hdr:
-			nitters = set_invalid_nitter(host, nitters)
-		else:
-			break
+
+	hdr, res, http, host, nitters = nitter_get('/%s' % user, http, host, nitters, proxies)
 
 	# make sure all tweets fetched in a single invocation get the same timestamp,
 	# otherwise ordering might become messed up, once we sort them
@@ -509,18 +499,9 @@ def get_twats(user, proxies=None, count=0, http=None, checkfn=None, nitters={}):
 		if not len(cursor):
 			break
 
-		while True:
-			hdr, res = http.get("/%s%s"%(user, cursor[0]))
-			# rate limiting issue
-			if not "200 OK" in hdr:
-				nitters = set_invalid_nitter(host, nitters)
-				http, host, nitters = nitter_connect(nitters, proxies)
-				# no available nitter instance
-				if not http:
-					time.sleep(60)
-			else: break
+		hdr, res, http, host, nitters = nitter_get('/%s%s' % (user, cursor[0]), http, host, nitters, proxies)
 
-	return twats, nitters
+	return twats, nitters, host, http
 
 if __name__ == '__main__':
 	print repr ( get_twats('realdonaldtrump') )
