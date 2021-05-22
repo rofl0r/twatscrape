@@ -331,11 +331,11 @@ class Rocksock():
 					raise(RocksockException(RS_E_HIT_READTIMEOUT, failedproxy=self._failed_proxy(pnum)))
 				else:
 					raise(RocksockException(RS_E_SSL_GENERIC, failedproxy=s, errortype=RS_ET_SSL))
-			if len(chunk) == 0:
-				raise(RocksockException(RS_E_REMOTE_DISCONNECTED, failedproxy=self._failed_proxy(pnum)))
 			data += chunk
-			if count == -1: break
-			else: count -= len(chunk)
+			if len(chunk) + len(data) == 0:
+				raise(RocksockException(RS_E_REMOTE_DISCONNECTED, failedproxy=self._failed_proxy(pnum)))
+			elif len(chunk) < n: break
+			elif count > 0: count -= len(chunk)
 		return data
 
 	def recvline(self):
