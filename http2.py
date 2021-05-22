@@ -166,6 +166,15 @@ class RsHttp():
 		data = urllib.urlencode(values)
 		return self._make_post_request_raw(url, data, extras)
 
+	def _try_gunzip(self, data):
+		try:
+			res = zlib.decompress(data, 16+zlib.MAX_WBITS)
+			return 0, res
+		except zlib.error as e:
+			if 'incomplete' in e.message:
+				return -1, ''
+		return -2, ''
+
 	def _get_response(self):
 		def parse_header_fields(line):
 			if not ':' in line: return line.rstrip(' '), ""
@@ -229,7 +238,13 @@ class RsHttp():
 
 		if len(res) != 0:
 			if unzip == 'gzip':
-				res = zlib.decompress(res, 16+zlib.MAX_WBITS)
+				ec, extr = self._try_gunzip(res)
+				while ec == -1:
+					res += self.conn.recv(-1)
+					ec, extr = self._try_gunzip(res)
+				if ec == -2:
+					raise zlib.error
+				res = extr
 			elif unzip == 'deflate':
 				try:
 					res = zlib.decompress(res)
