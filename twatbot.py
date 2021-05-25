@@ -772,14 +772,11 @@ if __name__ == '__main__':
 				    'nitter.pussthecat.org',
 				    'nitter.nixnet.services',
 				    'nitter.tedomum.net',
-				    'nitter.unixfox.eu',
-				    'nitter.eu',
 				    'nitter.namazso.eu',
 				    'nitter.mailstation.de',
 				    'nitter.cattube.org',
 				    'birdsite.xanny.family',
 				    'nitter.40two.app',
-				    'nitter.skrep.in',
 				    'nitter.exonip.de',
 				    'nitter.koyu.space' ]
 
