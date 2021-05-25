@@ -298,7 +298,7 @@ def fetch_profile_picture(user, proxies, res=None, twhttp=None, nitters={}):
 
 	soup = soupify(res)
 	for meta in soup.find_all('meta', attrs={'property': 'og:image'}):
-		pic_url = meta.get('content') if '://' in meta.get('content') else 'https://%s%s' % (get_nitter_instance(nitters), meta.get('content'))
+		pic_url = meta.get('content') if '://' in meta.get('content') else 'https://%s%s' % (get_nitter_instance(nitters, False), meta.get('content'))
 		url_components = _split_url(pic_url)
 		http = RsHttp(host=url_components['host'], port=url_components['port'], timeout=15, ssl=url_components['ssl'], keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
 
@@ -415,12 +415,12 @@ def extract_twat(soup, twats, timestamp,nitters={}):
 			if attachments_div:
 				images = []
 				for img in attachments_div.find_all('img'):
-					images.append('https://%s%s' % (get_nitter_instance(nitters), img.get('src')))
+					images.append('https://%s%s' % (get_nitter_instance(nitters, False), img.get('src')))
 
 				for vid in attachments_div.find_all('video'):
 					video = True
 					bg = vid.get('poster')
-					images.append('https://%s%s' % (get_nitter_instance(nitters), bg))
+					images.append('https://%s%s' % (get_nitter_instance(nitters, False), bg))
 
 			# card div..
 			card_div = div.find('div', attrs={'class': 'card'})
