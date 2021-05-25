@@ -1,12 +1,15 @@
 import time
 from http2 import RsHttp
+import random
 
-def get_nitter_instance(nitters):
+def get_nitter_instance(nitters, update_nitters_list):
+	if not update_nitters_list: return random.choice( nitters.keys() )
+
 	for nitter in nitters:
 		if nitters[nitter]['fail_ticks'] == 0 or (time.time() - nitters[nitter]['fail_ticks']) > nitters[nitter]['ban_time']:
 			nitters[nitter] = {'fail_ticks': 0, 'ban_time': 0}
-			return nitter
-	return None
+			return nitter, nitters
+	return None, nitters
 
 def set_invalid_nitter(nitter, nitters, bantime=600):
 	nitters[nitter] = { 'fail_ticks': time.time(), 'ban_time': bantime }
@@ -14,7 +17,7 @@ def set_invalid_nitter(nitter, nitters, bantime=600):
 
 def nitter_connect(nitters, proxies):
 	while True:
-		host = get_nitter_instance(nitters)
+		host, nitters = get_nitter_instance(nitters, True)
 		# no available instance
 		# sleep for a while and try again
 		if not host:
@@ -36,7 +39,10 @@ def nitter_get(req, http, host, nitters, proxies):
 		if not http:
 			http, host, nitters = nitter_connect(nitters, proxies)
 
-		hdr, res = http.get(req)
+		try: hdr, res = http.get(req)
+		except Exception as e:
+			print('http.get error: %s' %e)
+			hdr = ''
 		# we hit rate limiting
 		if not  '200 OK' in hdr:
 			nitters = set_invalid_nitter(host, nitters)
