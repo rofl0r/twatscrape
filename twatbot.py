@@ -239,8 +239,8 @@ def htmlize_twat(twat, variables, quoted=False):
 
 	tw += '\n</div>\n'
 
-	## link to mirrored filed, emojis and such
-	if args.mirror: twat['text'] = replace_url_in_twat(twat, args=args)
+	## replace urls in twats
+	twat['text'] = replace_url_in_twat(twat, args=args)
 	## strip html ?
 	if args.nohtml: twat['text']= strip_tags(twat['text'])
 
