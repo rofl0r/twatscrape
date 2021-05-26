@@ -558,9 +558,13 @@ def scrape(user, http, host):
 def resume_retry_mirroring(done):
 	start_time = time.time()
 	print('resume_retry_mirroring: thread started')
+	infoticks = time.time()
 	for user in watchlist:
 		for t in tweets[user]:
 			if done.is_set(): break
+			elif (time.time() - infoticks) > 300:
+				print('resume_retry_mirroring: thread is still running')
+				infoticks = time.time()
 			mirror_twat(t, args=args)
 	elapsed_time = time.time() - start_time
 	print('resume_retry_mirroring: end of thread, duration: %s' % time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
