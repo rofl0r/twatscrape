@@ -45,7 +45,12 @@ def _parse_url(url):
 		return "", 0, False, url
 
 	port_index = -1
+	fixed_amazon_redirect = False
 	for i in range(len(url)):
+		if url[i] == '?':
+			if not fixed_amazon_redirect:
+				url = url.replace('?','/?',True)
+				fixed_amazon_redirect = True
 		if url[i] == ':':
 			host = url[:i]
 			port_index = i+1
