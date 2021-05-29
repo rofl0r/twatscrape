@@ -169,7 +169,7 @@ def mirror_twat(twat, args=None):
 		outname = paths.get_user(twat['user']) + '/%s.mp4' % tid
 		if not os.path.exists('data/%s.mp4' % tid):
 			if args.proxy:
-				os.system('%s --proxy %s -o data/%s.mp4 %s > /dev/null 2>&1' % (args.ytdl, args.proxy, tid, url))
+				os.system('%s --proxy %s -o data/%s.mp4 %s > /dev/null 2>&1' % (args.ytdl, args.rawproxy, tid, url))
 			else:
 				os.system('%s -o data/%s.mp4 %s > /dev/null 2>&1' % (args.ytdl, tid, url))
 		if not os.path.exists('%s' % outname) and os.path.exists('data/%s.mp4' % tid):
