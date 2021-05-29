@@ -790,6 +790,7 @@ if __name__ == '__main__':
 		nitters[instance] = {'fail_ticks': 0, 'ban_time': 0}
 
 	if args.mirror and 'v' in args.mirror:
+		args.rawproxy = args.proxy
 		if not args.ytdl: args.ytdl = 'youtube-dl'
 		try:
 			# check if youtube-dl exists
@@ -798,7 +799,7 @@ if __name__ == '__main__':
 			if args.ytdl_upgrade:
 				try:
 					if args.proxy:
-						os.system('%s --proxy %s -U > /dev/null 2>&1' % (args.ytdl, args.proxy))
+						os.system('%s --proxy %s -U > /dev/null 2>&1' % (args.ytdl, args.rawproxy))
 					else:
 						os.system('%s -U > /dev/null 2>&1' % args.ytdl)
 				except:
