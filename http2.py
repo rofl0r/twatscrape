@@ -32,6 +32,11 @@ def _parse_url(url):
 		ssl = False
 		url = url[7:]
 		port = 80
+	elif url_l.startswith('//'):
+		# can happen with a redirect
+		ssl = False
+		url = url[2:]
+		port = -1
 	elif url_l.startswith('/'):
 		# can happen with a redirect
 		url = url[1:]
@@ -339,8 +344,9 @@ class RsHttp():
 			host, port, use_ssl, url = _parse_url(redirect)
 			if port != 0:
 				self.host = host
-				self.port = port
-				self.use_ssl = use_ssl
+				if port != -1: # -1: use existing port/ssl
+					self.port = port
+					self.use_ssl = use_ssl
 			self.conn.disconnect()
 			self.conn = None
 			self.reconnect()
