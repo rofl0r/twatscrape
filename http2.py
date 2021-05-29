@@ -94,6 +94,7 @@ class RsHttp():
 		self.use_ssl = ssl
 		self.debugreq = False
 		self.follow_redirects = follow_redirects
+		self.redirect_counter = 0
 		self.auto_set_cookies = auto_set_cookies
 		self.keep_alive = keep_alive
 		self.timeout = timeout
@@ -341,6 +342,11 @@ class RsHttp():
 		hdr, res, redirect = self._send_and_recv(req)
 
 		if redirect != '' and self.follow_redirects:
+			MAX_REDIRECTS = 16
+			self.redirect_counter += 1
+			if self.redirect_counter > MAX_REDIRECTS:
+				return '', ''
+
 			host, port, use_ssl, url = _parse_url(redirect)
 			if port != 0:
 				self.host = host
@@ -351,6 +357,8 @@ class RsHttp():
 			self.conn = None
 			self.reconnect()
 			return self.get(url, extras)
+		else:
+			self.redirect_counter = 0
 
 		return hdr, res
 
