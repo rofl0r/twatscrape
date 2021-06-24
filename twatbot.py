@@ -271,7 +271,7 @@ def htmlize_twat(twat, variables, quoted=False):
 					href = i
 					title = "view remote image"
 				elif 'video' in twat or 'ext_tw_video_thumb' in i:
-					mp4_path = paths.get_user(twat['user']) + '%s.mp4' % str(twat['id'])
+					mp4_path = paths.get_user(twat['user']) + '/%s.mp4' % str(twat['id'])
 					if os.path.exists(mp4_path):
 						href = mp4_path
 						title = "view local video"
