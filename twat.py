@@ -294,7 +294,9 @@ def fetch_profile_picture(user, proxies, res=None, twhttp=None, nitters={}):
 			# no avail. instance, pic will be scraped another time
 			if not twhttp: return
 
-		hdr, res = twhttp.get("/%s" % user)
+		try: hdr, res = twhttp.get("/%s" % user)
+		# user does not exist
+		except UnicodeDecodeError: return None
 
 	soup = soupify(res)
 	for meta in soup.find_all('meta', attrs={'property': 'og:image'}):
