@@ -775,7 +775,6 @@ if __name__ == '__main__':
 				    'nitter.fdn.fr',
 				    'nitter.pussthecat.org',
 				    'nitter.nixnet.services',
-				    'nitter.tedomum.net',
 				    'nitter.namazso.eu',
 				    'nitter.mailstation.de',
 				    'nitter.cattube.org',
