@@ -44,7 +44,7 @@ def replace_url_in_twat(twat, args=None):
 		elif 'title' in a.attrs:
 			username = a.attrs['href'].split('/')[1]
 			at_link = user_at_link(username)
-			rebuild = '<b>%s<a href="https://twitter.com/%s">%s</a></b>' % (at_link, username, username)
+			rebuild = '<b>%s<a href="https://%s/%s">%s</a></b>' % (at_link, random.choice(args.instances), username, username)
 			# this fails when nonascii chars are present in a['title']
 			# XXX: would be nice to remove that 'title' attr, which would solve the issue
 			try: twat['text'] = twat['text'].replace(str(a), rebuild)
@@ -196,7 +196,7 @@ def html_header():
 def user_at_link(user):
 	if user in watchlist:
 		return '<a href="?user=%s">@</a>' % user
-	return '<a href="https://twitter.com/%s">@</a>' % user
+	return '<a href="https://%s/%s">@</a>' % (random.choice(args.instances), user)
 
 def replace_twat_text(text):
 	try: text = text.decode('utf8').replace('\n', '<br>') #replace( u'\xa0', ' ').replace(u'\0xe2', '	')
@@ -218,15 +218,15 @@ def htmlize_twat(twat, variables, quoted=False):
 
 		if paths.has_profile_pic(twat['owner']): retweet_pic = paths.get_profile_pic(twat['owner'])
 
-		retweet_str = " (RT %s<a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a>)" % \
-		(user_at_link(twat['user']), twat['user'], twat['id'], twat['user'])
+		retweet_str = " (RT %s<a target='_blank' href='https://%s/%s/status/%s'>%s</a>)" % \
+		(user_at_link(twat['user']), random.choice(args.instances), twat['user'], twat['id'], twat['user'])
 
 	if tweet_pic: tw += '<div class="profile_picture"><img width="100%%" height="100%%" src="%s"></div>' % tweet_pic
 	if retweet_pic: tw += '<div class="profile_picture_retweet"><img width="100%%" height="100%%" src="%s"></div>' % retweet_pic
 
 	user_str =  user_at_link(twat["owner"])
-	user_str += "<a target='_blank' href='https://twitter.com/%s/status/%s'>%s</a>%s" % \
-	(twat["owner"], get_effective_twat_id(twat), twat["owner"], retweet_str)
+	user_str += "<a target='_blank' href='https://%s/%s/status/%s'>%s</a>%s" % \
+	(random.choice(args.instances), twat["owner"], get_effective_twat_id(twat), twat["owner"], retweet_str)
 
 
 	tw += '\n<div class="twat-title">'
