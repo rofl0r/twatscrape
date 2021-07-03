@@ -88,6 +88,7 @@ class RsHttp():
 	def __init__(self, host, port=80, ssl=False, follow_redirects=False, \
 	auto_set_cookies=False, keep_alive=False, timeout=60, \
 	user_agent=None, proxies=None, max_tries=10, log_errors=True, \
+	verify_cert=False,
 	**kwargs):
 		self.host = host
 		self.port = port
@@ -104,6 +105,7 @@ class RsHttp():
 		self.max_tries = max_tries
 		self.log_errors = log_errors
 		self.last_rs_exception = None
+		self.verify_cert=verify_cert
 		self.headers = []
 
 	def get_last_rocksock_exception(self):
@@ -275,7 +277,7 @@ class RsHttp():
 		while tries < self.max_tries:
 			tries += 1
 			try:
-				self.conn = Rocksock(host=self.host, port=self.port, proxies=self.proxies, ssl=self.use_ssl, timeout=self.timeout)
+				self.conn = Rocksock(host=self.host, port=self.port, proxies=self.proxies, ssl=self.use_ssl, timeout=self.timeout, verifycert=self.verify_cert)
 				self.conn.connect()
 				return True
 			except RocksockException as e:
