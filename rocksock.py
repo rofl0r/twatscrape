@@ -65,7 +65,7 @@ RS_E_REMOTE_DISCONNECTED = 24
 RS_E_NO_PROXYSTORAGE = 25
 RS_E_HOSTNAME_TOO_LONG = 26
 RS_E_INVALID_PROXY_URL = 27
-
+RS_E_SSL_CERTIFICATE_ERROR = 28
 
 class RocksockException(Exception):
 	def __init__(self, error, failedproxy=None, errortype=RS_ET_OWN, *args, **kwargs):
@@ -120,7 +120,8 @@ class RocksockException(Exception):
 			RS_E_REMOTE_DISCONNECTED : "remote socket closed connection",
 			RS_E_NO_PROXYSTORAGE : "no proxy storage assigned",
 			RS_E_HOSTNAME_TOO_LONG : "hostname exceeds 255 chars",
-			RS_E_INVALID_PROXY_URL : "invalid proxy URL string"
+			RS_E_INVALID_PROXY_URL : "invalid proxy URL string",
+			RS_E_SSL_CERTIFICATE_ERROR : "certificate check error"
 		}
 		if self.errortype == RS_ET_SYS:
 			if self.error in errno.errorcode:
@@ -131,7 +132,7 @@ class RocksockException(Exception):
 			msg = "GAI: " + self.failedproxy
 		elif self.errortype == RS_ET_SSL:
 			msg = errordict[self.error]
-			if self.error == RS_E_SSL_GENERIC and self.failedproxy != None:
+			if (self.error == RS_E_SSL_GENERIC or self.error == RS_E_SSL_CERTIFICATE_ERROR) and self.failedproxy != None:
 				msg += ': ' + self.failedproxy #failedproxy is repurposed for SSL exceptions
 		else: #RS_ET_OWN
 			msg = errordict[self.error] + " (proxy %d)"%self.failedproxy
@@ -213,7 +214,10 @@ class Rocksock():
 		if 'ssl' in kwargs and kwargs['ssl'] == True:
 			self.sslcontext = ssl.create_default_context()
 			self.sslcontext.check_hostname = False
-			if not verifycert: self.sslcontext.verify_mode = ssl.CERT_NONE
+			self.sslcontext.verify_mode = ssl.CERT_NONE
+			if verifycert:
+				self.sslcontext.verify_mode = ssl.CERT_OPTIONAL
+				self.sslcontext.check_hostname = True
 		else:
 			self.sslcontext = None
 		self.proxychain = []
@@ -267,6 +271,9 @@ class Rocksock():
 		if self.sslcontext:
 			try:
 				self.sock = self.sslcontext.wrap_socket(self.sock, server_hostname=self.proxychain[len(self.proxychain)-1].hostinfo.host)
+			except ssl.CertificateError as e:
+				reason = self._get_ssl_exception_reason(e)
+				raise(RocksockException(RS_E_SSL_CERTIFICATE_ERROR, failedproxy=reason, errortype=RS_ET_SSL))
 			except ssl.SSLError as e:
 				reason = self._get_ssl_exception_reason(e)
 				#if hasattr(e, 'library'): subsystem = e.library
