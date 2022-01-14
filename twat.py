@@ -207,7 +207,7 @@ def mirror_twat(twat, args=None):
 					retry_makedirs( emodir )
 
 				if not os.path.exists('%s/%s' % (emodir,filename)):
-					http = RsHttp(host=host, port=443, timeout=15, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
+					http = RsHttp(host=host, port=443, timeout=30, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
 					while not http.connect():
 						# FIXME : what should happen on connect error ?
 						pass
@@ -223,7 +223,7 @@ def add_tweet(id, user, time, text):
 # twat_id looks like: '/username/status/id'
 def get_twat_timestamp(twat_id):
 	host = 'twitter.com'
-	http = RsHttp(host=host, port=443, timeout=15, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, user_agent="curl/7.60.0")
+	http = RsHttp(host=host, port=443, timeout=30, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, user_agent="curl/7.60.0")
 	while not http.connect():
 		# FIXME : what should happen on connect error ?
 		pass
@@ -239,7 +239,7 @@ def get_twat_timestamp(twat_id):
 
 def get_twats_mobile(user, proxies=None):
 	host = 'mobile.twitter.com'
-	http = RsHttp(host=host, port=443, timeout=15, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
+	http = RsHttp(host=host, port=443, timeout=30, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
 #	http.debugreq = True
 	while not http.connect():
 		# FIXME : what should happen on connect error ?
@@ -302,7 +302,7 @@ def fetch_profile_picture(user, proxies, res=None, twhttp=None, nitters={}):
 	for meta in soup.find_all('meta', attrs={'property': 'og:image'}):
 		pic_url = meta.get('content') if '://' in meta.get('content') else 'https://%s%s' % (get_nitter_instance(nitters, False), meta.get('content'))
 		url_components = _split_url(pic_url)
-		http = RsHttp(host=url_components['host'], port=url_components['port'], timeout=15, ssl=url_components['ssl'], keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
+		http = RsHttp(host=url_components['host'], port=url_components['port'], timeout=30, ssl=url_components['ssl'], keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
 
 		# if connection fails, the profile picture
 		# will be fetched another time

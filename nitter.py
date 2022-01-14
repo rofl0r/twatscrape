@@ -24,7 +24,7 @@ def nitter_connect(nitters, proxies):
 			time.sleep(60)
 			continue
 
-		http = RsHttp(host=host, port=443, timeout=15, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
+		http = RsHttp(host=host, port=443, timeout=30, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
 		http.set_cookie('hlsPlayback=on')
 		if http.connect():
 			return http, host, nitters
