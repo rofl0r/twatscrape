@@ -798,17 +798,8 @@ if __name__ == '__main__':
 	if args.instances:
 		args.instances = [ instance.strip() for instance in args.instances.split(',') ]
 	else:
-		args.instances = [  'nitter.42l.fr',
-				    'nitter.fdn.fr',
-				    'nitter.pussthecat.org',
-				    'nitter.nixnet.services',
-				    'nitter.namazso.eu',
-				    'nitter.mailstation.de',
-				    'nitter.cattube.org',
-				    'birdsite.xanny.family',
-				    'nitter.40two.app',
-				    'nitter.exonip.de',
-				    'nitter.koyu.space' ]
+		with open('nitter_instances.txt', 'r') as h:
+			args.instances = [ r.strip() for r in h.readlines() ]
 
 	random.shuffle(args.instances)
 	nitters = {}
