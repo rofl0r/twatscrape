@@ -24,6 +24,7 @@ tweet_cache = dict()
 disabled_users = dict()
 watchlist = []
 new_accounts = []
+has_keywords = False
 site_dirs = [
 	"/css",
 ]
@@ -65,6 +66,7 @@ def build_searchbox(variables):
 	user_sel = ['<center><table><tr>']
 	i = 0
 	for user in sorted(watchlist, key=str.lower):
+		if user[0] == '#': continue
 		selected = '' if (not 'user' in variables or not user in variables['user']) else ' checked'
 		user_sel.append("""<td width="33%%"><label class="hide_until_hover"><input id="u_%s" class="hide_until_hover" type="checkbox" value="%s"%s>%s</label></td>""" % (user, user, selected, user))
 		i = i + 1
@@ -134,9 +136,12 @@ def file_exists(fn):
 
 def in_twatlist(user, twat):
 	eid = get_effective_twat_id(twat)
-	return eid in tweet_cache[user]
+	if user in tweet_cache: return tweet_cache[user]
+	else: return None
 
 def add_twatlist(user, twat, insert_pos):
+	if not user in tweets: tweets[user] = list()
+	if not user in tweet_cache: tweet_cache[user] = dict()
 	tweets[user].insert(insert_pos, twat)
 	tweet_cache[user][get_effective_twat_id(twat)] = True
 
@@ -330,7 +335,7 @@ def sort_tweets(twts):
 
 def get_all_tweets(remove_dupes=False):
 	all_tweets = []
-	for user in watchlist:
+	for user in tweets:
 		all_tweets.extend(add_owner_to_list(user, tweets[user]))
 
 	all_tweets = sort_tweets(all_tweets)
@@ -513,26 +518,29 @@ def get_timestamp(date_format, date=None):
 	if not date: date = time.time()
 	return time.strftime(date_format, time.gmtime(date))
 
-def scrape(user, http, host):
+def scrape(item, http, host, search):
 	global nitters
 
-	if user in new_accounts:
+	count = args.count
+	if item in new_accounts:
 		count = args.count
 		checkfn = None
-		new_accounts.remove(user)
+		new_accounts.remove(item)
 	else:
 		checkfn = fetch_more_tweets_callback
-		count = -1
+		if not search: count = -1
 
 	elapsed_time = time.time()
 	insert_pos = 0
-	sys.stdout.write('\r[%s] scraping %s... ' % (get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), user))
+	sys.stdout.write('\r[%s] scraping %s... ' % (get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), item))
 	sys.stdout.flush()
 
-	twats, nitters, host, http = get_twats(user, proxies=args.proxy, count=count, http=http, checkfn=checkfn, nitters=nitters, host=host)
+	twats, nitters, host, http = get_twats(item, proxies=args.proxy, count=count, http=http, checkfn=checkfn, nitters=nitters, host=host, search=search)
 
 	new = False
 	for t in twats:
+		user = t['user'] if search else item
+
 		if not in_twatlist(user, t):
 			new = True
 			if args.unshorten: t = unshorten_urls(t, proxies=args.proxy, shorteners=shorteners)
@@ -545,14 +553,26 @@ def scrape(user, http, host):
 				if not os.path.isdir(paths.get_user(t['user'])): retry_makedirs(paths.get_user(t['user']))
 				fetch_profile_picture(t['user'], args.proxy, twhttp=nitter_rshttp, nitters=nitters)
 			if args.mirror: mirror_twat(t, args=args)
-			sys.stdout.write('\r[%s] scraping %s... +%d ' % (get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), user, insert_pos))
+			sys.stdout.write('\r[%s] scraping %s... +%d ' % (get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), item, insert_pos))
 			sys.stdout.flush()
 
-	if new: write_user_tweets(user)
+	if new:
+		if search:
+			write_tweets_from_search(twats)
+		else:
+			write_user_tweets(item)
 	elapsed_time = (time.time() - elapsed_time)
 	sys.stdout.write('done (%s)\n' % get_timestamp("%H:%M:%S", elapsed_time))
 	sys.stdout.flush()
 	return http, host
+
+def write_tweets_from_search(twats):
+	written = dict()
+	for t in twats:
+		user = t['user']
+		if not user in written:
+			write_user_tweets(user)
+			written[user] = 1
 
 
 def resume_retry_mirroring(done):
@@ -715,7 +735,7 @@ def start_server(ip, port):
 
 wl_hash = None
 def load_watchlist():
-	global watchlist, wl_hash
+	global watchlist, wl_hash, has_keywords
 	wl = []
 	for x in open(args.watchlist, 'r').readlines():
 		x = x.rstrip()
@@ -724,7 +744,9 @@ def load_watchlist():
 			disabled_users[username] = True
 		else:
 			username = x
-		if not os.path.exists(paths.get_user_json(username)):
+			if username[0] == '#' and not has_keywords:
+				has_keywords = True
+		if not username[0] == '#' and not os.path.exists(paths.get_user_json(username)):
 			new_accounts.append(username)
 			if not os.path.exists(paths.get_user(username)):
 				retry_makedirs(paths.get_user(username))
@@ -735,6 +757,11 @@ def load_watchlist():
 		wl_hash = newhash
 		watchlist = wl
 		json_loads()
+
+	if has_keywords:
+		for file in os.listdir('users'):
+			d = os.path.join('users', file)
+			if os.path.isdir(d): load_user_json(file)
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
@@ -847,9 +874,10 @@ if __name__ == '__main__':
 			## randomize watchlist if requested
 			if args.randomize_watchlist > 0: random.shuffle(watchlist)
 			## scrape profile
-			for user in watchlist:
-				if not user in disabled_users:
-					nitter_rshttp, host = scrape(user, nitter_rshttp, host)
+			for item in watchlist:
+				if not item in disabled_users:
+					search = True if item[0] == '#' else False
+					nitter_rshttp, host = scrape(item, nitter_rshttp, host, search)
 			time.sleep(args.profile)
 
 		except KeyboardInterrupt:

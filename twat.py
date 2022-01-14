@@ -318,7 +318,7 @@ def fetch_profile_picture(user, proxies, res=None, twhttp=None, nitters={}):
 
 	return
 
-def extract_twats(html, user, twats, timestamp, checkfn, nitters):
+def extract_twats(html, item, twats, timestamp, checkfn, nitters):
 	def find_div_end(html):
 		level = 0
 		for i in xrange(len(html)):
@@ -331,7 +331,7 @@ def extract_twats(html, user, twats, timestamp, checkfn, nitters):
 
 	regex = re.compile(r'<div.*class.*[" ]timeline.item[" ]')
 	nfetched = 0
-	cursor = [ a.get('href') for a in soupify(html).body.find_all('a') if a.get('href').startswith('?cursor=') ]
+	cursor = [ a.get('href') for a in soupify(html).body.find_all('a') if a.get('href').find('cursor=') != -1 ]
 	while 1:
 		match = regex.search(html)
 		if not match:
@@ -345,15 +345,18 @@ def extract_twats(html, user, twats, timestamp, checkfn, nitters):
 		nfetched += 1
 		# if the first two (the very first could be pinned) tweets are already known
 		# do not waste cpu processing more html
-		if nfetched == 2 and checkfn and not checkfn(user, twats):
+		if nfetched == 2 and checkfn and not checkfn(item, twats):
 			return twats, cursor
 
 def nitter_time_to_timegm(nt):
-	nt = nt.split(',')
-	d = nt[0].split('/')
-	t = nt[1].strip().split(':')
-	dtdt = datetime.datetime(int(d[2]), int(d[1]), int(d[0]), int(t[0]), int(t[1]))
-	return calendar.timegm(dtdt.timetuple())
+	try:
+		nt = nt.split(',')
+		d = nt[0].split('/')
+		t = nt[1].strip().split(':')
+		dtdt = datetime.datetime(int(d[2]), int(d[1]), int(d[0]), int(t[0]), int(t[1]))
+		return calendar.timegm(dtdt.timetuple())
+	except:
+		return round(time.time())
 
 def extract_twat(soup, twats, timestamp,nitters={}):
 	for div in soup.body.find_all('div'): # , attrs={'class':'tweet  '}):
@@ -475,10 +478,13 @@ def extract_twat(soup, twats, timestamp,nitters={}):
 # if checkfn is passed , it'll be called with the username and current list of
 # received twats, and can decide whether fetching will be continued or not,
 # by returning True (continue) or False.
-def get_twats(user, proxies=None, count=0, http=None, checkfn=None, nitters={}, host=None):
+def get_twats(item, proxies=None, count=0, http=None, checkfn=None, nitters={}, host=None, search=False):
+	if search:
+		query = '/search?f=tweets&q=%s' % item.strip('#')
+	else:
+		query = '/%s' % item
 
-
-	hdr, res, http, host, nitters = nitter_get('/%s' % user, http, host, nitters, proxies)
+	hdr, res, http, host, nitters = nitter_get(query, http, host, nitters, proxies)
 
 	# make sure all tweets fetched in a single invocation get the same timestamp,
 	# otherwise ordering might become messed up, once we sort them
@@ -489,19 +495,18 @@ def get_twats(user, proxies=None, count=0, http=None, checkfn=None, nitters={}, 
 	break_loop = False
 
 	while True:
-		twats, cursor = extract_twats(res, user, twats, timestamp, checkfn, nitters)
-		if count == 0 or len(twats) == 0 or break_loop or (count != -1 and len(twats) >= count):
-			break
-		if checkfn and not checkfn(user, twats): break
+		twats, cursor = extract_twats(res, item, twats, timestamp, checkfn, nitters)
+		if count == 0 or len(twats) == 0 or break_loop or (count != -1 and len(twats) >= count): break
+		if checkfn and not checkfn(item, twats): break
 
 		# fetch additional tweets that are not in the initial set of 20:
 		last_id = get_effective_twat_id(twats[len(twats)-1])
 
 		# we scrapped everything
-		if not len(cursor):
-			break
+		if not len(cursor): break
 
-		hdr, res, http, host, nitters = nitter_get('/%s%s' % (user, cursor[0]), http, host, nitters, proxies)
+		query = '/search?f=tweets&q=%s%s' % (item.strip('#'), cursor[0]) if search else '/%s%s' % (item, cursor[0])
+		hdr, res, http, host, nitters = nitter_get(query, http, host, nitters, proxies)
 
 	return twats, nitters, host, http
 
