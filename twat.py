@@ -430,14 +430,27 @@ def extract_twat(soup, twats, timestamp,nitters={}):
 			# card div..
 			card_div = div.find('div', attrs={'class': 'card'})
 			if card_div:
-				try: card_url = card_div.find('a', attrs={'class':'card-container'}).get('href')
-				except: pass
-				try: card_title = card_div.find('h2', attrs={'class': 'card-title'}).get_text()
-				except: pass
-				try: card_description = card_div.find('p', attrs={'class': 'card-description'}).get_text()
-				except: pass
-				try: card_destination = card_div.find('span', attrs={'class': 'card-destination'}).get_text()
-				except: pass
+				# card url (OK)
+				for a in card_div.find_all('a'):
+					if 'class' in a.attrs and 'card-container' in a.attrs['class']:
+						card_url = a.get('href')
+						break
+				# card title (OK)
+				for h2 in card_div.find_all('h2'):
+					if 'class' in h2.attrs and 'card-title' in h2.attrs['class']:
+						card_title = h2.get_text()
+						break
+				# card description
+				for p in card_div.find_all('p'):
+					if 'class' in p.attrs and 'card_description' in p.attrs['class']:
+						print('got card description')
+						card_description = p.get_text()
+						break
+				# card destination (OK)
+				for span in card_div.find_all('span'):
+					if 'class' in span.attrs and 'card-destination' in span.attrs['class']:
+						card_destination = span.get_text()
+						break
 
 			if tweet_user != None and tweet_id:
 				vals = {'id':tweet_id, 'user':tweet_user, 'time':tweet_time, 'text':tweet_text, 'fetched':timestamp}
