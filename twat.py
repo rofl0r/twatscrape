@@ -492,10 +492,7 @@ def extract_twat(soup, twats, timestamp,nitters={}):
 # received twats, and can decide whether fetching will be continued or not,
 # by returning True (continue) or False.
 def get_twats(item, proxies=None, count=0, http=None, checkfn=None, nitters={}, host=None, search=False):
-	if search:
-		query = '/search?f=tweets&q=%s' % item.strip('#')
-	else:
-		query = '/%s' % item
+	query = '/search?f=tweets&q=%s' % item.strip('#') if search else '/%s' %item
 
 	hdr, res, http, host, nitters = nitter_get(query, http, host, nitters, proxies)
 
@@ -517,7 +514,6 @@ def get_twats(item, proxies=None, count=0, http=None, checkfn=None, nitters={}, 
 
 		# we scrapped everything
 		if not len(cursor): break
-
 		query = '/search?f=tweets&q=%s%s' % (item.strip('#'), cursor[0]) if search else '/%s%s' % (item, cursor[0])
 		hdr, res, http, host, nitters = nitter_get(query, http, host, nitters, proxies)
 
