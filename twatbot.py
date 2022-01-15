@@ -521,14 +521,13 @@ def get_timestamp(date_format, date=None):
 def scrape(item, http, host, search):
 	global nitters
 
-	count = args.count
 	if item in new_accounts:
 		count = args.count
 		checkfn = None
 		new_accounts.remove(item)
 	else:
 		checkfn = fetch_more_tweets_callback
-		if not search: count = -1
+		count = -1
 
 	elapsed_time = time.time()
 	insert_pos = 0
