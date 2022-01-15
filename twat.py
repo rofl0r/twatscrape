@@ -491,10 +491,10 @@ def extract_twat(soup, twats, timestamp,nitters={}):
 # if checkfn is passed , it'll be called with the username and current list of
 # received twats, and can decide whether fetching will be continued or not,
 # by returning True (continue) or False.
-def get_twats(item, proxies=None, count=0, http=None, checkfn=None, nitters={}, host=None, search=False):
+def get_twats(item, proxies=None, count=0, http=None, checkfn=None, nitters={}, host=None, search=False, user_agent="curl/7.60.0"):
 	query = '/search?f=tweets&q=%s' % item.strip('#') if search else '/%s' %item
 
-	hdr, res, http, host, nitters = nitter_get(query, http, host, nitters, proxies)
+	hdr, res, http, host, nitters = nitter_get(query, http, host, nitters, proxies, user_agent)
 
 	# make sure all tweets fetched in a single invocation get the same timestamp,
 	# otherwise ordering might become messed up, once we sort them
@@ -515,7 +515,7 @@ def get_twats(item, proxies=None, count=0, http=None, checkfn=None, nitters={}, 
 		# we scrapped everything
 		if not len(cursor): break
 		query = '/search?f=tweets&q=%s%s' % (item.strip('#'), cursor[0]) if search else '/%s%s' % (item, cursor[0])
-		hdr, res, http, host, nitters = nitter_get(query, http, host, nitters, proxies)
+		hdr, res, http, host, nitters = nitter_get(query, http, host, nitters, proxies, user_agent)
 
 	return twats, nitters, host, http
 

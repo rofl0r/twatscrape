@@ -519,7 +519,7 @@ def get_timestamp(date_format, date=None):
 	if not date: date = time.time()
 	return time.strftime(date_format, time.gmtime(date))
 
-def scrape(item, http, host, search):
+def scrape(item, http, host, search, user_agent):
 	global nitters
 
 	if item in new_accounts:
@@ -535,7 +535,7 @@ def scrape(item, http, host, search):
 	sys.stdout.write('\r[%s] scraping %s... ' % (get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), item))
 	sys.stdout.flush()
 
-	twats, nitters, host, http = get_twats(item, proxies=args.proxy, count=count, http=http, checkfn=checkfn, nitters=nitters, host=host, search=search)
+	twats, nitters, host, http = get_twats(item, proxies=args.proxy, count=count, http=http, checkfn=checkfn, nitters=nitters, host=host, search=search, user_agent=user_agent)
 
 	new = False
 	user = None if item[0] == '#' else item
@@ -786,6 +786,9 @@ if __name__ == '__main__':
 	parser.add_argument('--ytdl', help="Define full path to youtube-dl", default=None, type=str, required=False)
 	parser.add_argument('--ytdl-upgrade', help="Define whether or not youtube-dl should be upgraded on statup - default: False", default=False, type=bool, required=False)
 	parser.add_argument('--instances', help="define nitter instance(s), comma separated - deault: letsencrypt instances", default=None, type=str, required=False)
+	parser.add_argument('--user-agent', help="define user agent to use", default="curl/7.60.0", type=str, required=False)
+	parser.add_argument('--random-user-agent', help="use random user agent", default=False, type=bool, required=False)
+	parser.add_argument('--user-agent-file', help="file containing user agents", default='useragent.txt', type=str, required=False)
 
 
 	args = parser.parse_args()
@@ -841,6 +844,10 @@ if __name__ == '__main__':
 
 	args.proxy = [RocksockProxyFromURL(args.proxy)] if args.proxy else None
 
+	if args.random_user_agent:
+		with open(args.user_agent_file, 'r') as f:
+			useragents = [ f.strip() for f in f.readlines() ]
+
 	nitter_rshttp = None
 	host = None
 
@@ -855,7 +862,10 @@ if __name__ == '__main__':
 
 	start_server(args.listenip, args.port)
 
+	user_agent = 'curl/7.60.0'
 	while True:
+		if args.random_user_agent:
+			user_agent = random.choice(useragents)
 		try:
 			## randomize watchlist if requested
 			if args.randomize_watchlist > 0: random.shuffle(watchlist)
@@ -863,7 +873,7 @@ if __name__ == '__main__':
 			for item in watchlist:
 				if not item in disabled_users:
 					search = True if item[0] == '#' else False
-					nitter_rshttp, host = scrape(item, nitter_rshttp, host, search)
+					nitter_rshttp, host = scrape(item, nitter_rshttp, host, search, user_agent)
 			time.sleep(args.profile)
 
 		except KeyboardInterrupt:

@@ -15,7 +15,7 @@ def set_invalid_nitter(nitter, nitters, bantime=600):
 	nitters[nitter] = { 'fail_ticks': time.time(), 'ban_time': bantime }
 	return nitters
 
-def nitter_connect(nitters, proxies):
+def nitter_connect(nitters, proxies, user_agent="curl/7.60.0"):
 	while True:
 		host, nitters = get_nitter_instance(nitters, True)
 		# no available instance
@@ -24,20 +24,20 @@ def nitter_connect(nitters, proxies):
 			time.sleep(60)
 			continue
 
-		http = RsHttp(host=host, port=443, timeout=30, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
+		http = RsHttp(host=host, port=443, timeout=30, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent=user_agent)
 		http.set_cookie('hlsPlayback=on')
 		if http.connect():
 			return http, host, nitters
 		else:
 			nitters = set_invalid_nitter(host, nitters, 86400)
 
-def nitter_get(req, http, host, nitters, proxies):
+def nitter_get(req, http, host, nitters, proxies, user_agent):
 	while True:
 
 		# initiate connection to random nitter instance, if no
 		# opened http connection exists
 		if not http:
-			http, host, nitters = nitter_connect(nitters, proxies)
+			http, host, nitters = nitter_connect(nitters, proxies, user_agent)
 
 		try: hdr, res = http.get(req)
 		except Exception as e:
