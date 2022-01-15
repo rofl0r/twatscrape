@@ -136,8 +136,8 @@ def file_exists(fn):
 
 def in_twatlist(user, twat):
 	eid = get_effective_twat_id(twat)
-	if user in tweet_cache: return tweet_cache[user]
-	else: return None
+	if user in tweet_cache and eid in tweet_cache[user]: return True
+	else: return False
 
 def add_twatlist(user, twat, insert_pos):
 	if not user in tweets: tweets[user] = list()
@@ -504,13 +504,14 @@ def write_html(html, variables=None, pages=0):
 
 	return "\n".join(ht).encode('utf-8')
 
-def fetch_more_tweets_callback(user, twats):
+def fetch_more_tweets_callback(item, twats):
 	# iterate over last 20 tweets only as this is called once per page with the full list
 	twats_per_page = 20
 	if len(twats) < twats_per_page: twats_per_page = len(twats)
 	for i in xrange(1, twats_per_page + 1):
 		twat = twats[i * -1]
 		if 'pinned' in twat and twat['pinned'] == 1: continue
+		user = twat['user'] if item[0] == '#' else item
 		if in_twatlist(user, twat): return False
 	return True
 
@@ -527,24 +528,28 @@ def scrape(item, http, host, search):
 		new_accounts.remove(item)
 	else:
 		checkfn = fetch_more_tweets_callback
-		count = -1
-
+		count = args.count if item[0] == '#' else -1
+	item = item.lower()
 	elapsed_time = time.time()
-	insert_pos = 0
+	insert_pos = dict()
 	sys.stdout.write('\r[%s] scraping %s... ' % (get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), item))
 	sys.stdout.flush()
 
 	twats, nitters, host, http = get_twats(item, proxies=args.proxy, count=count, http=http, checkfn=checkfn, nitters=nitters, host=host, search=search)
 
 	new = False
+	user = None if item[0] == '#' else item
+	insert_pos_total = 0
 	for t in twats:
-		user = t['user'] if search else item
+		if item[0] == '#': user = t['user']
+		if not user in insert_pos: insert_pos[user] = 0
 
 		if not in_twatlist(user, t):
 			new = True
 			if args.unshorten: t = unshorten_urls(t, proxies=args.proxy, shorteners=shorteners)
-			add_twatlist(user, t, insert_pos)
-			insert_pos += 1
+			add_twatlist(user, t, insert_pos[user])
+			insert_pos[user] += 1
+			insert_pos_total += 1
 			if 'quote_tweet' in t:
 				if not os.path.isdir(paths.get_user(t[quote_tweet]['user'])): retry_makedirs(paths.get_user(t[quote_tweet]['user']))
 				fetch_profile_picture(t[quote_tweet]['user'], args.proxy, twhttp=nitter_rshttp, nitters=nitters)
@@ -552,27 +557,18 @@ def scrape(item, http, host, search):
 				if not os.path.isdir(paths.get_user(t['user'])): retry_makedirs(paths.get_user(t['user']))
 				fetch_profile_picture(t['user'], args.proxy, twhttp=nitter_rshttp, nitters=nitters)
 			if args.mirror: mirror_twat(t, args=args)
-			sys.stdout.write('\r[%s] scraping %s... +%d ' % (get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), item, insert_pos))
+			sys.stdout.write('\r[%s] scraping %s... +%d ' % (get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), item, insert_pos_total))
 			sys.stdout.flush()
 
 	if new:
-		if search:
-			write_tweets_from_search(twats)
+		if item[0] == '#':
+			for user in insert_pos.keys(): write_user_tweets(user)
 		else:
 			write_user_tweets(item)
 	elapsed_time = (time.time() - elapsed_time)
 	sys.stdout.write('done (%s)\n' % get_timestamp("%H:%M:%S", elapsed_time))
 	sys.stdout.flush()
 	return http, host
-
-def write_tweets_from_search(twats):
-	written = dict()
-	for t in twats:
-		user = t['user']
-		if not user in written:
-			write_user_tweets(user)
-			written[user] = 1
-
 
 def resume_retry_mirroring(done):
 	start_time = time.time()

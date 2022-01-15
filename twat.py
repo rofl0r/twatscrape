@@ -409,7 +409,7 @@ def extract_twat(soup, twats, timestamp,nitters={}):
 				qtime = quoted.find('span', attrs={'class': 'tweet-date'}).get('title')
 				if qtime: qtime = nitter_time_to_timegm( qtime )
 				quote_tweet = {
-					'user': quser,
+					'user': quser.lower(),
 					'id': qid,
 					'text': qtext,
 					'time': qtime
