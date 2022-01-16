@@ -379,7 +379,7 @@ def extract_twat(soup, twats, timestamp,nitters={}):
 			pinned = ('user-pinned' in div.attrs["class"])
 
 			tweet_id = div.find('a', attrs={'class': 'tweet-link'}).get('href').split('/')[3].split('#')[0]
-			tweet_user = div.find('a', attrs={'class': 'username'}).get('title').lstrip('@')
+			tweet_user = div.find('a', attrs={'class': 'username'}).get('title').lstrip('@').lower()
 
 			tt = [ i for i in div.find('div', attrs={'class': 'tweet-content'}).contents ]
 			tweet_text = ''

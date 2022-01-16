@@ -44,7 +44,7 @@ def replace_url_in_twat(twat, args=None):
 		## @username : replace when local
 		elif 'title' in a.attrs:
 			username = a.attrs['href'].split('/')[1]
-			at_link = user_at_link(username)
+			at_link = user_at_link(username.lower())
 			rebuild = '<b>%s<a href="https://%s/%s">%s</a></b>' % (at_link, random.choice(args.instances), username, username)
 			# this fails when nonascii chars are present in a['title']
 			# XXX: would be nice to remove that 'title' attr, which would solve the issue
@@ -229,7 +229,7 @@ def htmlize_twat(twat, variables, quoted=False):
 	if tweet_pic: tw += '<div class="profile_picture"><img width="100%%" height="100%%" src="%s"></div>' % tweet_pic
 	if retweet_pic: tw += '<div class="profile_picture_retweet"><img width="100%%" height="100%%" src="%s"></div>' % retweet_pic
 
-	user_str =  user_at_link(twat["owner"])
+	user_str =  user_at_link(twat["owner"].lower())
 	user_str += "<a target='_blank' href='https://%s/%s/status/%s'>%s</a>%s" % \
 	(random.choice(args.instances), twat["owner"], get_effective_twat_id(twat), twat["owner"], retweet_str)
 
@@ -511,7 +511,7 @@ def fetch_more_tweets_callback(item, twats):
 	for i in xrange(1, twats_per_page + 1):
 		twat = twats[i * -1]
 		if 'pinned' in twat and twat['pinned'] == 1: continue
-		user = twat['user'] if item[0] == '#' else item
+		user = twat['user'] if item[0] == '#' else item.lower()
 		if in_twatlist(user, twat): return False
 	return True
 
@@ -521,6 +521,7 @@ def get_timestamp(date_format, date=None):
 
 def scrape(item, http, host, search, user_agent):
 	global nitters
+	item = item.lower()
 
 	if item in new_accounts:
 		count = args.count
@@ -529,7 +530,6 @@ def scrape(item, http, host, search, user_agent):
 	else:
 		checkfn = fetch_more_tweets_callback
 		count = args.count if item[0] == '#' else -1
-	item = item.lower()
 	elapsed_time = time.time()
 	insert_pos = dict()
 	sys.stdout.write('\r[%s] scraping %s... ' % (get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), item))
@@ -541,7 +541,7 @@ def scrape(item, http, host, search, user_agent):
 	user = None if item[0] == '#' else item
 	insert_pos_total = 0
 	for t in twats:
-		if item[0] == '#': user = t['user']
+		if item[0] == '#': user = t['user'].lower()
 		if not user in insert_pos: insert_pos[user] = 0
 
 		if not in_twatlist(user, t):
@@ -733,7 +733,7 @@ def load_watchlist():
 	global watchlist, wl_hash, has_keywords
 	wl = []
 	for x in open(args.watchlist, 'r').readlines():
-		x = x.rstrip()
+		x = x.rstrip().lower()
 		if x.startswith(';'):
 			username = x[1:]
 			disabled_users[username] = True
