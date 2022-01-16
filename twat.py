@@ -348,15 +348,31 @@ def extract_twats(html, item, twats, timestamp, checkfn, nitters):
 		if nfetched == 2 and checkfn and not checkfn(item, twats):
 			return twats, cursor
 
+""" this function might require some love """
 def nitter_time_to_timegm(nt):
-	try:
+	nt = nt.encode('utf-8') if isinstance(nt, unicode) else nt
+	# new date format
+	if nt.find('/') == -1:
+		months = {'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6, 'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12 }
+		ampm = nt.split(' ')[5]
+		mon = months[nt.split(' ')[0]]
+		day = nt.split(' ')[1].strip(',')
+		yea = nt.split(' ')[2]
+		hou = int(nt.split(' ')[4].split(':')[0])
+		min = nt.split(' ')[4].split(':')[1]
+		strp = datetime.datetime.strptime('%s-%s-%s %s:%s:00 %s' % (int(yea), int(mon), int(day), int(hou), int(min), ampm), '%Y-%m-%d %H:%M:%S %p')
+		dd, tt = str(strp).split(' ')
+		yea, mon, day = dd.split('-')
+		hou, min, sec = tt.split(':')
+
+		dtdt = datetime.datetime(int(yea), int(mon), int(day), int(hou), int(min), int(sec))
+	# old time format
+	else:
 		nt = nt.split(',')
 		d = nt[0].split('/')
 		t = nt[1].strip().split(':')
 		dtdt = datetime.datetime(int(d[2]), int(d[1]), int(d[0]), int(t[0]), int(t[1]))
-		return calendar.timegm(dtdt.timetuple())
-	except:
-		return round(time.time())
+	return calendar.timegm(dtdt.timetuple())
 
 def extract_twat(soup, twats, timestamp,nitters={}):
 	for div in soup.body.find_all('div'): # , attrs={'class':'tweet  '}):
@@ -406,7 +422,7 @@ def extract_twat(soup, twats, timestamp,nitters={}):
 				quote_link = quoted.find('a', attrs={'class': 'quote-link'}).get('href')
 				quser = quote_link.split('/')[1]
 				qid = quote_link.split('/')[3].split('#')[0]
-				qtime = quoted.find('span', attrs={'class': 'tweet-date'}).get('title')
+				qtime = quoted.find('span', attrs={'class': 'tweet-date'}).find('a').get('title')
 				if qtime: qtime = nitter_time_to_timegm( qtime )
 				quote_tweet = {
 					'user': quser.lower(),
