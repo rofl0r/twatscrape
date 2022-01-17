@@ -1,4 +1,5 @@
 from twat import get_twats, mirror_twat, get_effective_twat_id, unshorten_urls, fetch_profile_picture
+from mastodon import get_toots
 from rocksock import RocksockProxyFromURL
 from nitter import set_invalid_nitter, get_nitter_instance
 import time
@@ -45,11 +46,17 @@ def replace_url_in_twat(twat, args=None):
 		elif 'title' in a.attrs:
 			username = a.attrs['href'].split('/')[1]
 			at_link = user_at_link(username.lower())
-			rebuild = '<b>%s<a href="https://%s/%s">%s</a></b>' % (at_link, random.choice(args.instances), username, username)
+			if username.find('@') == -1:
+				rebuild = '<b>%s<a href="https://%s/%s">%s</a></b>' % (at_link, random.choice(args.instances), username, username)
+			else:
+				_, u, h = username.split('@')
+				rebuild = '<b>%s<a href="https://%s/@%s">%s</a></b>' % (at_link, h, u, username)
 			# this fails when nonascii chars are present in a['title']
 			# XXX: would be nice to remove that 'title' attr, which would solve the issue
 			try: twat['text'] = twat['text'].replace(str(a), rebuild)
-			except: pass
+			except Exception as e:
+				print('cannot replace twat text: %s' %twat['text'])
+				pass
 
 	return twat['text']
 
@@ -107,7 +114,7 @@ def build_iconbar(twat, variables, quoted):
 		bar += '<a href="%s" name="%s">%s</a>'%(il2, id,'&#9193;')
 
 	## twitter
-	bar += '&nbsp;<a target="_blank" href="https://api.twitter.com/1.1/statuses/retweets/%d.json" title="retweet">%s</a>' % (int(twat['id']), '&#128038;')
+	#bar += '&nbsp;<a target="_blank" href="https://api.twitter.com/1.1/statuses/retweets/%d.json" title="retweet">%s</a>' % (int(twat['id']), '&#128038;')
 	## wayback machine
 	bar += '&nbsp;<a target="_blank" href="https://web.archive.org/save/https://twitter.com/%s/status/%s" title="wayback">%s</a>' % (twat['user'], twat['id'], '&#9852;')
 	## json file
@@ -201,11 +208,16 @@ def html_header():
 def user_at_link(user):
 	if user in watchlist:
 		return '<a href="?user=%s">@</a>' % user
-	return '<a href="https://%s/%s">@</a>' % (random.choice(args.instances), user)
+
+	if user.find('@') == -1:
+		return '<a href="https://%s/%s">@</a>' % (random.choice(args.instances), user)
+	else:
+		_, u, h = user.split('@')
+		return '<a href="https://%s/@%s">@</a>' % (h,u)
 
 def replace_twat_text(text):
 	try: text = text.decode('utf8').replace('\n', '<br>') #replace( u'\xa0', ' ').replace(u'\0xe2', '	')
-	except: pass
+	except: return text
 	return text
 
 def htmlize_twat(twat, variables, quoted=False):
@@ -223,8 +235,13 @@ def htmlize_twat(twat, variables, quoted=False):
 
 		if paths.has_profile_pic(twat['owner']): retweet_pic = paths.get_profile_pic(twat['owner'])
 
-		retweet_str = " (RT %s<a target='_blank' href='https://%s/%s/status/%s'>%s</a>)" % \
-		(user_at_link(twat['user']), random.choice(args.instances), twat['user'], twat['id'], twat['user'])
+		if twat['user'].find('@') == -1:
+			retweet_str = " (RT %s<a target='_blank' href='https://%s/%s/status/%s'>%s</a>)" % \
+			(user_at_link(twat['user']), random.choice(args.instances), twat['user'], twat['id'], twat['user'])
+		else:
+			_, u, h = twat['user'].split('@')
+			retweet_str = " (RT %s<a target='_blank' href='https://%s/@%s/%s'>%s</a>)" % \
+			(user_at_link(twat['user']), h, u, twat['id'], twat['user'].lstrip('@'))
 
 	if tweet_pic: tw += '<div class="profile_picture"><img width="100%%" height="100%%" src="%s"></div>' % tweet_pic
 	if retweet_pic: tw += '<div class="profile_picture_retweet"><img width="100%%" height="100%%" src="%s"></div>' % retweet_pic
@@ -318,8 +335,11 @@ def sort_tweets_func(x, y):
 	# sorting indicator, so we use it on all tweets > 2018
 	timestamp_2018 = 1514764800 #01/01/2018
 	if x['time'] > timestamp_2018 and y['time'] > timestamp_2018:
-		t1 = int(get_effective_twat_id(x))
-		t2 = int(get_effective_twat_id(y))
+		try:
+			t1 = int(get_effective_twat_id(x))
+			t2 = int(get_effective_twat_id(y))
+		except:
+			return -1
 		if t1 == t2: return 0
 		elif t1 > t2: return 1
 		else: return -1
@@ -521,6 +541,7 @@ def get_timestamp(date_format, date=None):
 
 def scrape(item, http, host, search, user_agent):
 	global nitters
+	global mastodon_rshttp
 	item = item.lower()
 
 	if item in new_accounts:
@@ -535,7 +556,13 @@ def scrape(item, http, host, search, user_agent):
 	sys.stdout.write('\r[%s] scraping %s... ' % (get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), item))
 	sys.stdout.flush()
 
-	twats, nitters, host, http = get_twats(item, proxies=args.proxy, count=count, http=http, checkfn=checkfn, nitters=nitters, host=host, search=search, user_agent=user_agent)
+	if item.find('@') == -1:
+		platform = 'twitter'
+		twats, nitters, host, http = get_twats(item, proxies=args.proxy, count=count, http=http, checkfn=checkfn, nitters=nitters, host=host, search=search, user_agent=user_agent)
+	else:
+		platform = 'mastodon'
+		twats, http = get_toots(item, proxies=args.proxy, count=count, http=http, checkfn=checkfn, user_agent=user_agent)
+		mastodon_rshttp[host] = http
 
 	new = False
 	user = None if item[0] == '#' else item
@@ -551,11 +578,19 @@ def scrape(item, http, host, search, user_agent):
 			insert_pos[user] += 1
 			insert_pos_total += 1
 			if 'quote_tweet' in t:
+				if '@' in t['quote_tweet']['user']:
+					_, foo, bar = t['quote_tweet']['user'].split('@')
+					http = None if not bar in mastodon_rshttp else mastodon_rshttp[bar]
+
 				if not os.path.isdir(paths.get_user(t[quote_tweet]['user'])): retry_makedirs(paths.get_user(t[quote_tweet]['user']))
-				fetch_profile_picture(t[quote_tweet]['user'], args.proxy, twhttp=nitter_rshttp, nitters=nitters)
+				fetch_profile_picture(t[quote_tweet]['user'], args.proxy, twhttp=http, nitters=nitters, platform=platform)
 			if 'user' in t:
+				if '@' in t['user']:
+					_, foo, bar = t['user'].split('@')
+					http = None if not bar in mastodon_rshttp else mastodon_rshttp[bar]
+
 				if not os.path.isdir(paths.get_user(t['user'])): retry_makedirs(paths.get_user(t['user']))
-				fetch_profile_picture(t['user'], args.proxy, twhttp=nitter_rshttp, nitters=nitters)
+				fetch_profile_picture(t['user'], args.proxy, twhttp=http, nitters=nitters, platform=platform)
 			if args.mirror: mirror_twat(t, args=args)
 			sys.stdout.write('\r[%s] scraping %s... +%d ' % (get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), item, insert_pos_total))
 			sys.stdout.flush()
@@ -850,6 +885,7 @@ if __name__ == '__main__':
 
 	nitter_rshttp = None
 	host = None
+	mastodon_rshttp = dict()
 
 	load_watchlist()
 
@@ -872,8 +908,14 @@ if __name__ == '__main__':
 			## scrape profile
 			for item in watchlist:
 				if not item in disabled_users:
-					search = True if item[0] == '#' else False
-					nitter_rshttp, host = scrape(item, nitter_rshttp, host, search, user_agent)
+					if item.find('@') == -1:
+						search = True if item[0] == '#' else False
+						nitter_rshttp, host = scrape(item, nitter_rshttp, host, search, user_agent)
+					else:
+						_, _, host = item.split('@')
+						if not host in mastodon_rshttp: mastodon_rshttp[host] = None
+						mastodon_rshttp[host], _ = scrape(item=item, http=mastodon_rshttp[host], host=host, search=False, user_agent=user_agent)
+
 			time.sleep(args.profile)
 
 		except KeyboardInterrupt:

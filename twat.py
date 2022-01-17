@@ -1,6 +1,7 @@
 from http2 import RsHttp, _parse_url
 from soup_parser import soupify
 from nitter import nitter_get, nitter_connect, get_nitter_instance, set_invalid_nitter
+from mastodon import mastodon_get
 import time, datetime, calendar
 import json
 import os.path
@@ -284,19 +285,27 @@ def get_style_tag(tag, styles):
 		if tg.strip() == tag: return s.strip()
 	return None
 
-def fetch_profile_picture(user, proxies, res=None, twhttp=None, nitters={}):
+def fetch_profile_picture(user, proxies, res=None, twhttp=None, nitters={}, platform='twitter', user_agent='curl/7.60.0'):
 	pic_path = paths.get_profile_pic(user)
 	if os.path.isfile(pic_path): return
 
-	if not res:
-		while not twhttp:
-			twhttp, host, nitters = nitter_connect(nitters, proxies)
-			# no avail. instance, pic will be scraped another time
-			if not twhttp: return
+	if platform == 'mastodon':
+		if not res:
+			_, user, host = user.split('@')
+			try: hdr, res, _, _ = mastodon_get('/@%s' %user, twhttp, host, proxies)
+			except UnicodeDecodeError: return None
+			except: return None
 
-		try: hdr, res = twhttp.get("/%s" % user)
-		# user does not exist
-		except UnicodeDecodeError: return None
+	elif platform == 'twitter':
+		if not res:
+			while not twhttp:
+				twhttp, host, nitters = nitter_connect(nitters, proxies)
+				# no avail. instance, pic will be scraped another time
+				if not twhttp: return
+
+			try: hdr, res = twhttp.get("/%s" % user)
+			# user does not exist
+			except UnicodeDecodeError: return None
 
 	soup = soupify(res)
 	for meta in soup.find_all('meta', attrs={'property': 'og:image'}):
