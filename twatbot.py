@@ -26,6 +26,7 @@ disabled_users = dict()
 watchlist = []
 new_accounts = []
 has_keywords = False
+all_tweets = []
 site_dirs = [
 	"/css",
 ]
@@ -193,6 +194,7 @@ def js_searchbox():
 	"</script>")
 
 def html_header():
+	global all_tweets
 	header = """<!DOCTYPE html><html><head>
 <title>%s</title><meta charset="utf-8"/>""" % args.title
 
@@ -202,6 +204,7 @@ def html_header():
 	## autorefresh the page ?
 	if args.refresh: header += """<meta http-equiv="refresh" content="%d" >""" % args.refresh
 	header += """<link rel='stylesheet' type='text/css' href='css/%s.css'></head><body>""" % args.theme
+	if len(all_tweets): header += '<a class="export" href=/export download="twats.json">export %d tweets</a>' % len(all_tweets)
 
 	return header
 
@@ -419,6 +422,7 @@ def find_tweets(all_tweets, search=None, users=None):
 # return tuple of html, redirect_url
 # only one of both is set to something other than ""
 def render_site(variables = {}):
+	global all_tweets
 	html = []
 
 	page = 0 if not 'page' in variables else int(variables['page'])
@@ -724,6 +728,10 @@ def httpsrv_client_thread(c, evt_done):
 		c.serve_file(os.getcwd() + req['url'])
 	elif req['url'] == '/robots.txt':
 		c.send(200, "OK", "User-agent: *\nDisallow: /")
+
+	elif req['url'] == '/export':
+		global all_tweets
+		c.send(200,'OK', json.dumps(all_tweets, sort_keys=True, indent=4))
 
 	elif req['url'].startswith('/config.html'):
 		if args.config > 0:

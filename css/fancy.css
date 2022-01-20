@@ -1,6 +1,7 @@
 html { font-size: 14px; background: #eee; Font-Family: Monospace; color: #fff;}
 div.iconbar { position: relative; float: right; margin-right: 1%; font-size: 14px;}
 div.iconbar a { text-decoration: none; }
+a.export { position: absolute; top: 0; right: 2%; color:blue; text-decoration: none;}
 
 div.profile_picture {position: absolute; height: 45px; width: 45px; margin: -10px 0 0 -5px; overflow: hidden; border-radius: 100px 100px 100px 100px; }
 div.profile_picture_retweet {position: absolute; height: 45px; width: 45px; margin: -10px 0 0 30px; overflow: hidden; border-radius: 100px 100px 100px 100px;}
