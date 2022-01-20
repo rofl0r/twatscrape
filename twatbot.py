@@ -56,7 +56,7 @@ def replace_url_in_twat(twat, args=None):
 			# XXX: would be nice to remove that 'title' attr, which would solve the issue
 			try: twat['text'] = twat['text'].replace(str(a), rebuild)
 			except Exception as e:
-				print('cannot replace twat text: %s' %twat['text'])
+				print('replace_url_in_twats: %s' %e)
 				pass
 
 	return twat['text']
