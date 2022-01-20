@@ -414,6 +414,7 @@ def extract_twat(soup, twats, timestamp,nitters={}):
 				else:
 					t = str(t.string.encode('utf-8')) if isinstance( t.string, unicode) else str(t.string)
 				tweet_text += t #str(t).encode('utf-8') if 'Tag' in str(type(t)) else t.string.encode('utf-8')
+			if isinstance(tweet_text, unicode): tweet_text = tweet_text.encode('utf-8')
 
 			tweet_time = nitter_time_to_timegm( div.find('span', attrs={'class': 'tweet-date'}).find('a').get('title') )
 
@@ -427,6 +428,7 @@ def extract_twat(soup, twats, timestamp,nitters={}):
 			quoted = div.find('div', attrs={'class':'quote-text'})
 			if quoted:
 				qtext = quoted.get_text()
+				if isinstance(qtext, unicode): qtext = qtext.encode('utf-8')
 				quoted = div.find('div', attrs={'class': 'quote-big'})
 				quote_link = quoted.find('a', attrs={'class': 'quote-link'}).get('href')
 				quser = quote_link.split('/')[1]
