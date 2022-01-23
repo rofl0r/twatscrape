@@ -357,8 +357,10 @@ def sort_tweets(twts):
 	return sorted(twts, cmp=sort_tweets_func, reverse=True)
 
 def get_all_tweets(remove_dupes=False):
+	global ignore
 	all_tweets = []
 	for user in tweets:
+		if user in ignore: continue
 		all_tweets.extend(add_owner_to_list(user, tweets[user]))
 
 	all_tweets = sort_tweets(all_tweets)
@@ -562,10 +564,10 @@ def scrape(item, http, host, search, user_agent):
 
 	if item.find('@') == -1:
 		platform = 'twitter'
-		twats, nitters, host, http = get_twats(item, proxies=args.proxy, count=count, http=http, checkfn=checkfn, nitters=nitters, host=host, search=search, user_agent=user_agent)
+		twats, nitters, host, http = get_twats(item, proxies=args.proxy, count=count, http=http, checkfn=checkfn, nitters=nitters, host=host, search=search, user_agent=user_agent, ignore=args.ignore)
 	else:
 		platform = 'mastodon'
-		twats, http = get_toots(item, proxies=args.proxy, count=count, http=http, checkfn=checkfn, user_agent=user_agent)
+		twats, http = get_toots(item, proxies=args.proxy, count=count, http=http, checkfn=checkfn, user_agent=user_agent, ignore=args.ignore)
 		mastodon_rshttp[host] = http
 
 	new = False
@@ -805,6 +807,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--dir', help="where to save twats (default: current directory)", type=str, default=None, required=False)
 	parser.add_argument('--watchlist', help="specify watchlist to use (default: watchlist.txt)", type=str, default='watchlist.txt', required=False)
+	parser.add_argument('--ignore', help="specify a file containing user accounts to ignore (default: ignorelist.txt)", type=str, default="ignorelist.txt", required=False)
 	parser.add_argument('--randomize-watchlist', help="randomize watchlist on each loop (default: 0)", type=int, default=0, required=False)
 	parser.add_argument('--refresh', help="refresh html page every X seconds - 0: disabled (default: 0)", type=int, default=0, required=False)
 	parser.add_argument('--title', help="defile title (default: %s)" % title, type=str, default=title, required=False)
@@ -841,6 +844,12 @@ if __name__ == '__main__':
 	else:
 		with open('nitter_instances.txt', 'r') as h:
 			args.instances = [ r.strip() for r in h.readlines() ]
+
+	ignore = dict()
+	if os.path.isfile(args.ignore):
+		with open(args.ignore, 'r') as h:
+			for l in h.readlines():
+				ignore[l.strip()] = 1
 
 	random.shuffle(args.instances)
 	nitters = {}

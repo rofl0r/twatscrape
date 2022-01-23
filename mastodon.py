@@ -19,7 +19,7 @@ def extract_props(item):
 	props = props.encode('utf-8') if isinstance(props, unicode) else props
 	return json.loads(props)
 
-def extract_toots(html, item, toots, timestamp, checkfn):
+def extract_toots(html, item, toots, timestamp, checkfn, ignore={}):
 	cursor = [ a.get('href') for a in soupify(html).body.find_all('a') if a.get('href').find('?max_id=') != -1 ]
 	cursor = cursor[0] if len(cursor) else None
 	quote_toot = None
@@ -53,6 +53,7 @@ def extract_toots(html, item, toots, timestamp, checkfn):
 		toot_author = infodiv.find('a', attrs={'class':'status__display-name'}).get('href').split('/')[3].lower()
 		toot_displayname = infodiv.find('strong', attrs={'class':'display-name__html'}).get_text()
 		toot_account = infodiv.find('span', attrs={'class':'display-name__account'}).contents[0].strip()
+		if toot_account in ignore: continue
 		# FIXME: toot_text has weird formatting upon scraping, but displays fine
 		# once twatbot is restarted... needs to investigate this.
 		toot_text = str(element.find('div', attrs={'class':'e-content'}))
@@ -113,7 +114,7 @@ def mastodon_get(req, http, host, proxies, user_agent='curl/7.60.0'):
 		return hdr, res, http, host
 	return None, None, None, host
 
-def get_toots(item, proxies=None, count=0, http=None, checkfn=None, user_agent='curl/7.60.0'):
+def get_toots(item, proxies=None, count=0, http=None, checkfn=None, user_agent='curl/7.60.0', ignore={}):
 	toots = []
 	_, user, host = item.split('@')
 
@@ -123,7 +124,7 @@ def get_toots(item, proxies=None, count=0, http=None, checkfn=None, user_agent='
 	break_loop = False
 
 	while True:
-		toots, cursor = extract_toots(res, item, toots, timestamp, checkfn)
+		toots, cursor = extract_toots(res, item, toots, timestamp, checkfn, ignore)
 
 		if count == 0 or len(toots) == 0 or break_loop or (count != -1 and len(toots) >= count): break
 		if checkfn and not checkfn(item, toots): break
