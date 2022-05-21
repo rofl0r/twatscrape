@@ -18,6 +18,7 @@ import hashlib
 import paths
 from utils import safe_write, retry_makedirs
 import socket, errno
+import misc
 
 title="twatscrape"
 tweets = dict()
@@ -541,10 +542,6 @@ def fetch_more_tweets_callback(item, twats):
 		if in_twatlist(user, twat): return False
 	return True
 
-def get_timestamp(date_format, date=None):
-	if not date: date = time.time()
-	return time.strftime(date_format, time.gmtime(date))
-
 def scrape(item, http, host, search, user_agent):
 	global nitters
 	global mastodon_rshttp
@@ -557,22 +554,20 @@ def scrape(item, http, host, search, user_agent):
 	else:
 		checkfn = fetch_more_tweets_callback
 		count = args.count if item[0] == '#' else -1
-	elapsed_time = time.time()
-	insert_pos = dict()
-	sys.stdout.write('\r[%s] scraping %s... ' % (get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), item))
-	sys.stdout.flush()
 
 	if item.find('@') == -1:
 		platform = 'twitter'
-		twats, nitters, host, http = get_twats(item, proxies=args.proxy, count=count, http=http, checkfn=checkfn, nitters=nitters, host=host, search=search, user_agent=user_agent, ignore=args.ignore)
+		twats, nitters, host, http, page = get_twats(item, proxies=args.proxy, count=count, http=http, checkfn=checkfn, nitters=nitters, host=host, search=search, user_agent=user_agent, ignore=args.ignore)
 	else:
 		platform = 'mastodon'
 		twats, http = get_toots(item, proxies=args.proxy, count=count, http=http, checkfn=checkfn, user_agent=user_agent, ignore=args.ignore)
 		mastodon_rshttp[host] = http
 
+	insert_pos = dict()
 	new = False
 	user = None if item[0] == '#' else item
 	insert_pos_total = 0
+	elapsed_time = time.time()
 	for t in twats:
 		if item[0] == '#': user = t['user'].lower()
 		if not user in insert_pos: insert_pos[user] = 0
@@ -598,7 +593,7 @@ def scrape(item, http, host, search, user_agent):
 				if not os.path.isdir(paths.get_user(t['user'])): retry_makedirs(paths.get_user(t['user']))
 				fetch_profile_picture(t['user'], args.proxy, twhttp=http, nitters=nitters, platform=platform)
 			if args.mirror: mirror_twat(t, args=args)
-			sys.stdout.write('\r[%s] scraping %s... +%d ' % (get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), item, insert_pos_total))
+			sys.stdout.write('\r[%s] %s: extracting from %d page(s): +%d twat(s)' % (misc.get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), item, page, insert_pos_total))
 			sys.stdout.flush()
 
 	if new:
@@ -607,7 +602,7 @@ def scrape(item, http, host, search, user_agent):
 		else:
 			write_user_tweets(item)
 	elapsed_time = (time.time() - elapsed_time)
-	sys.stdout.write('done (%s)\n' % get_timestamp("%H:%M:%S", elapsed_time))
+	sys.stdout.write('done (%s)\n' % misc.get_timestamp("%H:%M:%S", elapsed_time))
 	sys.stdout.flush()
 	return http, host
 

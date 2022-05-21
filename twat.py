@@ -9,6 +9,8 @@ import hashlib
 import re
 import random
 import paths
+import misc
+import sys
 from utils import retry_write, retry_makedirs
 # the effective id of a twat is the retweet id, if it's a retweet
 def get_effective_twat_id(twat):
@@ -523,6 +525,12 @@ def extract_twat(soup, twats, timestamp, nitters={}, ignore={}):
 def get_twats(item, proxies=None, count=0, http=None, checkfn=None, nitters={}, host=None, search=False, user_agent="curl/7.60.0", ignore={}):
 	query = '/search?f=tweets&q=%s' % item.strip('#') if search else '/%s' %item
 
+	page = 0
+	elapsed_time = time.time()
+
+	sys.stdout.write('\r[%s] %s: scraping... p:%d ' % (misc.get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), item, page))
+	sys.stdout.flush()
+
 	hdr, res, http, host, nitters = nitter_get(query, http, host, nitters, proxies, user_agent)
 
 	# make sure all tweets fetched in a single invocation get the same timestamp,
@@ -530,10 +538,11 @@ def get_twats(item, proxies=None, count=0, http=None, checkfn=None, nitters={}, 
 	timestamp = int(time.time())
 
 	twats = []
-
 	break_loop = False
 
 	while True:
+		sys.stdout.write('\r[%s] %s: scraping... p:%d ' % (misc.get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), item, page))
+		sys.stdout.flush()
 		twats, cursor = extract_twats(res, item, twats, timestamp, checkfn, nitters, ignore)
 		if count == 0 or len(twats) == 0 or break_loop or (count != -1 and len(twats) >= count): break
 		if checkfn and not checkfn(item, twats): break
@@ -545,8 +554,9 @@ def get_twats(item, proxies=None, count=0, http=None, checkfn=None, nitters={}, 
 		if not len(cursor): break
 		query = '/search?f=tweets&q=%s%s' % (item.strip('#'), cursor[0]) if search else '/%s%s' % (item, cursor[0])
 		hdr, res, http, host, nitters = nitter_get(query, http, host, nitters, proxies, user_agent)
+		page = page + 1
 
-	return twats, nitters, host, http
+	return twats, nitters, host, http, page
 
 if __name__ == '__main__':
 	print repr ( get_twats('realdonaldtrump') )
