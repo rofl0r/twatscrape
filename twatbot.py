@@ -793,7 +793,7 @@ def load_watchlist():
 		watchlist = wl
 		json_loads()
 
-	if has_keywords:
+	if has_keywords and os.path.exists('users'):
 		for file in os.listdir('users'):
 			d = os.path.join('users', file)
 			if os.path.isdir(d): load_user_json(file)
