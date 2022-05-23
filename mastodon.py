@@ -137,4 +137,4 @@ def get_toots(item, proxies=None, count=0, http=None, checkfn=None, user_agent='
 	return toots, http
 
 if __name__ == '__main__':
-	get_toots('Decentralize_today@mastodon.social', proxies=None, count=-1, http=None, checkfn=None)
+	get_toots('@Decentralize_today@mastodon.social', proxies=None, count=-1, http=None, checkfn=None)
