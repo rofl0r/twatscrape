@@ -358,11 +358,11 @@ def sort_tweets(twts):
 	return sorted(twts, cmp=sort_tweets_func, reverse=True)
 
 def get_all_tweets(remove_dupes=False):
-	global ignore, whitelist
+	global blacklist, whitelist
 	all_tweets = []
 	if len(whitelist): use_whitelist = True
 	for user in tweets:
-		if user in ignore: continue
+		if user in blacklist: continue
 		if use_whitelist and not user in whitelist: continue
 		all_tweets.extend(add_owner_to_list(user, tweets[user]))
 
@@ -559,10 +559,10 @@ def scrape(item, http, host, search, user_agent):
 
 	if item.find('@') == -1:
 		platform = 'twitter'
-		twats, nitters, host, http, page = get_twats(item, proxies=args.proxy, count=count, http=http, checkfn=checkfn, nitters=nitters, host=host, search=search, user_agent=user_agent, ignore=args.ignore, whitelist=args.whitelist)
+		twats, nitters, host, http, page = get_twats(item, proxies=args.proxy, count=count, http=http, checkfn=checkfn, nitters=nitters, host=host, search=search, user_agent=user_agent, blacklist=args.blacklist, whitelist=args.whitelist)
 	else:
 		platform = 'mastodon'
-		twats, http = get_toots(item, proxies=args.proxy, count=count, http=http, checkfn=checkfn, user_agent=user_agent, ignore=args.ignore, whitelist=args.whitelist)
+		twats, http = get_toots(item, proxies=args.proxy, count=count, http=http, checkfn=checkfn, user_agent=user_agent, blacklist=args.blacklist, whitelist=args.whitelist)
 		mastodon_rshttp[host] = http
 
 	insert_pos = dict()
@@ -804,7 +804,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--dir', help="where to save twats (default: current directory)", type=str, default=None, required=False)
 	parser.add_argument('--watchlist', help="specify watchlist to use (default: watchlist.txt)", type=str, default='watchlist.txt', required=False)
-	parser.add_argument('--ignore', help="specify a file containing user accounts to ignore (default: ignorelist.txt)", type=str, default="ignorelist.txt", required=False)
+	parser.add_argument('--blacklist', help="specify a file containing user accounts to ignore (default: blacklist.txt)", type=str, default="blacklist.txt", required=False)
 	parser.add_argument('--whitelist', help="only save twats from those user accounts (default: whitelist.txt)", type=str, default="whitelist.txt", required=False)
 	parser.add_argument('--randomize-watchlist', help="randomize watchlist on each loop (default: 0)", type=int, default=0, required=False)
 	parser.add_argument('--refresh', help="refresh html page every X seconds - 0: disabled (default: 0)", type=int, default=0, required=False)
@@ -843,11 +843,11 @@ if __name__ == '__main__':
 		with open('nitter_instances.txt', 'r') as h:
 			args.instances = [ r.strip() for r in h.readlines() ]
 
-	ignore = dict()
-	if os.path.isfile(args.ignore):
-		with open(args.ignore, 'r') as h:
+	blacklist = dict()
+	if os.path.isfile(args.blacklist):
+		with open(args.blacklist, 'r') as h:
 			for l in h.readlines():
-				ignore[l.strip()] = 1
+				blacklist[l.strip()] = 1
 
 	whitelist = dict()
 	if args.whitelist and os.path.isfile(args.whitelist):

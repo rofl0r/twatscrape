@@ -329,7 +329,7 @@ def fetch_profile_picture(user, proxies, res=None, twhttp=None, nitters={}, plat
 
 	return
 
-def extract_twats(html, item, twats, timestamp, checkfn, nitters, ignore, whitelist):
+def extract_twats(html, item, twats, timestamp, checkfn, nitters, blacklist, whitelist):
 	def find_div_end(html):
 		level = 0
 		for i in xrange(len(html)):
@@ -385,7 +385,7 @@ def nitter_time_to_timegm(nt):
 		dtdt = datetime.datetime(int(d[2]), int(d[1]), int(d[0]), int(t[0]), int(t[1]))
 	return calendar.timegm(dtdt.timetuple())
 
-def extract_twat(soup, twats, timestamp, nitters={}, ignore={}, whitelist={}):
+def extract_twat(soup, twats, timestamp, nitters={}, blacklist={}, whitelist={}):
 	for div in soup.body.find_all('div'): # , attrs={'class':'tweet  '}):
 		if 'class' in div.attrs and 'timeline-item' in div.attrs["class"]:
 
@@ -435,7 +435,7 @@ def extract_twat(soup, twats, timestamp, nitters={}, ignore={}, whitelist={}):
 				quoted = div.find('div', attrs={'class': 'quote-big'})
 				quote_link = quoted.find('a', attrs={'class': 'quote-link'}).get('href')
 				quser = quote_link.split('/')[1]
-				if quser in ignore: continue
+				if quser in blacklist: continue
 				qid = quote_link.split('/')[3].split('#')[0]
 				qtime = quoted.find('span', attrs={'class': 'tweet-date'}).find('a').get('title')
 				if qtime: qtime = nitter_time_to_timegm( qtime )
@@ -484,7 +484,7 @@ def extract_twat(soup, twats, timestamp, nitters={}, ignore={}, whitelist={}):
 						break
 
 			if tweet_user != None and tweet_id:
-				if tweet_user in ignore: continue
+				if tweet_user in blacklist: continue
 				if len(whitelist) and not tweet_user in whitelist: continue
 				vals = {'id':tweet_id, 'user':tweet_user, 'time':tweet_time, 'text':tweet_text, 'fetched':timestamp}
 				if retweet_id: vals['rid'] = retweet_id
@@ -524,7 +524,7 @@ def extract_twat(soup, twats, timestamp, nitters={}, ignore={}, whitelist={}):
 # if checkfn is passed , it'll be called with the username and current list of
 # received twats, and can decide whether fetching will be continued or not,
 # by returning True (continue) or False.
-def get_twats(item, proxies=None, count=0, http=None, checkfn=None, nitters={}, host=None, search=False, user_agent="curl/7.60.0", ignore={}, whitelist={}):
+def get_twats(item, proxies=None, count=0, http=None, checkfn=None, nitters={}, host=None, search=False, user_agent="curl/7.60.0", blacklist={}, whitelist={}):
 	query = '/search?f=tweets&q=%s' % item.strip('#') if search else '/%s' %item
 
 	page = 0
@@ -545,7 +545,7 @@ def get_twats(item, proxies=None, count=0, http=None, checkfn=None, nitters={}, 
 	while True:
 		sys.stdout.write('\r[%s] %s: scraping... p:%d ' % (misc.get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), item, page))
 		sys.stdout.flush()
-		twats, cursor = extract_twats(res, item, twats, timestamp, checkfn, nitters, ignore)
+		twats, cursor = extract_twats(res, item, twats, timestamp, checkfn, nitters, blacklist, whitelist)
 		if count == 0 or len(twats) == 0 or break_loop or (count != -1 and len(twats) >= count): break
 		if checkfn and not checkfn(item, twats): break
 
