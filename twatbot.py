@@ -833,6 +833,7 @@ if __name__ == '__main__':
 	parser.add_argument('--user-agent', help="define user agent to use", default="curl/7.60.0", type=str, required=False)
 	parser.add_argument('--random-user-agent', help="use random user agent", default=False, type=bool, required=False)
 	parser.add_argument('--user-agent-file', help="file containing user agents", default='useragent.txt', type=str, required=False)
+	parser.add_argument('--once', help="run once then exit", default=False, type=bool, required=False)
 
 
 	args = parser.parse_args()
@@ -941,6 +942,8 @@ if __name__ == '__main__':
 
 		except KeyboardInterrupt:
 			break
+
+		if args.once: break
 
 	try:
 		if not mirroring_done.is_set():
