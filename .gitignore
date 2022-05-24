@@ -5,4 +5,6 @@
 data/
 users/
 watchlist.txt
+blacklist.txt
+whitelist.txt
 nitter_instances.txt
