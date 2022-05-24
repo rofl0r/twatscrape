@@ -407,6 +407,7 @@ def extract_twat(soup, twats, timestamp, nitters={}, blacklist={}, whitelist={})
 
 			tweet_id = div.find('a', attrs={'class': 'tweet-link'}).get('href').split('/')[3].split('#')[0]
 			tweet_user = div.find('a', attrs={'class': 'username'}).get('title').lstrip('@').lower()
+			if tweet_user in blacklist or (len(whitelist) and not tweet_user in whitelist): continue
 
 			tt = [ i for i in div.find('div', attrs={'class': 'tweet-content'}).contents ]
 			tweet_text = ''
@@ -484,8 +485,6 @@ def extract_twat(soup, twats, timestamp, nitters={}, blacklist={}, whitelist={})
 						break
 
 			if tweet_user != None and tweet_id:
-				if tweet_user in blacklist: continue
-				if len(whitelist) and not tweet_user in whitelist: continue
 				vals = {'id':tweet_id, 'user':tweet_user, 'time':tweet_time, 'text':tweet_text, 'fetched':timestamp}
 				if retweet_id: vals['rid'] = retweet_id
 				if card_url: vals['curl'] = card_url
