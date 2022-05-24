@@ -527,11 +527,8 @@ def extract_twat(soup, twats, timestamp, nitters={}, blacklist={}, whitelist={})
 def get_twats(item, proxies=None, count=0, http=None, checkfn=None, nitters={}, host=None, search=False, user_agent="curl/7.60.0", blacklist={}, whitelist={}):
 	query = '/search?f=tweets&q=%s' % item.strip('#') if search else '/%s' %item
 
-	page = 0
+	page = 1
 	elapsed_time = time.time()
-
-	sys.stdout.write('\r[%s] %s: scraping... p:%d ' % (misc.get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), item, page))
-	sys.stdout.flush()
 
 	hdr, res, http, host, nitters = nitter_get(query, http, host, nitters, proxies, user_agent)
 
@@ -543,9 +540,9 @@ def get_twats(item, proxies=None, count=0, http=None, checkfn=None, nitters={}, 
 	break_loop = False
 
 	while True:
+		twats, cursor = extract_twats(res, item, twats, timestamp, checkfn, nitters, blacklist, whitelist)
 		sys.stdout.write('\r[%s] %s: scraping... p:%d ' % (misc.get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), item, page))
 		sys.stdout.flush()
-		twats, cursor = extract_twats(res, item, twats, timestamp, checkfn, nitters, blacklist, whitelist)
 		if count == 0 or len(twats) == 0 or break_loop or (count != -1 and len(twats) >= count): break
 		if checkfn and not checkfn(item, twats): break
 
