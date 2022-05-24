@@ -358,10 +358,12 @@ def sort_tweets(twts):
 	return sorted(twts, cmp=sort_tweets_func, reverse=True)
 
 def get_all_tweets(remove_dupes=False):
-	global ignore
+	global ignore, whitelist
 	all_tweets = []
+	if len(whitelist): use_whitelist = True
 	for user in tweets:
 		if user in ignore: continue
+		if use_whitelist and not user in whitelist: continue
 		all_tweets.extend(add_owner_to_list(user, tweets[user]))
 
 	all_tweets = sort_tweets(all_tweets)
@@ -557,10 +559,10 @@ def scrape(item, http, host, search, user_agent):
 
 	if item.find('@') == -1:
 		platform = 'twitter'
-		twats, nitters, host, http, page = get_twats(item, proxies=args.proxy, count=count, http=http, checkfn=checkfn, nitters=nitters, host=host, search=search, user_agent=user_agent, ignore=args.ignore)
+		twats, nitters, host, http, page = get_twats(item, proxies=args.proxy, count=count, http=http, checkfn=checkfn, nitters=nitters, host=host, search=search, user_agent=user_agent, ignore=args.ignore, whitelist=args.whitelist)
 	else:
 		platform = 'mastodon'
-		twats, http = get_toots(item, proxies=args.proxy, count=count, http=http, checkfn=checkfn, user_agent=user_agent, ignore=args.ignore)
+		twats, http = get_toots(item, proxies=args.proxy, count=count, http=http, checkfn=checkfn, user_agent=user_agent, ignore=args.ignore, whitelist=args.whitelist)
 		mastodon_rshttp[host] = http
 
 	insert_pos = dict()
@@ -803,6 +805,7 @@ if __name__ == '__main__':
 	parser.add_argument('--dir', help="where to save twats (default: current directory)", type=str, default=None, required=False)
 	parser.add_argument('--watchlist', help="specify watchlist to use (default: watchlist.txt)", type=str, default='watchlist.txt', required=False)
 	parser.add_argument('--ignore', help="specify a file containing user accounts to ignore (default: ignorelist.txt)", type=str, default="ignorelist.txt", required=False)
+	parser.add_argument('--whitelist', help="only save twats from those user accounts (default: whitelist.txt)", type=str, default="whitelist.txt", required=False)
 	parser.add_argument('--randomize-watchlist', help="randomize watchlist on each loop (default: 0)", type=int, default=0, required=False)
 	parser.add_argument('--refresh', help="refresh html page every X seconds - 0: disabled (default: 0)", type=int, default=0, required=False)
 	parser.add_argument('--title', help="defile title (default: %s)" % title, type=str, default=title, required=False)
@@ -845,6 +848,12 @@ if __name__ == '__main__':
 		with open(args.ignore, 'r') as h:
 			for l in h.readlines():
 				ignore[l.strip()] = 1
+
+	whitelist = dict()
+	if args.whitelist and os.path.isfile(args.whitelist):
+		with open(args.whitelist, 'r') as h:
+			for l in h.readlines():
+				whitelist[l.strip()] = 1
 
 	random.shuffle(args.instances)
 	nitters = {}

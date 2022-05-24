@@ -329,7 +329,7 @@ def fetch_profile_picture(user, proxies, res=None, twhttp=None, nitters={}, plat
 
 	return
 
-def extract_twats(html, item, twats, timestamp, checkfn, nitters, ignore):
+def extract_twats(html, item, twats, timestamp, checkfn, nitters, ignore, whitelist):
 	def find_div_end(html):
 		level = 0
 		for i in xrange(len(html)):
@@ -385,7 +385,7 @@ def nitter_time_to_timegm(nt):
 		dtdt = datetime.datetime(int(d[2]), int(d[1]), int(d[0]), int(t[0]), int(t[1]))
 	return calendar.timegm(dtdt.timetuple())
 
-def extract_twat(soup, twats, timestamp, nitters={}, ignore={}):
+def extract_twat(soup, twats, timestamp, nitters={}, ignore={}, whitelist={}):
 	for div in soup.body.find_all('div'): # , attrs={'class':'tweet  '}):
 		if 'class' in div.attrs and 'timeline-item' in div.attrs["class"]:
 
@@ -485,6 +485,7 @@ def extract_twat(soup, twats, timestamp, nitters={}, ignore={}):
 
 			if tweet_user != None and tweet_id:
 				if tweet_user in ignore: continue
+				if len(whitelist) and not tweet_user in whitelist: continue
 				vals = {'id':tweet_id, 'user':tweet_user, 'time':tweet_time, 'text':tweet_text, 'fetched':timestamp}
 				if retweet_id: vals['rid'] = retweet_id
 				if card_url: vals['curl'] = card_url
@@ -523,7 +524,7 @@ def extract_twat(soup, twats, timestamp, nitters={}, ignore={}):
 # if checkfn is passed , it'll be called with the username and current list of
 # received twats, and can decide whether fetching will be continued or not,
 # by returning True (continue) or False.
-def get_twats(item, proxies=None, count=0, http=None, checkfn=None, nitters={}, host=None, search=False, user_agent="curl/7.60.0", ignore={}):
+def get_twats(item, proxies=None, count=0, http=None, checkfn=None, nitters={}, host=None, search=False, user_agent="curl/7.60.0", ignore={}, whitelist={}):
 	query = '/search?f=tweets&q=%s' % item.strip('#') if search else '/%s' %item
 
 	page = 0
