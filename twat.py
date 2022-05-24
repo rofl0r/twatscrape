@@ -351,8 +351,7 @@ def extract_twats(html, item, twats, timestamp, checkfn, nitters, blacklist, whi
 		div_end = find_div_end(html)
 		slice = html[:div_end]
 		html = html[div_end:]
-		#twats = extract_twat(soupify(slice), twats, timestamp)
-		twats = extract_twat(soupify(html), twats, timestamp, nitters)
+		twats = extract_twat(soupify(html), twats, timestamp, nitters, blacklist, whitelist)
 		nfetched += 1
 		# if the first two (the very first could be pinned) tweets are already known
 		# do not waste cpu processing more html
@@ -408,6 +407,7 @@ def extract_twat(soup, twats, timestamp, nitters={}, blacklist={}, whitelist={})
 			tweet_id = div.find('a', attrs={'class': 'tweet-link'}).get('href').split('/')[3].split('#')[0]
 			tweet_user = div.find('a', attrs={'class': 'username'}).get('title').lstrip('@').lower()
 			if tweet_user in blacklist or (len(whitelist) and not tweet_user in whitelist): continue
+			print('user: %s' %tweet_user)
 
 			tt = [ i for i in div.find('div', attrs={'class': 'tweet-content'}).contents ]
 			tweet_text = ''
@@ -542,11 +542,11 @@ def get_twats(item, proxies=None, count=0, http=None, checkfn=None, nitters={}, 
 		twats, cursor = extract_twats(res, item, twats, timestamp, checkfn, nitters, blacklist, whitelist)
 		sys.stdout.write('\r[%s] %s: scraping... p:%d ' % (misc.get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), item, page))
 		sys.stdout.flush()
-		if count == 0 or len(twats) == 0 or break_loop or (count != -1 and len(twats) >= count): break
+		if count == 0 or (len(twats) == 0 and not len(cursor)) or break_loop or (count != -1 and len(twats) >= count): break
 		if checkfn and not checkfn(item, twats): break
 
 		# fetch additional tweets that are not in the initial set of 20:
-		last_id = get_effective_twat_id(twats[len(twats)-1])
+		if len(twats): last_id = get_effective_twat_id(twats[len(twats)-1])
 
 		# we scrapped everything
 		if not len(cursor): break

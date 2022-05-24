@@ -559,7 +559,7 @@ def scrape(item, http, host, search, user_agent):
 
 	if item.find('@') == -1:
 		platform = 'twitter'
-		twats, nitters, host, http, page = get_twats(item, proxies=args.proxy, count=count, http=http, checkfn=checkfn, nitters=nitters, host=host, search=search, user_agent=user_agent, blacklist=args.blacklist, whitelist=args.whitelist)
+		twats, nitters, host, http, page = get_twats(item, proxies=args.proxy, count=count, http=http, checkfn=checkfn, nitters=nitters, host=host, search=search, user_agent=user_agent, blacklist=blacklist, whitelist=whitelist)
 	else:
 		platform = 'mastodon'
 		twats, http = get_toots(item, proxies=args.proxy, count=count, http=http, checkfn=checkfn, user_agent=user_agent, blacklist=args.blacklist, whitelist=args.whitelist)
