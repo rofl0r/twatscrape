@@ -407,7 +407,6 @@ def extract_twat(soup, twats, timestamp, nitters={}, blacklist={}, whitelist={})
 			tweet_id = div.find('a', attrs={'class': 'tweet-link'}).get('href').split('/')[3].split('#')[0]
 			tweet_user = div.find('a', attrs={'class': 'username'}).get('title').lstrip('@').lower()
 			if tweet_user in blacklist or (len(whitelist) and not tweet_user in whitelist): continue
-			print('user: %s' %tweet_user)
 
 			tt = [ i for i in div.find('div', attrs={'class': 'tweet-content'}).contents ]
 			tweet_text = ''
@@ -540,7 +539,7 @@ def get_twats(item, proxies=None, count=0, http=None, checkfn=None, nitters={}, 
 
 	while True:
 		twats, cursor = extract_twats(res, item, twats, timestamp, checkfn, nitters, blacklist, whitelist)
-		sys.stdout.write('\r[%s] %s: scraping... p:%d ' % (misc.get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), item, page))
+		sys.stdout.write('\r[%s] %s: scraping... p:%d, t:%d ' % (misc.get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), item, page, len(twats)))
 		sys.stdout.flush()
 		if count == 0 or (len(twats) == 0 and not len(cursor)) or break_loop or (count != -1 and len(twats) >= count): break
 		if checkfn and not checkfn(item, twats): break
