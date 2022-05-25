@@ -361,7 +361,7 @@ def sort_tweets(twts):
 def get_all_tweets(remove_dupes=False):
 	global blacklist, whitelist
 	all_tweets = []
-	if len(whitelist): use_whitelist = True
+	use_whitelist = True if len(whitelist) else False
 	for user in tweets:
 		if user in blacklist: continue
 		if use_whitelist and not user in whitelist: continue
