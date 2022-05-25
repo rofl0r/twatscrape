@@ -19,6 +19,7 @@ import paths
 from utils import safe_write, retry_makedirs
 import socket, errno
 import misc
+import collections
 
 title="twatscrape"
 tweets = dict()
@@ -557,7 +558,7 @@ def scrape(item, http, host, search, user_agent):
 		checkfn = fetch_more_tweets_callback
 		count = args.count if item[0] == '#' else -1
 
-	if item.find('@') == -1:
+	if item.count('@') < 2:
 		platform = 'twitter'
 		twats, nitters, host, http, page = get_twats(item, proxies=args.proxy, count=count, http=http, checkfn=checkfn, nitters=nitters, host=host, search=search, user_agent=user_agent, blacklist=blacklist, whitelist=whitelist)
 	else:
@@ -930,7 +931,7 @@ if __name__ == '__main__':
 			## scrape profile
 			for item in watchlist:
 				if not item in disabled_users:
-					if item.find('@') == -1:
+					if item.count('@') < 2:
 						search = True if item[0] == '#' else False
 						nitter_rshttp, host = scrape(item, nitter_rshttp, host, search, user_agent)
 					else:
