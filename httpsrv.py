@@ -124,8 +124,8 @@ class HttpClient():
 				result[y] = z.strip()
 		if meth == 'POST':
 			result['postdata'] = dict()
-			postdata = s[rnrn:]
-			for line in postdata.split('\n'):
+			postdata = s[rnrn:].split('&')
+			for line in '\n'.join( postdata ).split('\n'):
 				if '=' in line:
 					k,v = line.split('=', 1)
 					result['postdata'][k] = self._url_decode(v.strip())
