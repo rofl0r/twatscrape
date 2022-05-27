@@ -679,7 +679,9 @@ def configpage(req = {}, variables={}):
 		with open('watchlist.txt', 'r') as handle: content = ''.join(handle.readlines())
 		html = [
 			'<div class="watchlist"><form name="configuration" action="config.html" method="post">\n',
-			'<textarea name="watchlist" cols="30" rows="20" placeholder="handles you want to follow, one per line">%s</textarea><br/>\n' % content,
+			'<label for=watchlist>watchlist</label><textarea id=watchlist name="watchlist" cols="30" rows="20" placeholder="watchlist, one per line">%s</textarea>\n' % content,
+			'<label for=whitelist>whitelist</label><textarea id=whitelist name="whitelist" cols="30" rows="20" placeholder="whitelist, one per line">%s</textarea>\n' %'\n'.join(whitelist.keys()),
+			'<label for=blacklist>blacklist</label><textarea id=blacklist name="blacklist" cols="30" rows="20" placeholder="blacklist, one per line">%s</textarea><br/>\n' %'\n'.join(blacklist.keys()),
 			'<input type="submit" value="save and apply">\n',
 			'</form></div>\n'
 		]
@@ -689,8 +691,14 @@ def configpage(req = {}, variables={}):
 		redir = 'index.html'
 		for item in req['postdata']:
 			if item == 'watchlist':
-				with open('watchlist.txt', 'w') as handle: handle.write(req['postdata'][item])
+				with open(args.watchlist, 'w') as handle: handle.write(req['postdata'][item])
 				load_watchlist()
+			elif item == 'blacklist':
+				with open(args.blacklist, 'w') as handle: handle.write(req['postdata'][item])
+				load_list(item)
+			elif item == 'whitelist':
+				with open(args.whitelist, 'w') as handle: handle.write(req['postdata'][item])
+				load_list(item)
 
 	return html, redir
 
@@ -771,6 +779,37 @@ def start_server(ip, port):
 	t.start()
 	return t, done
 
+whitelist_hash = None
+whitelist = dict()
+blacklist_hash = None
+blacklist = dict()
+def load_list(item):
+	if item == 'whitelist':
+		global whitelist_hash, whitelist
+		old_hash = whitelist_hash
+		fname = args.whitelist
+	else:
+		global blacklist_hash, blacklist
+		old_hash = blacklist_hash
+		fname = args.blacklist
+
+	wl = dict()
+	for x in open(fname, 'r').readlines():
+		x = x.rstrip().lower()
+		if x.startswith(';'): continue
+		else: wl[x] = 1
+
+	if not len(wl): return
+	newhash = hashlib.md5( ''.join(wl.keys())).hexdigest()
+	if newhash != old_hash:
+		print('reloading %s' %item)
+		if item == 'whitelist':
+			whitelist_hash = newhash
+			whitelist = wl
+		else:
+			blacklist_hash = newhash
+			blacklist = wl
+
 wl_hash = None
 def load_watchlist():
 	global watchlist, wl_hash, has_keywords
@@ -845,13 +884,11 @@ if __name__ == '__main__':
 		with open('nitter_instances.txt', 'r') as h:
 			args.instances = [ r.strip() for r in h.readlines() ]
 
-	blacklist = dict()
 	if os.path.isfile(args.blacklist):
 		with open(args.blacklist, 'r') as h:
 			for l in h.readlines():
 				blacklist[l.strip()] = 1
 
-	whitelist = dict()
 	if args.whitelist and os.path.isfile(args.whitelist):
 		with open(args.whitelist, 'r') as h:
 			for l in h.readlines():
