@@ -890,17 +890,6 @@ if __name__ == '__main__':
 	for instance in args.instances:
 		nitters[instance] = {'fail_ticks': 0, 'ban_time': 0}
 
-	if os.path.isfile(args.blacklist):
-		with open(args.blacklist, 'r') as h:
-			for l in h.readlines():
-				blacklist[l.strip()] = 1
-
-	if args.whitelist and os.path.isfile(args.whitelist):
-		with open(args.whitelist, 'r') as h:
-			for l in h.readlines():
-				whitelist[l.strip()] = 1
-
-
 	if args.mirror and 'v' in args.mirror:
 		args.rawproxy = args.proxy
 		if not args.ytdl: args.ytdl = 'youtube-dl'
@@ -950,6 +939,7 @@ if __name__ == '__main__':
 	mastodon_rshttp = dict()
 
 	load_watchlist()
+	for li in [ 'whitelist', 'blacklist']: load_list(li)
 
 	## resume/retry mirroring process
 	mirroring_done = threading.Event()
