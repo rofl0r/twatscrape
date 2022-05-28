@@ -874,6 +874,7 @@ if __name__ == '__main__':
 	parser.add_argument('--random-user-agent', help="use random user agent", default=False, type=bool, required=False)
 	parser.add_argument('--user-agent-file', help="file containing user agents", default='useragent.txt', type=str, required=False)
 	parser.add_argument('--once', help="run once then exit", default=False, type=bool, required=False)
+	parser.add_argument('--random-instances', help="randomize nitter instances (default: False)", default=False, type=bool, required=False)
 
 
 	args = parser.parse_args()
@@ -883,6 +884,11 @@ if __name__ == '__main__':
 	else:
 		with open('nitter_instances.txt', 'r') as h:
 			args.instances = [ r.strip() for r in h.readlines() ]
+	if args.random_instances: random.shuffle(args.instances)
+
+	nitters = {}
+	for instance in args.instances:
+		nitters[instance] = {'fail_ticks': 0, 'ban_time': 0}
 
 	if os.path.isfile(args.blacklist):
 		with open(args.blacklist, 'r') as h:
@@ -894,10 +900,6 @@ if __name__ == '__main__':
 			for l in h.readlines():
 				whitelist[l.strip()] = 1
 
-	random.shuffle(args.instances)
-	nitters = {}
-	for instance in args.instances:
-		nitters[instance] = {'fail_ticks': 0, 'ban_time': 0}
 
 	if args.mirror and 'v' in args.mirror:
 		args.rawproxy = args.proxy
