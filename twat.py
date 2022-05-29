@@ -387,133 +387,123 @@ def nitter_time_to_timegm(nt):
 	return calendar.timegm(dtdt.timetuple())
 
 def extract_twat(soup, twats, timestamp, nitters={}, blacklist={}, whitelist={}):
-	for div in soup.body.find_all('div'): # , attrs={'class':'tweet  '}):
-		if 'class' in div.attrs and 'timeline-item' in div.attrs["class"]:
+	for div in soup.body.find_all('div', attrs={'class':'timeline-item'}):
 
-			tweet_id = 0
-			tweet_user = None
-			tweet_time = None
-			tweet_text = None
-			retweet_id = 0
-			retweet_user = None
-			card_url = None
-			card_title = None
-			card_description = None
-			card_destination = None
-			images = None
-			quote_tweet = None
-			video = False
+		tweet_id = 0
+		tweet_user = None
+		tweet_time = None
+		tweet_text = None
+		retweet_id = 0
+		retweet_user = None
+		card_url = None
+		card_title = None
+		card_description = None
+		card_destination = None
+		images = None
+		quote_tweet = None
+		video = False
 
-			pinned = ('user-pinned' in div.attrs["class"])
+		pinned = ('user-pinned' in div.attrs["class"])
 
-			tweet_id = div.find('a', attrs={'class': 'tweet-link'}).get('href').split('/')[3].split('#')[0]
-			tweet_user = div.find('a', attrs={'class': 'username'}).get('title').lstrip('@').lower()
-			if tweet_user in blacklist or (len(whitelist) and not tweet_user in whitelist): continue
+		tweet_id = div.find('a', attrs={'class': 'tweet-link'}).get('href').split('/')[3].split('#')[0]
+		tweet_user = div.find('a', attrs={'class': 'username'}).get('title').lstrip('@').lower()
+		if tweet_user in blacklist or (len(whitelist) and not tweet_user in whitelist): continue
 
-			tt = [ i for i in div.find('div', attrs={'class': 'tweet-content'}).contents ]
-			tweet_text = ''
-			for t in tt:
-				if 'Tag' in str(type(t)):
-					t = str(t.encode('utf-8'))
-				else:
-					t = str(t.string.encode('utf-8')) if isinstance( t.string, unicode) else str(t.string)
-				tweet_text += t #str(t).encode('utf-8') if 'Tag' in str(type(t)) else t.string.encode('utf-8')
-			if isinstance(tweet_text, unicode): tweet_text = tweet_text.encode('utf-8')
+		tt = ''.join( [ i.string for i in div.find('div', attrs={'class': 'tweet-content'}).contents ] )
+		tweet_text = tt.encode('utf-8') if isinstance(tt, unicode) else tt
+		tweet_time = nitter_time_to_timegm( div.find('span', attrs={'class': 'tweet-date'}).find('a').get('title') )
 
-			tweet_time = nitter_time_to_timegm( div.find('span', attrs={'class': 'tweet-date'}).find('a').get('title') )
+		# it's a retweet
+		rt = div.find('div', attrs={'class': 'retweet-header'})
+		if rt is not None:
+			retweet_user = div.find('a', attrs={'class':'username'}).get('title').lstrip('@').lower()
+			if retweet_user != tweet_user: retweet_id = tweet_id
+			else: retweet_user = None
 
-			# it's a retweet
-			rt = div.find('div', attrs={'class': 'retweet-header'})
-			if rt is not None:
-				retweet_user = div.find('a', attrs={'class':'username'}).get('title').lstrip('@').lower()
-				if retweet_user != tweet_user: retweet_id = tweet_id
-				else: retweet_user = None
+		# user quotes someone else
+		quoted = div.find('div', attrs={'class':'quote-text'})
+		if quoted:
+			qtext = quoted.get_text()
+			if isinstance(qtext, unicode): qtext = qtext.encode('utf-8')
+			quoted = div.find('div', attrs={'class': 'quote-big'})
+			quote_link = quoted.find('a', attrs={'class': 'quote-link'}).get('href')
+			quser = quote_link.split('/')[1]
+			if quser in blacklist: continue
+			qid = quote_link.split('/')[3].split('#')[0]
+			qtime = quoted.find('span', attrs={'class': 'tweet-date'}).find('a').get('title')
+			if qtime: qtime = nitter_time_to_timegm( qtime )
+			quote_tweet = {
+				'user': quser.lower(),
+				'id': qid,
+				'text': qtext,
+				'time': qtime
+			}
 
-			# user quotes someone else
-			quoted = div.find('div', attrs={'class':'quote-text'})
-			if quoted:
-				qtext = quoted.get_text()
-				if isinstance(qtext, unicode): qtext = qtext.encode('utf-8')
-				quoted = div.find('div', attrs={'class': 'quote-big'})
-				quote_link = quoted.find('a', attrs={'class': 'quote-link'}).get('href')
-				quser = quote_link.split('/')[1]
-				if quser in blacklist: continue
-				qid = quote_link.split('/')[3].split('#')[0]
-				qtime = quoted.find('span', attrs={'class': 'tweet-date'}).find('a').get('title')
-				if qtime: qtime = nitter_time_to_timegm( qtime )
-				quote_tweet = {
-					'user': quser.lower(),
-					'id': qid,
-					'text': qtext,
-					'time': qtime
-				}
+		# find attachments
+		attachments_div = div.find('div', attrs={'class': 'attachments'})
+		if attachments_div:
+			images = []
+			for img in attachments_div.find_all('img'):
+				images.append('https://%s%s' % (get_nitter_instance(nitters, False), img.get('src')))
 
-			# find attachments
-			attachments_div = div.find('div', attrs={'class': 'attachments'})
-			if attachments_div:
-				images = []
-				for img in attachments_div.find_all('img'):
-					images.append('https://%s%s' % (get_nitter_instance(nitters, False), img.get('src')))
+			for vid in attachments_div.find_all('video'):
+				video = True
+				bg = vid.get('poster')
+				images.append('https://%s%s' % (get_nitter_instance(nitters, False), bg))
 
-				for vid in attachments_div.find_all('video'):
-					video = True
-					bg = vid.get('poster')
-					images.append('https://%s%s' % (get_nitter_instance(nitters, False), bg))
+		# card div..
+		card_div = div.find('div', attrs={'class': 'card'})
+		if card_div:
+			# card url (OK)
+			for a in card_div.find_all('a'):
+				if 'class' in a.attrs and 'card-container' in a.attrs['class']:
+					card_url = a.get('href')
+					break
+			# card title (OK)
+			for h2 in card_div.find_all('h2'):
+				if 'class' in h2.attrs and 'card-title' in h2.attrs['class']:
+					card_title = h2.get_text()
+					break
+			# card description
+			for p in card_div.find_all('p'):
+				if 'class' in p.attrs and 'card_description' in p.attrs['class']:
+					print('got card description')
+					card_description = p.get_text()
+					break
+			# card destination (OK)
+			for span in card_div.find_all('span'):
+				if 'class' in span.attrs and 'card-destination' in span.attrs['class']:
+					card_destination = span.get_text()
+					break
 
-			# card div..
-			card_div = div.find('div', attrs={'class': 'card'})
-			if card_div:
-				# card url (OK)
-				for a in card_div.find_all('a'):
-					if 'class' in a.attrs and 'card-container' in a.attrs['class']:
-						card_url = a.get('href')
-						break
-				# card title (OK)
-				for h2 in card_div.find_all('h2'):
-					if 'class' in h2.attrs and 'card-title' in h2.attrs['class']:
-						card_title = h2.get_text()
-						break
-				# card description
-				for p in card_div.find_all('p'):
-					if 'class' in p.attrs and 'card_description' in p.attrs['class']:
-						print('got card description')
-						card_description = p.get_text()
-						break
-				# card destination (OK)
-				for span in card_div.find_all('span'):
-					if 'class' in span.attrs and 'card-destination' in span.attrs['class']:
-						card_destination = span.get_text()
-						break
+		if tweet_user != None and tweet_id:
+			vals = {'id':tweet_id, 'user':tweet_user, 'time':tweet_time, 'text':tweet_text, 'fetched':timestamp}
+			if retweet_id: vals['rid'] = retweet_id
+			if card_url: vals['curl'] = card_url
+			if card_title: vals['ctitle'] = card_title
+			if card_description: vals['cdesc'] = card_description
+			if card_destination: vals['cdest'] = card_destination
+			if images: vals['images'] = images
+			if quote_tweet: vals['quote'] = quote_tweet
+			if pinned: vals['pinned'] = 1
+			if video: vals['video'] = 1
+			# save order of timeline by storing id of next twat
+			# next is equivalent to the next-newer twat.
+			if len(twats) and not 'pinned' in twats[len(twats)-1]:
+				next_twat = twats[len(twats)-1]
+				if len(next_twat):
+					vals['next'] = next_twat['id']
+					if retweet_id:
+						pr_time = 0
+						if 'rid' in next_twat:
+							if 'rid_time' in next_twat:
+								pr_time = next_twat['rid_time'] - 1
+						else:
+							pr_time = next_twat['time'] - 1
 
-			if tweet_user != None and tweet_id:
-				vals = {'id':tweet_id, 'user':tweet_user, 'time':tweet_time, 'text':tweet_text, 'fetched':timestamp}
-				if retweet_id: vals['rid'] = retweet_id
-				if card_url: vals['curl'] = card_url
-				if card_title: vals['ctitle'] = card_title
-				if card_description: vals['cdesc'] = card_description
-				if card_destination: vals['cdest'] = card_destination
-				if images: vals['images'] = images
-				if quote_tweet: vals['quote'] = quote_tweet
-				if pinned: vals['pinned'] = 1
-				if video: vals['video'] = 1
-				# save order of timeline by storing id of next twat
-				# next is equivalent to the next-newer twat.
-				if len(twats) and not 'pinned' in twats[len(twats)-1]:
-					next_twat = twats[len(twats)-1]
-					if len(next_twat):
-						vals['next'] = next_twat['id']
-						if retweet_id:
-							pr_time = 0
-							if 'rid' in next_twat:
-								if 'rid_time' in next_twat:
-									pr_time = next_twat['rid_time'] - 1
-							else:
-								pr_time = next_twat['time'] - 1
+						if pr_time != 0: vals['rid_time'] = pr_time
 
-							if pr_time != 0: vals['rid_time'] = pr_time
-
-				twats.append(vals)
-		break
+			if not vals in twats: twats.append(vals)
 	return twats
 
 # count: specify the number of twats that shall be fetched.
