@@ -796,6 +796,7 @@ def load_list(item):
 	wl = dict()
 	for x in open(fname, 'r').readlines():
 		x = x.rstrip().lower()
+		if not len(x): continue
 		if x.startswith(';'): continue
 		else: wl[x] = 1
 
