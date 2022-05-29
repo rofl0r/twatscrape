@@ -11,6 +11,7 @@ import random
 import paths
 import misc
 import sys
+import rsparse
 from utils import retry_write, retry_makedirs
 # the effective id of a twat is the retweet id, if it's a retweet
 def get_effective_twat_id(twat):
@@ -342,7 +343,8 @@ def extract_twats(html, item, twats, timestamp, checkfn, nitters, blacklist, whi
 
 	regex = re.compile(r'<div.*class.*[" ]timeline.item[" ]')
 	nfetched = 0
-	cursor = [ a.get('href') for a in soupify(html).body.find_all('a') if a.get('href').find('cursor=') != -1 ]
+	_as = '\n'.join( [ rs for rs in rsparse.find_all_tags(html, 'a') ])
+	cursor = [ a.get('href') for a in soupify(_as).body.find_all('a') if a.get('href').find('cursor=') != -1 ]
 	while 1:
 		match = regex.search(html)
 		if not match:
