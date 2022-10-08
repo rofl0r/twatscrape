@@ -291,33 +291,25 @@ def get_style_tag(tag, styles):
 		if tg.strip() == tag: return s.strip()
 	return None
 
-def fetch_profile_picture(user, proxies, res=None, twhttp=None, nitters={}, platform='twitter', user_agent='curl/7.60.0'):
+def fetch_nitter_picture(user, proxies, res=None, twhttp=None, nitters={}, user_agent='curl/7.74.0'):
 	pic_path = paths.get_profile_pic(user)
 	if os.path.isfile(pic_path): return
 
-	if platform == 'mastodon':
-		if not res:
-			_, user, host = user.split('@')
-			try: hdr, res, _, _ = mastodon_get('/@%s' %user, twhttp, host, proxies)
-			except UnicodeDecodeError: return None
-			except: return None
+	if not res:
+		while not twhttp:
+			twhttp, host, nitters = nitter_connect(nitters, proxies)
+			# no avail. instance, pic will be scraped another time
+			if not twhttp: return
 
-	elif platform == 'twitter':
-		if not res:
-			while not twhttp:
-				twhttp, host, nitters = nitter_connect(nitters, proxies)
-				# no avail. instance, pic will be scraped another time
-				if not twhttp: return
-
-			try: hdr, res = twhttp.get("/%s" % user)
-			# user does not exist
-			except UnicodeDecodeError: return None
+		try: hdr, res = twhttp.get("/%s" % user)
+		# user does not exist
+		except UnicodeDecodeError: return None
 
 	soup = soupify(res)
-	for meta in soup.find_all('meta', attrs={'property': 'og:image'}):
-		pic_url = meta.get('content') if '://' in meta.get('content') else 'https://%s%s' % (get_nitter_instance(nitters, False), meta.get('content'))
+	for a in soup.find_all('a', attrs={'class': 'profile-card-avatar'}):
+		pic_url = a.get('href') if '://' in a.get('href') else 'https://%s%s' % (get_nitter_instance(nitters, False), a.get('href'))
 		url_components = _split_url(pic_url)
-		http = RsHttp(host=url_components['host'], port=url_components['port'], timeout=30, ssl=url_components['ssl'], keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
+		http = RsHttp(host=url_components['host'], port=url_components['port'], timeout=30, ssl=url_components['ssl'], keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.74.0")
 
 		# if connection fails, the profile picture
 		# will be fetched another time
@@ -428,23 +420,24 @@ def extract_twat(html, twats, timestamp, nitters={}, blacklist={}, whitelist={})
 			else: retweet_user = None
 
 		# user quotes someone else
-		quoted = div.find('div', attrs={'class':'quote-text'})
-		if quoted:
-			qtext = quoted.get_text()
-			if isinstance(qtext, unicode): qtext = qtext.encode('utf-8')
-			quoted = div.find('div', attrs={'class': 'quote-big'})
-			quote_link = quoted.find('a', attrs={'class': 'quote-link'}).get('href')
-			quser = quote_link.split('/')[1]
-			if quser in blacklist: continue
-			qid = quote_link.split('/')[3].split('#')[0]
-			qtime = quoted.find('span', attrs={'class': 'tweet-date'}).find('a').get('title')
-			if qtime: qtime = nitter_time_to_timegm( qtime )
-			quote_tweet = {
-				'user': quser.lower(),
-				'id': qid,
-				'text': qtext,
-				'time': qtime
-			}
+		qdiv = div.find('div', attrs={'class': 'quote-big'})
+		if qdiv:
+			quoted = qdiv.find('div', attrs={'class':'quote-text'})
+			if quoted:
+				quote_link = qdiv.find('a', attrs={'class': 'quote-link'}).get('href')
+				quser = quote_link.split('/')[1]
+				if quser in blacklist: continue
+				qtext = quoted.get_text()
+				if isinstance(qtext, unicode): qtext = qtext.encode('utf-8')
+				qid = quote_link.split('/')[3].split('#')[0]
+				qtime = qdiv.find('span', attrs={'class': 'tweet-date'}).find('a').get('title')
+				if qtime: qtime = nitter_time_to_timegm( qtime )
+				quote_tweet = {
+					'user': quser.lower(),
+					'id': qid,
+					'text': qtext,
+					'time': qtime
+				}
 
 		# find attachments
 		attachments_div = div.find('div', attrs={'class': 'attachments'})
