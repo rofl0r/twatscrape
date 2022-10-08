@@ -19,6 +19,7 @@ import paths
 from utils import safe_write, retry_makedirs
 import socket, errno
 import misc
+import re
 import collections
 
 title="twatscrape"
@@ -814,7 +815,6 @@ wl_hash = None
 def load_watchlist():
 	global watchlist, wl_hash
 	has_keywords = False
-	interests = dict()
 	wl = []
 	for x in open(args.watchlist, 'r').readlines():
 		x = x.rstrip().lower()
@@ -826,13 +826,6 @@ def load_watchlist():
 			username = x if x.find(' ') == -1 else x.replace(' ', '+')
 		else:
 			username = x
-
-		if username.find(' ') != -1:
-			_split = username.split()
-			username = _split[0]
-			interest = _split[1:]
-			random.shuffle(interest)
-			interests[username] = interest
 
 		if not username[0] == '#' and not os.path.exists(paths.get_user_json(username)):
 			new_accounts.append(username)
@@ -852,7 +845,29 @@ def load_watchlist():
 			d = os.path.join('users', file)
 			if os.path.isdir(d): load_user_json(d)
 
-	return interests if len(interests) else None
+def sort_keywords(interests):
+	return sorted(interests.items(), key = lambda kv:(kv[1],kv[0]))
+
+def get_keywords(username):
+	js = paths.get_user_json(username)
+
+	with open(js, 'r') as h:
+		interests = {}
+		j = json.load(h)
+
+		lines = [ twat['text'] for twat in j ]
+
+		for line in lines:
+			line = line.lower().strip()
+			for word in line.split():
+				if word[0] == '#':
+					if len(word) > 3:
+						interests[word[1:]] = 1 if not word[1:] in interests else (interests[word[1:]] + 1)
+				elif re.match('^[a-z0-9]{5,}$', word):
+					interests[word] = 1 if not word in interests else (interests[word] + 1)
+
+	sample = len(interests) if len(interests) < 10 else 10
+	return random.sample( interests, sample )
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
@@ -890,6 +905,7 @@ if __name__ == '__main__':
 	parser.add_argument('--once', help="run once then exit", default=False, type=bool, required=False)
 	parser.add_argument('--random-instances', help="randomize nitter instances (default: False)", default=False, type=bool, required=False)
 	parser.add_argument('--fetch-profile-picture', help="fetch profile pictures (Default: True)", default=True, type=bool, required=False)
+	parser.add_argument('--interests', help="also fetch interests extracted from profile (Default: false)", default=False, type=bool, required=False)
 
 
 	args = parser.parse_args()
@@ -953,7 +969,7 @@ if __name__ == '__main__':
 	host = None
 	mastodon_rshttp = dict()
 
-	interests = load_watchlist()
+	_ = load_watchlist()
 	for li in [ 'whitelist', 'blacklist']: load_list(li)
 
 	## resume/retry mirroring process
@@ -966,34 +982,45 @@ if __name__ == '__main__':
 	start_server(args.listenip, args.port)
 
 	user_agent = 'curl/7.60.0'
+	interests = dict()
+	known_interests = dict()
 	while True:
-		if args.random_user_agent:
-			user_agent = random.choice(useragents)
 		try:
-			## randomize watchlist if requested
+			if args.random_user_agent: user_agent = random.choice(useragents)
 			if args.randomize_watchlist > 0: random.shuffle(watchlist)
-			## scrape profile
-			for item in watchlist:
-				if not item in disabled_users:
-					if item.count('@') < 2:
-						search = True if item[0] == '#' else False
-						nitter_rshttp, host = scrape(item, nitter_rshttp, host, search, user_agent)
-					else:
-						_, _, host = item.split('@')
-						if not host in mastodon_rshttp: mastodon_rshttp[host] = None
-						mastodon_rshttp[host], _ = scrape(item=item, http=mastodon_rshttp[host], host=host, search=False, user_agent=user_agent)
 
-			if interests:
+			for item in watchlist:
+				if item in disabled_users:
+					continue
+
+				elif item.count('@') >= 2:
+					_, _, host = item.split('@')
+					if not host in mastodon_rshttp: mastodon_rshttp[host] = None
+					mastodon_rshttp[host], _ = scrape(item=item, http=mastodon_rshttp[host], host=host, search=False, user_agent=user_agent)
+
+				else:
+					search = True if item[0] == '#' else False
+					nitter_rshttp, host = scrape(item, nitter_rshttp, host, search, user_agent)
+					if args.interests and not search:
+						interest = get_keywords(item)
+						if len(interest): interests[item] = interest
+
+			if args.interests and interests:
 				for username in interests.keys():
+					if not username in known_interests: known_interests[username] = dict()
 					for interest in interests[username]:
+						if interest in known_interests[username]:
+							last = known_interests[username][interest]
+							if (time.time() - last) < (3600*(24*7)): continue
+
+						known_interests[username][interest] = time.time()
 						nitter_rshttp, host = scrape('@%s+%s' % (username, interest), nitter_rshttp, host, True, user_agent)
-				interests = None
+
+			if args.once: break
 			time.sleep(args.profile)
 
 		except KeyboardInterrupt:
 			break
-
-		if args.once: break
 
 	try:
 		if not mirroring_done.is_set():
