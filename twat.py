@@ -533,7 +533,7 @@ def get_twats(item, proxies=None, count=0, http=None, checkfn=None, nitters={}, 
 		twats, cursor = extract_twats(res, item, twats, timestamp, checkfn, nitters, blacklist, whitelist)
 		sys.stdout.write('\r[%s] %s: scraping... p:%d ' % (misc.get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), item, page))
 		sys.stdout.flush()
-		if count == 0 or (len(twats) == 0 and not len(cursor)) or break_loop or (count != -1 and len(twats) >= count): break
+		if count == 0 or (not len(twats) and not len(cursor)) or break_loop or (count != -1 and len(twats) >= count): break
 		if checkfn and not checkfn(item, twats): break
 
 		# fetch additional tweets that are not in the initial set of 20:
