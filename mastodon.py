@@ -101,7 +101,7 @@ def extract_toots(html, item, toots, timestamp, checkfn, ignore={}):
 
 	return toots, cursor
 
-def mastodon_get(req, http, host, proxies, user_agent='curl/7.60.0'):
+def mastodon_get(req, http, host, proxies, user_agent='curl/7.74.0'):
 
 	if http is None:
 		http = RsHttp(host=host,port=443,timeout=30,ssl=True,keep_alive=True,follow_redirects=True,auto_set_cookies=True,proxies=proxies,user_agent=user_agent)
@@ -114,7 +114,7 @@ def mastodon_get(req, http, host, proxies, user_agent='curl/7.60.0'):
 		return hdr, res, http, host
 	return None, None, None, host
 
-def get_toots(item, proxies=None, count=0, http=None, checkfn=None, user_agent='curl/7.60.0', ignore={}):
+def get_toots(item, proxies=None, count=0, http=None, checkfn=None, user_agent='curl/7.74.0', ignore={}):
 	toots = []
 	_, user, host = item.split('@')
 
