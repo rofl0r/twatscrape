@@ -852,7 +852,7 @@ def load_watchlist():
 			d = os.path.join('users', file)
 			if os.path.isdir(d): load_user_json(d)
 
-	return interests
+	return interests if len(interests) else None
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
@@ -983,9 +983,11 @@ if __name__ == '__main__':
 						if not host in mastodon_rshttp: mastodon_rshttp[host] = None
 						mastodon_rshttp[host], _ = scrape(item=item, http=mastodon_rshttp[host], host=host, search=False, user_agent=user_agent)
 
-			for username in interests.keys():
-				for interest in interests[username]:
-					nitter_rshttp, host = scrape('@%s+%s' % (username, interest), nitter_rshttp, host, True, user_agent)
+			if interests:
+				for username in interests.keys():
+					for interest in interests[username]:
+						nitter_rshttp, host = scrape('@%s+%s' % (username, interest), nitter_rshttp, host, True, user_agent)
+				interests = None
 			time.sleep(args.profile)
 
 		except KeyboardInterrupt:
