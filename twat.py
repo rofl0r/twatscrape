@@ -353,7 +353,7 @@ def extract_twats(html, item, twats, timestamp, checkfn, nitters, blacklist, whi
 		div_end = find_div_end(html)
 		slice = html[:div_end]
 		html = html[div_end:]
-		twats = extract_twat(soupify(html), twats, timestamp, nitters, blacklist, whitelist)
+		twats = extract_twat(html, twats, timestamp, nitters, blacklist, whitelist)
 		nfetched += 1
 		# if the first two (the very first could be pinned) tweets are already known
 		# do not waste cpu processing more html
@@ -386,7 +386,8 @@ def nitter_time_to_timegm(nt):
 		dtdt = datetime.datetime(int(d[2]), int(d[1]), int(d[0]), int(t[0]), int(t[1]))
 	return calendar.timegm(dtdt.timetuple())
 
-def extract_twat(soup, twats, timestamp, nitters={}, blacklist={}, whitelist={}):
+def extract_twat(html, twats, timestamp, nitters={}, blacklist={}, whitelist={}):
+	soup = soupify(html)
 	for div in soup.body.find_all('div', attrs={'class':'timeline-item'}):
 
 		tweet_id = 0
