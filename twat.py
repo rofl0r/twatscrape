@@ -533,6 +533,7 @@ def get_twats(item, proxies=None, count=0, http=None, checkfn=None, nitters={}, 
 	# otherwise ordering might become messed up, once we sort them
 	timestamp = int(time.time())
 
+	known_cursors = []
 	twats = []
 	break_loop = False
 
@@ -547,8 +548,10 @@ def get_twats(item, proxies=None, count=0, http=None, checkfn=None, nitters={}, 
 		if len(twats): last_id = get_effective_twat_id(twats[len(twats)-1])
 
 		# we scrapped everything
-		if not cursor or page >= maxpage: break
-		query = '/search?f=tweets&q=%s%s' % (item.strip('#'), cursor[0]) if search else '/%s%s' % (item, cursor[0])
+		if not cursor or (maxpage > 0 and page >= maxpage) or cursor in known_cursors: break
+		known_cursors.append(cursor)
+		query = '/search?f=tweets&q=%s%s' % (item.strip('#'), cursor) if search else '/%s%s' % (item, cursor)
+		print('cursor: %s, query: %s' %(cursor,query))
 		hdr, res, http, host, nitters = nitter_get(query, http, host, nitters, proxies, user_agent)
 		page = page + 1
 
