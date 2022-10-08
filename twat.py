@@ -125,6 +125,7 @@ def _mirror_file(url_components, user, tid, args=None, content_type=None, force=
 def unshorten_urls(twat, proxies=None, shorteners={}):
 	soup = soupify(twat["text"])
 	for a in soup.body.find_all('a'):
+		if not 'href' in a.attrs: continue
 		href = a.attrs['href']
 		comp = _split_url(href)
 		if comp['host'] in shorteners:
@@ -329,8 +330,6 @@ def fetch_profile_picture(user, proxies, res=None, twhttp=None, nitters={}, plat
 			res_bytes = res.encode('utf-8') if isinstance(res, unicode) else res
 			retry_write(pic_path, res_bytes)
 		return
-
-	return
 
 def extract_twats(html, item, twats, timestamp, checkfn, nitters, blacklist, whitelist):
 	def find_div_end(html):
