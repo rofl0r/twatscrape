@@ -343,8 +343,13 @@ def extract_twats(html, item, twats, timestamp, checkfn, nitters, blacklist, whi
 
 	regex = re.compile(r'<div.*class.*[" ]timeline.item[" ]')
 	nfetched = 0
-	_as = '\n'.join( [ rs for rs in rsparse.find_all_tags(html, 'a') ])
-	cursor = [ a.get('href') for a in soupify(_as).body.find_all('a') if a.get('href').find('cursor=') != -1 ]
+	cursor = None
+	for a in soupify(html).body.find_all('a'):
+		href = a.get('href')
+		if href and href.find('cursor=') != -1:
+			cursor = a.get('href')
+			break
+
 	while 1:
 		match = regex.search(html)
 		if not match:
@@ -534,14 +539,14 @@ def get_twats(item, proxies=None, count=0, http=None, checkfn=None, nitters={}, 
 		twats, cursor = extract_twats(res, item, twats, timestamp, checkfn, nitters, blacklist, whitelist)
 		sys.stdout.write('\r[%s] %s: scraping... p:%d ' % (misc.get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), item, page))
 		sys.stdout.flush()
-		if count == 0 or (not len(twats) and not len(cursor)) or break_loop or (count != -1 and len(twats) >= count): break
+		if count == 0 or (not len(twats) and not cursor) or break_loop or (count != -1 and len(twats) >= count): break
 		if checkfn and not checkfn(item, twats): break
 
 		# fetch additional tweets that are not in the initial set of 20:
 		if len(twats): last_id = get_effective_twat_id(twats[len(twats)-1])
 
 		# we scrapped everything
-		if not len(cursor): break
+		if not cursor or page >= 10000: break
 		query = '/search?f=tweets&q=%s%s' % (item.strip('#'), cursor[0]) if search else '/%s%s' % (item, cursor[0])
 		hdr, res, http, host, nitters = nitter_get(query, http, host, nitters, proxies, user_agent)
 		page = page + 1
