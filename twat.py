@@ -520,7 +520,7 @@ def extract_twat(html, twats, timestamp, nitters={}, blacklist={}, whitelist={})
 # if checkfn is passed , it'll be called with the username and current list of
 # received twats, and can decide whether fetching will be continued or not,
 # by returning True (continue) or False.
-def get_twats(item, proxies=None, count=0, http=None, checkfn=None, nitters={}, host=None, search=False, user_agent="curl/7.60.0", blacklist={}, whitelist={}):
+def get_twats(item, proxies=None, count=0, http=None, checkfn=None, nitters={}, host=None, search=False, user_agent="curl/7.60.0", blacklist={}, whitelist={}, maxpage=1000):
 	query = '/search?f=tweets&q=%s' % item.strip('#') if search else '/%s' %item
 
 	page = 1
@@ -546,7 +546,7 @@ def get_twats(item, proxies=None, count=0, http=None, checkfn=None, nitters={}, 
 		if len(twats): last_id = get_effective_twat_id(twats[len(twats)-1])
 
 		# we scrapped everything
-		if not cursor or page >= 10000: break
+		if not cursor or page >= maxpage: break
 		query = '/search?f=tweets&q=%s%s' % (item.strip('#'), cursor[0]) if search else '/%s%s' % (item, cursor[0])
 		hdr, res, http, host, nitters = nitter_get(query, http, host, nitters, proxies, user_agent)
 		page = page + 1

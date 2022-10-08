@@ -906,6 +906,7 @@ if __name__ == '__main__':
 	parser.add_argument('--random-instances', help="randomize nitter instances (default: False)", default=False, type=bool, required=False)
 	parser.add_argument('--fetch-profile-picture', help="fetch profile pictures (Default: True)", default=True, type=bool, required=False)
 	parser.add_argument('--interests', help="also fetch interests extracted from profile (Default: false)", default=False, type=bool, required=False)
+	parser.add_argument('--maxpage', help="go maximum $maxpages in the past (Default: 1000)", default=1000, type=int, required=False)
 
 
 	args = parser.parse_args()
