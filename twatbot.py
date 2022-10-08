@@ -899,7 +899,7 @@ if __name__ == '__main__':
 	parser.add_argument('--ytdl', help="Define full path to youtube-dl", default=None, type=str, required=False)
 	parser.add_argument('--ytdl-upgrade', help="Define whether or not youtube-dl should be upgraded on statup - default: False", default=False, type=bool, required=False)
 	parser.add_argument('--instances', help="define nitter instance(s), comma separated - deault: letsencrypt instances", default=None, type=str, required=False)
-	parser.add_argument('--user-agent', help="define user agent to use", default="curl/7.60.0", type=str, required=False)
+	parser.add_argument('--user-agent', help="define user agent to use", default="curl/7.74.0", type=str, required=False)
 	parser.add_argument('--random-user-agent', help="use random user agent", default=False, type=bool, required=False)
 	parser.add_argument('--user-agent-file', help="file containing user agents", default='useragent.txt', type=str, required=False)
 	parser.add_argument('--once', help="run once then exit", default=False, type=bool, required=False)
@@ -982,7 +982,7 @@ if __name__ == '__main__':
 
 	start_server(args.listenip, args.port)
 
-	user_agent = 'curl/7.60.0'
+	user_agent = 'curl/7.74.0'
 	interests = dict()
 	known_interests = dict()
 	while True:

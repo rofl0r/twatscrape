@@ -38,7 +38,7 @@ def _hash(str):
 def _get_real_location(url, proxies=None):
 	url_components = _split_url(url)
 
-	http = RsHttp(url_components['host'], ssl=url_components['ssl'], port=url_components['port'], keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
+	http = RsHttp(url_components['host'], ssl=url_components['ssl'], port=url_components['port'], keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.74.0")
 
 	if not http.connect(): return url
 	hdr = http.head(url_components['uri'])
@@ -211,7 +211,7 @@ def mirror_twat(twat, args=None):
 					retry_makedirs( emodir )
 
 				if not os.path.exists('%s/%s' % (emodir,filename)):
-					http = RsHttp(host=host, port=443, timeout=30, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
+					http = RsHttp(host=host, port=443, timeout=30, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.74.0")
 					while not http.connect():
 						# FIXME : what should happen on connect error ?
 						pass
@@ -227,7 +227,7 @@ def add_tweet(id, user, time, text):
 # twat_id looks like: '/username/status/id'
 def get_twat_timestamp(twat_id):
 	host = 'twitter.com'
-	http = RsHttp(host=host, port=443, timeout=30, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, user_agent="curl/7.60.0")
+	http = RsHttp(host=host, port=443, timeout=30, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, user_agent="curl/7.74.0")
 	while not http.connect():
 		# FIXME : what should happen on connect error ?
 		pass
@@ -243,7 +243,7 @@ def get_twat_timestamp(twat_id):
 
 def get_twats_mobile(user, proxies=None):
 	host = 'mobile.twitter.com'
-	http = RsHttp(host=host, port=443, timeout=30, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.60.0")
+	http = RsHttp(host=host, port=443, timeout=30, ssl=True, keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=proxies, user_agent="curl/7.74.0")
 #	http.debugreq = True
 	while not http.connect():
 		# FIXME : what should happen on connect error ?
@@ -520,7 +520,7 @@ def extract_twat(html, twats, timestamp, nitters={}, blacklist={}, whitelist={})
 # if checkfn is passed , it'll be called with the username and current list of
 # received twats, and can decide whether fetching will be continued or not,
 # by returning True (continue) or False.
-def get_twats(item, proxies=None, count=0, http=None, checkfn=None, nitters={}, host=None, search=False, user_agent="curl/7.60.0", blacklist={}, whitelist={}, maxpage=1000):
+def get_twats(item, proxies=None, count=0, http=None, checkfn=None, nitters={}, host=None, search=False, user_agent="curl/7.74.0", blacklist={}, whitelist={}, maxpage=1000):
 	query = '/search?f=tweets&q=%s' % item.strip('#') if search else '/%s' %item
 
 	page = 1
