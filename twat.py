@@ -49,20 +49,23 @@ def _get_real_location(url, proxies=None):
 	return url
 
 def _mirror_file(url_components, user, tid, args=None, content_type=None, force=False):
-	outname = paths.get_user(user)+ '/%s-%s' % (tid, url_components['filename'])
+	if 'filename' in url_components:
+		outname = paths.get_user(user)+ '/%s-%s' % (tid, url_components['filename'])
+		ext = url_components['filename'].split('.')[-1]
+	else:
+		outname = paths.get_user(user)+'/%s-%s' % (tid, url_components['uri'].split('/')[3])
+		ext = None
 	if not force and os.path.exists(outname):
 		return
 
-	http = RsHttp(url_components['host'], ssl=url_components['ssl'], port=url_components['port'], keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
+	http = RsHttp(url_components['host'], ssl=url_components['ssl'], port=url_components['port'], keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.74.0")
 
 	## do nothing if we cannot connect
 	if not http.connect(): return None
 
-	ext = url_components['filename'].split('.')[-1]
-
 	if content_type:
 
-		if args.ext: filtre = str(args.ext).split(',')
+		if ext is not None and args.ext: filtre = str(args.ext).split(',')
 		else: filtre = []
 
 		hdr = http.head(url_components['uri'])
@@ -95,13 +98,13 @@ def _mirror_file(url_components, user, tid, args=None, content_type=None, force=
 		if 'html' in value: return
 
 		## previous http object cannot be re-used
-		http = RsHttp(url_components['host'], ssl=url_components['ssl'], port=url_components['port'], keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.60.0")
+		http = RsHttp(url_components['host'], ssl=url_components['ssl'], port=url_components['port'], keep_alive=True, follow_redirects=True, auto_set_cookies=True, proxies=args.proxy, user_agent="curl/7.74.0")
 
 		## do nothing if we cannot connect
 		if not http.connect(): return
 
 	extras = []
-	if url_components['filename'] == 'card.html' and 'twitter.com' in url_components['host']:
+	if 'filename' in url_components and url_components['filename'] == 'card.html' and 'twitter.com' in url_components['host']:
 		extras.append("Referer: https://twitter.com/")
 
 	hdr, res = http.get(url_components['uri'], extras=extras)
@@ -191,8 +194,7 @@ def mirror_twat(twat, args=None):
 				i = '%s.%s' % (i.split('?')[0], fmt)
 
 			url_components = _split_url(i)
-			if 'filename' in url_components:
-				_mirror_file(url_components, user, twat['id'], args)
+			_mirror_file(url_components, user, twat['id'], args)
 
 	## deal with emojis
 	if 'e' in args.mirror:
