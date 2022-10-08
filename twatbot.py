@@ -27,7 +27,6 @@ tweet_cache = dict()
 disabled_users = dict()
 watchlist = []
 new_accounts = []
-has_keywords = False
 all_tweets = []
 site_dirs = [
 	"/css",
@@ -572,7 +571,7 @@ def scrape(item, http, host, search, user_agent):
 	insert_pos_total = 0
 	elapsed_time = time.time()
 	for t in twats:
-		if item[0] == '#': user = t['user'].lower()
+		if search: user = t['user'].lower()
 		if not user in insert_pos: insert_pos[user] = 0
 
 		if not in_twatlist(user, t):
@@ -600,7 +599,7 @@ def scrape(item, http, host, search, user_agent):
 			sys.stdout.flush()
 
 	if new:
-		if item[0] == '#':
+		if search:
 			for user in insert_pos.keys(): write_user_tweets(user)
 		else:
 			write_user_tweets(item)
@@ -813,21 +812,33 @@ def load_list(item):
 
 wl_hash = None
 def load_watchlist():
-	global watchlist, wl_hash, has_keywords
+	global watchlist, wl_hash
+	has_keywords = False
+	interests = dict()
 	wl = []
 	for x in open(args.watchlist, 'r').readlines():
 		x = x.rstrip().lower()
-		if x.startswith(';'):
+		if x[0] == ';':
 			username = x[1:]
 			disabled_users[username] = True
+		elif x[0] == '#':
+			if not has_keywords: has_keyword = True
+			username = x if x.find(' ') == -1 else x.replace(' ', '+')
 		else:
 			username = x
-			if username[0] == '#' and not has_keywords:
-				has_keywords = True
+
+		if username.find(' ') != -1:
+			_split = username.split()
+			username = _split[0]
+			interest = _split[1:]
+			random.shuffle(interest)
+			interests[username] = interest
+
 		if not username[0] == '#' and not os.path.exists(paths.get_user_json(username)):
 			new_accounts.append(username)
 			if not os.path.exists(paths.get_user(username)):
 				retry_makedirs(paths.get_user(username))
+
 		wl.append(username)
 	newhash = hashlib.md5(''.join(wl)).hexdigest()
 	if newhash != wl_hash:
@@ -839,7 +850,9 @@ def load_watchlist():
 	if has_keywords and os.path.exists('users'):
 		for file in os.listdir('users'):
 			d = os.path.join('users', file)
-			if os.path.isdir(d): load_user_json(file)
+			if os.path.isdir(d): load_user_json(d)
+
+	return interests
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
@@ -940,7 +953,7 @@ if __name__ == '__main__':
 	host = None
 	mastodon_rshttp = dict()
 
-	load_watchlist()
+	interests = load_watchlist()
 	for li in [ 'whitelist', 'blacklist']: load_list(li)
 
 	## resume/retry mirroring process
@@ -970,6 +983,9 @@ if __name__ == '__main__':
 						if not host in mastodon_rshttp: mastodon_rshttp[host] = None
 						mastodon_rshttp[host], _ = scrape(item=item, http=mastodon_rshttp[host], host=host, search=False, user_agent=user_agent)
 
+			for username in interests.keys():
+				for interest in interests[username]:
+					nitter_rshttp, host = scrape('@%s+%s' % (username, interest), nitter_rshttp, host, True, user_agent)
 			time.sleep(args.profile)
 
 		except KeyboardInterrupt:
