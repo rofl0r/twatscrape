@@ -3,6 +3,10 @@ from soup_parser import soupify
 import time, datetime, calendar
 import json
 import re
+import paths
+
+def fetch_mastodon_picture(user, proxies, res=None, twhttp=None, nitters={}, user_agent='curl/7.74.0'):
+	return
 
 def time_to_timegm(nt):
 	nt = nt.encode('utf-8') if isinstance(nt, unicode) else nt

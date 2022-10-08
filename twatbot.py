@@ -1,5 +1,5 @@
-from twat import get_twats, mirror_twat, get_effective_twat_id, unshorten_urls, fetch_profile_picture
-from mastodon import get_toots
+from twat import get_twats, mirror_twat, get_effective_twat_id, unshorten_urls, fetch_nitter_picture
+from mastodon import get_toots, fetch_mastodon_picture
 from rocksock import RocksockProxyFromURL
 from nitter import set_invalid_nitter, get_nitter_instance
 import time
@@ -559,10 +559,10 @@ def scrape(item, http, host, search, user_agent):
 		count = args.count if item[0] == '#' else -1
 
 	if item.count('@') < 2:
-		platform = 'twitter'
+		fetch_profile_picture = fetch_nitter_picture
 		twats, nitters, host, http, page = get_twats(item, proxies=args.proxy, count=count, http=http, checkfn=checkfn, nitters=nitters, host=host, search=search, user_agent=user_agent, blacklist=blacklist, whitelist=whitelist)
 	else:
-		platform = 'mastodon'
+		fetch_profile_picture = fetch_mastodon_picture
 		twats, http = get_toots(item, proxies=args.proxy, count=count, http=http, checkfn=checkfn, user_agent=user_agent, blacklist=args.blacklist, whitelist=args.whitelist)
 		mastodon_rshttp[host] = http
 
@@ -587,14 +587,14 @@ def scrape(item, http, host, search, user_agent):
 					http = None if not bar in mastodon_rshttp else mastodon_rshttp[bar]
 
 				if not os.path.isdir(paths.get_user(t[quote_tweet]['user'])): retry_makedirs(paths.get_user(t[quote_tweet]['user']))
-				if args.fetch_profile_picture: fetch_profile_picture(t[quote_tweet]['user'], args.proxy, twhttp=http, nitters=nitters, platform=platform)
+				if args.fetch_profile_picture: fetch_profile_picture(t[quote_tweet]['user'], args.proxy, twhttp=http, nitters=nitters, user_agent=user_agent)
 			if 'user' in t:
 				if '@' in t['user']:
 					_, foo, bar = t['user'].split('@')
 					http = None if not bar in mastodon_rshttp else mastodon_rshttp[bar]
 
 				if not os.path.isdir(paths.get_user(t['user'])): retry_makedirs(paths.get_user(t['user']))
-				if args.fetch_profile_picture: fetch_profile_picture(t['user'], args.proxy, twhttp=http, nitters=nitters, platform=platform)
+				if args.fetch_profile_picture: fetch_profile_picture(t['user'], args.proxy, twhttp=http, nitters=nitters, user_agent=user_agent)
 			if args.mirror: mirror_twat(t, args=args)
 			sys.stdout.write('\r[%s] %s: extracting from %d page(s): +%d twat(s)' % (misc.get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), item, page, insert_pos_total))
 			sys.stdout.flush()
