@@ -587,14 +587,14 @@ def scrape(item, http, host, search, user_agent):
 					http = None if not bar in mastodon_rshttp else mastodon_rshttp[bar]
 
 				if not os.path.isdir(paths.get_user(t[quote_tweet]['user'])): retry_makedirs(paths.get_user(t[quote_tweet]['user']))
-				fetch_profile_picture(t[quote_tweet]['user'], args.proxy, twhttp=http, nitters=nitters, platform=platform)
+				if args.fetch_profile_picture: fetch_profile_picture(t[quote_tweet]['user'], args.proxy, twhttp=http, nitters=nitters, platform=platform)
 			if 'user' in t:
 				if '@' in t['user']:
 					_, foo, bar = t['user'].split('@')
 					http = None if not bar in mastodon_rshttp else mastodon_rshttp[bar]
 
 				if not os.path.isdir(paths.get_user(t['user'])): retry_makedirs(paths.get_user(t['user']))
-				fetch_profile_picture(t['user'], args.proxy, twhttp=http, nitters=nitters, platform=platform)
+				if args.fetch_profile_picture: fetch_profile_picture(t['user'], args.proxy, twhttp=http, nitters=nitters, platform=platform)
 			if args.mirror: mirror_twat(t, args=args)
 			sys.stdout.write('\r[%s] %s: extracting from %d page(s): +%d twat(s)' % (misc.get_timestamp("%Y-%m-%d %H:%M:%S", elapsed_time), item, page, insert_pos_total))
 			sys.stdout.flush()
@@ -876,6 +876,7 @@ if __name__ == '__main__':
 	parser.add_argument('--user-agent-file', help="file containing user agents", default='useragent.txt', type=str, required=False)
 	parser.add_argument('--once', help="run once then exit", default=False, type=bool, required=False)
 	parser.add_argument('--random-instances', help="randomize nitter instances (default: False)", default=False, type=bool, required=False)
+	parser.add_argument('--fetch-profile-picture', help="fetch profile pictures (Default: True)", default=True, type=bool, required=False)
 
 
 	args = parser.parse_args()
