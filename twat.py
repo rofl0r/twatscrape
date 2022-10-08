@@ -410,7 +410,7 @@ def extract_twat(html, twats, timestamp, nitters={}, blacklist={}, whitelist={})
 		quote_tweet = None
 		video = False
 
-		pinned = ('user-pinned' in div.attrs["class"])
+		pinned = ('pinned' in div.attrs["class"])
 
 		tweet_id = div.find('a', attrs={'class': 'tweet-link'}).get('href').split('/')[3].split('#')[0]
 		tweet_user = div.find('a', attrs={'class': 'username'}).get('title').lstrip('@').lower()
